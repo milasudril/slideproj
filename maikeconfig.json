@@ -11,7 +11,10 @@
 					"config": {
 						"cflags": [
 							"-g"
-						]
+						],
+						"std_revision": {
+							"min":"c++20"
+						}
 					},
 					"recipe": "cxx_linker.py",
 					"use_get_tags": 0
@@ -35,7 +38,10 @@
 						],
 						"iquote": [
 							"."
-						]
+						],
+						"std_revision": {
+							"min":"c++20"
+						}
 					},
 					"recipe": "cxx_compiler.py",
 					"use_get_tags": 0
@@ -56,11 +62,21 @@
 						],
 						"cflags": [
 							"-g",
-							"-Wall"
+							"-O3",
+							"-ffast-math",
+							"-ftree-vectorize",
+							"-Wextra",
+							"-Wall",
+							"-Wconversion",
+							"-Wnarrowing",
+							"-Werror"
 						],
 						"iquote": [
 							"."
-						]
+						],
+						"std_revision": {
+							"min":"c++20"
+						}
 					},
 					"recipe": "cxx_compiler.py",
 					"use_get_tags": 0
@@ -133,7 +149,7 @@
 				"^\\.",
 				"^__"
 			],
-			"recursive": 0
+			"recursive": 1
 		}
 	}
 }
