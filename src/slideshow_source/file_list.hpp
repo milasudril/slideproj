@@ -33,6 +33,13 @@ namespace slideproj::slideshow_source
 			return *this;
 		}
 
+		template<class Rng>
+		file_list& shuffle(Rng&& rng)
+		{
+			std::ranges::shuffle(m_entries, std::forward<Rng>(rng));
+			return *this;
+		}
+
 		auto& operator[](size_t index) const
 		{
 			// NOTE: This is expected to be safe since index will be validated
