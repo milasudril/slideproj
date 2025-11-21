@@ -150,3 +150,10 @@ TESTCASE(slideproj_file_collector_file_list_sort_with_metadata_provider)
 		prev_file_info = current_file_info;
 	}
 }
+
+TESTCASE(slideproj_file_collector_make_real_file_list)
+{
+	auto files = slideproj::file_collector::make_file_list("/usr/share/wallpapers");
+	for(auto const& item: files)
+	{ EXPECT_EQ(item.path().is_absolute(), true); }
+}
