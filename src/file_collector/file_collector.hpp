@@ -106,11 +106,22 @@ namespace slideproj::file_collector
 		virtual file_metadata const& get_metadata(file_list_entry const& item) const = 0;
 	};
 
-	file_list make_file_list(
-		std::filesystem::path const& input_directory,
-		file_metadata_provider const& metadata_provider,
-		std::span<file_metadata_field const> sort_by
+	void sort(
+		file_list& files,
+		std::span<file_metadata_field const> sort_by,
+		file_metadata_provider const& metadata_provider
 	);
+
+	inline file_list make_file_list(
+		std::filesystem::path const& input_directory,
+		std::span<file_metadata_field const> sort_by,
+		file_metadata_provider const& metadata_provider
+	)
+	{
+		auto ret = make_file_list(input_directory);
+		sort(ret, sort_by, metadata_provider);
+		return ret;
+	}
 }
 
 #endif
