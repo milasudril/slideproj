@@ -8,25 +8,44 @@
 
 TESTCASE(slideproj_slideshow_source_file_list_load_and_sort)
 {
-	using from_range_t = slideproj::slideshow_source::file_list::from_range_t;
-	slideproj::slideshow_source::file_list items{
-		from_range_t{},
-		std::array{
-			std::filesystem::path{"foo/lenna.jpg"},
-			std::filesystem::path{"foo/bar.jpg"},
-			std::filesystem::path{"foo/kaka.jpg"}
-		}
-	};
+	slideproj::slideshow_source::file_list items;
 
-	EXPECT_EQ(items[0], "foo/lenna.jpg");
-	EXPECT_EQ(items[1], "foo/bar.jpg");
-	EXPECT_EQ(items[2], "foo/kaka.jpg");
+	items.append("foo/lenna.jpg")
+		.append("foo/bar.jpg")
+		.append("foo/kaka.jpg");
+
+	EXPECT_EQ(
+		items[0],
+		(
+			slideproj::slideshow_source::file_list_entry{
+				slideproj::slideshow_source::file_id{0}, "foo/lenna.jpg"
+			}
+		)
+	);
+
+	EXPECT_EQ(
+		items[1],
+		(
+			slideproj::slideshow_source::file_list_entry{
+				slideproj::slideshow_source::file_id{1}, "foo/bar.jpg"
+			}
+		)
+	);
+
+	EXPECT_EQ(
+		items[2],
+		(
+			slideproj::slideshow_source::file_list_entry{
+				slideproj::slideshow_source::file_id{2}, "foo/kaka.jpg"
+			}
+		)
+	);
 
 	items.sort([](auto const& a, auto const& b){
-		return a < b;
+		return a.path() < b.path();
 	});
 
-	EXPECT_EQ(items[0], "foo/bar.jpg");
-	EXPECT_EQ(items[1], "foo/kaka.jpg");
-	EXPECT_EQ(items[2], "foo/lenna.jpg");
+	EXPECT_EQ(items[0].path(), "foo/bar.jpg");
+	EXPECT_EQ(items[1].path(), "foo/kaka.jpg");
+	EXPECT_EQ(items[2].path(), "foo/lenna.jpg");
 }

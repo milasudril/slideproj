@@ -1,22 +1,54 @@
 #ifndef SLIDEPROJ_SLIDESHOW_SOURCE_FILE_LIST_HPP
 #define SLIDEPROJ_SLIDESHOW_SOURCE_FILE_LIST_HPP
 
+#include <chrono>
 #include <vector>
 #include <algorithm>
 #include <filesystem>
 
 namespace slideproj::slideshow_source
 {
+	class file_id
+	{
+	public:
+		constexpr explicit file_id(size_t value):
+			m_value{value}
+		{}
+
+		constexpr size_t value() const
+		{ return m_value; }
+
+		constexpr bool operator==(file_id const&) const = default;
+		constexpr bool operator!=(file_id const&) const = default;
+
+	private:
+		size_t m_value;
+	};
+
+	class file_list_entry
+	{
+	public:
+		explicit file_list_entry(file_id id, std::filesystem::path const& path):
+			m_id{id}, m_path{path}
+		{}
+
+		file_id id() const
+		{ return m_id; }
+
+		std::filesystem::path path() const
+		{ return m_path; }
+
+		bool operator==(file_list_entry const&) const = default;
+		bool operator!=(file_list_entry const&) const = default;
+
+	private:
+		file_id m_id;
+		std::filesystem::path m_path;
+	};
+
 	class file_list
 	{
 	public:
-		struct from_range_t{};
-
-		template<class PathSource>
-		explicit file_list(from_range_t, PathSource&& src):
-			m_entries{std::begin(src), std::end(src)}
-		{}
-
 		size_t size() const
 		{ return std::size(m_entries); }
 
@@ -33,10 +65,10 @@ namespace slideproj::slideshow_source
 			return *this;
 		}
 
-		template<class Rng>
-		file_list& shuffle(Rng&& rng)
+		file_list& append(std::filesystem::path const& path)
 		{
-			std::ranges::shuffle(m_entries, std::forward<Rng>(rng));
+			file_id new_id{size()};
+			m_entries.push_back(file_list_entry{new_id, path});
 			return *this;
 		}
 
@@ -48,8 +80,35 @@ namespace slideproj::slideshow_source
 		}
 
 	private:
-		std::vector<std::filesystem::path> m_entries;
+		std::vector<file_list_entry> m_entries;
 	};
+
+	file_list make_file_list(std::filesystem::path const& input_directory);
+
+	enum class file_metadata_field{
+		in_group,
+		caption,
+		timestamp
+	};
+
+	struct file_metadata
+	{
+		std::string in_group;
+		std::string caption;
+		std::chrono::file_clock timestamp;
+	};
+
+	class file_metadata_provider
+	{
+	public:
+		virtual file_metadata const& get_metadata(file_list_entry const& item) const = 0;
+	};
+
+	file_list make_file_list(
+		std::filesystem::path const& input_directory,
+		file_metadata_provider const& metadata_provider,
+		std::span<file_metadata_field const> sort_by
+	);
 }
 
 #endif
