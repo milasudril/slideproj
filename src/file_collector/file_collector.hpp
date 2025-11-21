@@ -1,3 +1,5 @@
+//@	{"dependencies_extra":[{"ref":"./file_collector.o", "rel":"implementation"}]}
+
 #ifndef SLIDEPROJ_FILE_COLLECTOR_FILE_COLLECTOR_HPP
 #define SLIDEPROJ_FILE_COLLECTOR_FILE_COLLECTOR_HPP
 
