@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <filesystem>
+#include <functional>
 
 namespace slideproj::file_collector
 {
@@ -95,46 +96,113 @@ namespace slideproj::file_collector
 
 	struct file_metadata
 	{
+		std::chrono::file_clock::time_point timestamp;
 		std::string in_group;
 		std::string caption;
-		std::chrono::file_clock timestamp;
 	};
 
 	template<class T>
+	concept string_comparator = requires(T const& obj, std::string_view a, std::string_view b){
+		{obj(a, b)} -> std::same_as<std::strong_ordering>;
+	};
+
+	template<string_comparator StringComparator>
+	inline auto compare_field(
+		file_metadata_field field,
+		file_metadata const& a,
+		file_metadata const& b,
+		StringComparator const& strcmp
+	)
+	{
+		// TODO: In this context, do not sort strings by using code units
+		switch(field)
+		{
+			case file_metadata_field::timestamp:
+				return a.timestamp <=> b.timestamp;
+			case file_metadata_field::in_group:
+				return strcmp(a.caption, b.caption);
+			case file_metadata_field::caption:
+				return strcmp(a.caption, b.caption);
+		}
+		__builtin_unreachable();
+	}
+
+	template<class T>
 	concept file_metadata_provider = requires(T const& obj, file_list_entry const& item){
-		{obj.get_file_metadata(item)} -> std::same_as<file_metadata const&>;
+		{obj.get_metadata(item)} -> std::same_as<file_metadata const&>;
+	};
+
+	struct type_erased_file_metadata_provider{
+		void const* object;
+		file_metadata const& (*get_metadata)(void const*, file_list_entry const&);
+	};
+
+	struct type_erased_string_comparator{
+		void const* object;
+		std::strong_ordering (*compare)(void const*, std::string_view a, std::string_view b);
 	};
 
 	void sort(
 		file_list& files,
 		std::span<file_metadata_field const> sort_by,
-		void const* metadata_provider,
-		file_metadata const& (*get_metadata)(void const*, file_list_entry const&)
+		type_erased_file_metadata_provider metadata_provider,
+		type_erased_string_comparator string_comparator
 	);
 
-	template<file_metadata_provider FileMetadataProvider>
+	template<
+		file_metadata_provider FileMetadataProvider,
+		string_comparator StringComparator
+	>
 	void sort(
 		file_list& files,
 		std::span<file_metadata_field const> sort_by,
-		FileMetadataProvider const& metadata_provider
+		FileMetadataProvider const& metadata_provider,
+		StringComparator const& string_comparator
 	)
 	{
-		sort(files, sort_by, &sort_by, [](void const* handle, file_list_entry const& item){
-			return static_cast<FileMetadataProvider const*>(handle)->get_metadata(item);
-		});
+		sort(
+			files,
+			sort_by,
+			type_erased_file_metadata_provider{
+				.object = &metadata_provider,
+				.get_metadata = [](void const* handle, file_list_entry const& item) -> decltype(auto) {
+					return static_cast<FileMetadataProvider const*>(handle)->get_metadata(item);
+				}
+			},
+			type_erased_string_comparator{
+				.object = &string_comparator,
+				.compare = [](void const* handle, std::string_view a, std::string_view b) {
+					return (*static_cast<StringComparator const*>(handle))(a, b);
+				}
+			}
+		);
 	}
 
-	template<file_metadata_provider FileMetadataProvider>
+	template<
+		file_metadata_provider FileMetadataProvider,
+		string_comparator StringComparator
+	>
 	inline file_list make_file_list(
 		std::filesystem::path const& input_directory,
 		std::span<file_metadata_field const> sort_by,
-		FileMetadataProvider const& metadata_provider
+		FileMetadataProvider const& metadata_provider,
+		StringComparator const& string_comparator
 	)
 	{
 		auto ret = make_file_list(input_directory);
-		sort(ret, sort_by, metadata_provider);
+		sort(ret, sort_by, metadata_provider, string_comparator);
 		return ret;
 	}
 }
+
+template<>
+struct std::hash<slideproj::file_collector::file_id>
+{
+	auto operator()(slideproj::file_collector::file_id id) const
+	{
+		static_assert(std::is_empty_v<std::hash<size_t>>);
+		return std::hash<size_t>{}(id.value());
+	}
+};
 
 #endif

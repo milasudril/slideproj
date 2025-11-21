@@ -69,7 +69,8 @@
 							"-Wall",
 							"-Wconversion",
 							"-Wnarrowing",
-							"-Werror"
+							"-Werror",
+							"-fconcepts-diagnostics-depth=2"
 						],
 						"iquote": [
 							"."
