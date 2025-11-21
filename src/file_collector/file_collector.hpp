@@ -100,22 +100,35 @@ namespace slideproj::file_collector
 		std::chrono::file_clock timestamp;
 	};
 
-	class file_metadata_provider
-	{
-	public:
-		virtual file_metadata const& get_metadata(file_list_entry const& item) const = 0;
+	template<class T>
+	concept file_metadata_provider = requires(T const& obj, file_list_entry const& item){
+		{obj.get_file_metadata(item)} -> std::same_as<file_metadata const&>;
 	};
 
 	void sort(
 		file_list& files,
 		std::span<file_metadata_field const> sort_by,
-		file_metadata_provider const& metadata_provider
+		void const* metadata_provider,
+		file_metadata const& (*get_metadata)(void const*, file_list_entry const&)
 	);
 
+	template<file_metadata_provider FileMetadataProvider>
+	void sort(
+		file_list& files,
+		std::span<file_metadata_field const> sort_by,
+		FileMetadataProvider const& metadata_provider
+	)
+	{
+		sort(files, sort_by, &sort_by, [](void const* handle, file_list_entry const& item){
+			return static_cast<FileMetadataProvider const*>(handle)->get_metadata(item);
+		});
+	}
+
+	template<file_metadata_provider FileMetadataProvider>
 	inline file_list make_file_list(
 		std::filesystem::path const& input_directory,
 		std::span<file_metadata_field const> sort_by,
-		file_metadata_provider const& metadata_provider
+		FileMetadataProvider const& metadata_provider
 	)
 	{
 		auto ret = make_file_list(input_directory);
