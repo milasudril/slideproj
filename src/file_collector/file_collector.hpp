@@ -1,12 +1,12 @@
-#ifndef SLIDEPROJ_SLIDESHOW_SOURCE_FILE_LIST_HPP
-#define SLIDEPROJ_SLIDESHOW_SOURCE_FILE_LIST_HPP
+#ifndef SLIDEPROJ_FILE_COLLECTOR_FILE_COLLECTOR_HPP
+#define SLIDEPROJ_FILE_COLLECTOR_FILE_COLLECTOR_HPP
 
 #include <chrono>
 #include <vector>
 #include <algorithm>
 #include <filesystem>
 
-namespace slideproj::slideshow_source
+namespace slideproj::file_collector
 {
 	class file_id
 	{
