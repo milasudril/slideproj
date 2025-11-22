@@ -11,21 +11,6 @@
 
 namespace slideproj::image_file_loader
 {
-	// FIXME: Should be moved to a directory with common helpers
-	template<std::integral T>
-	constexpr std::optional<T> to_number(std::string_view sv, std::ranges::minmax_result<T> accepted_range)
-	{
-		T value;
-		auto res = std::from_chars(std::begin(sv), std::end(sv), value);
-		if(res.ec != std::errc{} || res.ptr != std::end(sv))
-		{ return std::nullopt;}
-
-		if(value < accepted_range.min || value > accepted_range.max)
-		{ return std::nullopt; }
-
-		return value;
-	}
-
 	enum class pixel_ordering{
 		top_to_bottom_left_to_right,
 		top_to_bottom_right_to_left,

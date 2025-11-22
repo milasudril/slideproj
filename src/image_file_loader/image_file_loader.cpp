@@ -4,7 +4,9 @@
 //@	}
 
 #include "./image_file_loader.hpp"
+
 #include "src/file_collector/file_collector.hpp"
+#include "src/utils/utils.hpp"
 
 #include <OpenImageIO/typedesc.h>
 #include <OpenImageIO/ustring.h>
@@ -63,7 +65,7 @@ std::optional<statx_timestamp> slideproj::image_file_loader::make_statx_timestam
 	};
 	for(size_t k = 0; k != std::size(converted_values); ++k)
 	{
-		auto const res = to_number<int>(tokens[k], valid_ranges[k]);
+		auto const res = utils::to_number<int>(tokens[k], valid_ranges[k]);
 		if(!res.has_value())
 		{ return std::nullopt; }
 		converted_values[k] = *res;
