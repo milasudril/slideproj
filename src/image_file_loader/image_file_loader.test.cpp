@@ -9,6 +9,9 @@
 
 TESTCASE(slideproj_image_file_get_metadata)
 {
+	// TODO: Go and take some pictures that can be used as test data
+
+#if 0
 	slideproj::image_file_loader::image_file_metadata_repository repo;
 	auto const& res = repo.get_metadata(
 		slideproj::file_collector::file_list_entry{
@@ -20,4 +23,5 @@ TESTCASE(slideproj_image_file_get_metadata)
 	auto timestamp = std::format("{}", res.timestamp.time_since_epoch().count());
 	printf("%s %s %s\n", timestamp.c_str(), res.caption.c_str(), res.in_group.c_str());
 	//EXPECT_EQ(timestamp, "9223372036854775807999999999");
+#endif
 }
