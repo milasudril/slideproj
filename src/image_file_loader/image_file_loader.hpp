@@ -87,7 +87,6 @@ namespace slideproj::image_file_loader
 		std::string m_description;
 		file_collector::file_clock::time_point m_timestamp;
 		enum pixel_ordering m_pixel_ordering = pixel_ordering::top_to_bottom_left_to_right;
-
 	};
 
 	struct image_file_info:file_collector::file_metadata

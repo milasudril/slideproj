@@ -1,0 +1,4 @@
+{
+	"target":{"name":"slideproj"},
+	"dependencies":[{"ref":"src/app/slideproj.o", "rel":"implementation"}]
+}

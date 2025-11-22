@@ -183,7 +183,7 @@ namespace slideproj::file_collector
 			sort_by,
 			type_erased_file_metadata_provider{
 				.object = &metadata_provider,
-				.get_metadata = [](void const* handle, file_list_entry const& item) -> decltype(auto) {
+				.get_metadata = [](void const* handle, file_list_entry const& item) -> file_metadata const& {
 					return static_cast<FileMetadataProvider const*>(handle)->get_metadata(item);
 				}
 			},
