@@ -19,12 +19,13 @@ int main()
 			return a <=> b;
 		}
 	);
-
+#if 0
 	for(auto const& item : files)
 	{
 		auto const& metadata = metadata_repo.get_metadata(item);
 		printf("%s %s\n", metadata.in_group.c_str(), item.path().c_str());
 	}
+#endif
 
 	return 0;
 

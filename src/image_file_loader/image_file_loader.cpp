@@ -9,6 +9,7 @@
 #include <OpenImageIO/typedesc.h>
 #include <OpenImageIO/ustring.h>
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <ranges>
 #include <stdexcept>
@@ -158,6 +159,8 @@ slideproj::image_file_loader::image_file_metadata_repository::get_metadata(
 	auto i = m_cache.find(entry.id());
 	if(i != std::end(m_cache))
 	{ return i->second; }
+
+	printf("Loading metadata for %s\n", entry.path().c_str());
 
 	return m_cache.insert(std::pair{entry.id(), load_metadata(entry.path())}).first->second;
 }
