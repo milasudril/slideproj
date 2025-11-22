@@ -132,7 +132,6 @@ namespace slideproj::file_collector
 		StringComparator const& strcmp
 	)
 	{
-		// TODO: In this context, do not sort strings by using code units
 		switch(field)
 		{
 			case file_metadata_field::timestamp:
