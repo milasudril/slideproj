@@ -129,7 +129,7 @@ namespace slideproj::file_collector
 
 	template<class T>
 	concept file_metadata_provider = requires(T const& obj, file_list_entry const& item){
-		{obj.get_metadata(item)} -> std::same_as<file_metadata const&>;
+		{obj.get_metadata(item)} -> std::convertible_to<file_metadata const&>;
 	};
 
 	struct type_erased_file_metadata_provider{
