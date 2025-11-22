@@ -4,6 +4,7 @@
 #define SLIDEPROJ_FILE_COLLECTOR_FILE_COLLECTOR_HPP
 
 #include <chrono>
+#include <sys/stat.h>
 #include <vector>
 #include <algorithm>
 #include <filesystem>
@@ -101,6 +102,13 @@ namespace slideproj::file_collector
 		using period = std::nano;
 		using duration = std::chrono::duration<rep, period>;
 		using time_point = std::chrono::time_point<file_clock>;
+
+		static constexpr time_point create(statx_timestamp const& tv)
+		{
+			return time_point{
+				duration{rep{1'000'000'000}*rep{tv.tv_sec} + rep{tv.tv_nsec}}
+			};
+		}
 	};
 
 	struct file_metadata

@@ -57,6 +57,17 @@ TESTCASE(slideproj_file_collector_file_clock)
 	slideproj::file_collector::file_clock::time_point t{std::chrono::seconds{1643220649}};
 	auto str = std::format("{}", t.time_since_epoch().count());
 	EXPECT_EQ(str, "1643220649000000000");
+
+	constexpr auto t2 = slideproj::file_collector::file_clock::create(
+		statx_timestamp{
+			.tv_sec = 0x7fff'ffff'ffff'ffffLL,
+			.tv_nsec = 999'999'999,
+			.__reserved = 0
+		}
+	);
+
+	auto str2 = std::format("{}", t2.time_since_epoch().count());
+	EXPECT_EQ(str2, "9223372036854775807999999999");
 }
 
 namespace
