@@ -108,7 +108,7 @@ slideproj::image_file_loader::exif_query_result::exif_query_result(std::filesyst
 {
 	auto img_reader = OIIO::ImageInput::open(path);
 	if(!img_reader)
-	{ throw std::runtime_error{img_reader->geterror()}; }
+	{ return; }
 
 	auto const& spec = img_reader->spec();
 	auto timestamp = get_timestamp(spec);

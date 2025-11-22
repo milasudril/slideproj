@@ -22,7 +22,8 @@ int main()
 
 	for(auto const& item : files)
 	{
-		printf("%s\n", item.path().c_str());
+		auto const& metadata = metadata_repo.get_metadata(item);
+		printf("%s %s\n", metadata.in_group.c_str(), item.path().c_str());
 	}
 
 	return 0;

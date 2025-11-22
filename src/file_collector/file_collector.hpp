@@ -138,7 +138,7 @@ namespace slideproj::file_collector
 			case file_metadata_field::timestamp:
 				return a.timestamp <=> b.timestamp;
 			case file_metadata_field::in_group:
-				return strcmp(a.caption, b.caption);
+				return strcmp(a.in_group, b.in_group);
 			case file_metadata_field::caption:
 				return strcmp(a.caption, b.caption);
 		}
