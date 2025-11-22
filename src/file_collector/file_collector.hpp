@@ -211,6 +211,8 @@ namespace slideproj::file_collector
 		sort(ret, sort_by, metadata_provider, string_comparator);
 		return ret;
 	}
+
+	std::optional<file_clock::time_point> get_timestamp(std::filesystem::path const& path);
 }
 
 template<>

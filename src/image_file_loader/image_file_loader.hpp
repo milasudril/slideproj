@@ -49,6 +49,9 @@ namespace slideproj::image_file_loader
 		return ret;
 	}
 
+	std::optional<file_collector::file_clock::time_point>
+	get_timestamp_from_fs(std::filesystem::path const& path);
+
 	template<class Rep>
 	struct exif_date_time_value
 	{

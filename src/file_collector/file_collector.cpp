@@ -1,6 +1,8 @@
 //@	{"target": {"name":"file_collector.o"}}
 
 #include "./file_collector.hpp"
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <filesystem>
 
 slideproj::file_collector::file_list
@@ -50,4 +52,21 @@ void slideproj::file_collector::sort(
 			return false;
 		}
 	);
+}
+
+std::optional<slideproj::file_collector::file_clock::time_point>
+slideproj::file_collector::get_timestamp(std::filesystem::path const& path)
+{
+	struct statx statxbuf{};
+	auto res = statx(AT_FDCWD, path.c_str(), AT_NO_AUTOMOUNT, STATX_BTIME | STATX_MTIME, &statxbuf);
+	if(res == -1)
+	{ return std::nullopt; }
+
+	if(statxbuf.stx_mask&STATX_BTIME)
+	{	return file_clock::create(statxbuf.stx_btime); }
+	else
+	if(statxbuf.stx_mask&STATX_MTIME)
+	{ return file_clock::create(statxbuf.stx_mtime); }
+
+	return std::nullopt;
 }

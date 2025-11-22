@@ -10,12 +10,10 @@
 #include <OpenImageIO/ustring.h>
 #include <algorithm>
 #include <cstring>
-#include <linux/stat.h>
 #include <ranges>
 #include <stdexcept>
-#include <sys/fcntl.h>
-#include <sys/stat.h>
 #include <OpenImageIO/imageio.h>
+#include <ctime>
 
 std::optional<statx_timestamp> slideproj::image_file_loader::make_statx_timestamp(exif_date_time_value<std::string_view> edtv)
 {
@@ -125,32 +123,14 @@ slideproj::image_file_loader::image_file_info
 slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 {
 	exif_query_result exif_info{path};
-
-	if(exif_info.timestamp() != nullptr)
-	{
-		auto const res = *exif_info.timestamp();
-		auto timestamp = std::format("{}", res.time_since_epoch().count());
-		printf("%s\n", timestamp.c_str());
-	}
-
-	struct statx statxbuf{};
-	auto res = statx(AT_FDCWD, path.c_str(), AT_NO_AUTOMOUNT, STATX_BTIME | STATX_MTIME, &statxbuf);
-	if(res == -1)
-	{ throw std::runtime_error{strerror(errno)}; }
-
 	image_file_info ret{};
-
+	ret.timestamp = exif_info.timestamp() != nullptr?
+			*exif_info.timestamp()
+			: file_collector::get_timestamp(path).value_or(file_collector::file_clock::time_point{});
 	// TODO: Use EXIF data as primary source of truth
 	ret.caption = path.stem();
 	// TODO: Look for a file in parent directory with a descriptive name
 	ret.in_group = path.parent_path();
-
-	if(statxbuf.stx_mask&STATX_BTIME)
-	{	ret.timestamp = file_collector::file_clock::create(statxbuf.stx_btime); }
-	else
-	if(statxbuf.stx_mask&STATX_MTIME)
-	{ ret.timestamp = file_collector::file_clock::create(statxbuf.stx_mtime); }
-
 
 	return ret;
 }
