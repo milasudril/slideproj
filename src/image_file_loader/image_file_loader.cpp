@@ -2,9 +2,34 @@
 
 #include "./image_file_loader.hpp"
 
+#include <cstring>
+#include <linux/stat.h>
+#include <stdexcept>
+#include <sys/fcntl.h>
+#include <sys/stat.h>
+
 slideproj::image_file_loader::image_file_info
-slideproj::image_file_loader::load_metadata(std::filesystem::path const&)
+slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 {
+	struct statx statxbuf{};
+	auto res = statx(AT_FDCWD, path.c_str(), AT_NO_AUTOMOUNT, STATX_BTIME | STATX_MTIME, &statxbuf);
+	if(res == -1)
+	{ throw std::runtime_error{strerror(errno)}; }
+
+	image_file_info ret{};
+
+	// TODO: Use EXIF data as primary source of truth
+	ret.caption = path.stem();
+	// TODO: Look for a file in parent directory with a descriptive name
+	ret.in_group = path.parent_path();
+
+	if(statxbuf.stx_mask&STATX_BTIME)
+	{}
+	else
+	if(statxbuf.stx_mask&STATX_MTIME)
+	{}
+
+
 	return image_file_info{};
 }
 
