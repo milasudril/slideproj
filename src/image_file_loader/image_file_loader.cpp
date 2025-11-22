@@ -1,6 +1,7 @@
 //@	{"target": {"name":"image_file_loader.o"}}
 
 #include "./image_file_loader.hpp"
+#include "src/file_collector/file_collector.hpp"
 
 #include <cstring>
 #include <linux/stat.h>
@@ -24,13 +25,13 @@ slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 	ret.in_group = path.parent_path();
 
 	if(statxbuf.stx_mask&STATX_BTIME)
-	{}
+	{	ret.timestamp = file_collector::file_clock::create(statxbuf.stx_btime); }
 	else
 	if(statxbuf.stx_mask&STATX_MTIME)
-	{}
+	{ ret.timestamp = file_collector::file_clock::create(statxbuf.stx_mtime); }
 
 
-	return image_file_info{};
+	return ret;
 }
 
 slideproj::image_file_loader::image_file_info const&
