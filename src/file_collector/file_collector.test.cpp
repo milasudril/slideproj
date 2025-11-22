@@ -52,6 +52,13 @@ TESTCASE(slideproj_file_collector_file_list_load_and_sort)
 	EXPECT_EQ(items[2].path(), "foo/lenna.jpg");
 }
 
+TESTCASE(slideproj_file_collector_file_clock)
+{
+	slideproj::file_collector::file_clock::time_point t{std::chrono::seconds{1643220649}};
+	auto str = std::format("{}", t.time_since_epoch().count());
+	EXPECT_EQ(str, "1643220649000000000");
+}
+
 namespace
 {
 	struct file_metadata_provider
@@ -60,16 +67,16 @@ namespace
 		using file_metadata = slideproj::file_collector::file_metadata;
 
 		static constexpr std::array random_timestamps{
-			std::chrono::system_clock::time_point{std::chrono::seconds{1643220649}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1692772825}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1736678350}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1671528350}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1670981320}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1747655837}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1613510145}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1608130796}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1733967405}},
-			std::chrono::system_clock::time_point{std::chrono::seconds{1671563660}}
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1643220649}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1692772825}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1736678350}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1671528350}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1670981320}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1747655837}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1613510145}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1608130796}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1733967405}},
+			slideproj::file_collector::file_clock::time_point{std::chrono::seconds{1671563660}}
 		};
 
 		file_metadata const& get_metadata(slideproj::file_collector::file_list_entry const& item) const
@@ -82,7 +89,7 @@ namespace
 				std::pair{
 					item.id(),
 					file_metadata{
-						.timestamp = std::chrono::file_clock::from_sys(random_timestamps[item.id().value()]),
+						.timestamp = random_timestamps[item.id().value()],
 						.in_group = item.path().parent_path(),
 						.caption = item.path().filename()
 					}

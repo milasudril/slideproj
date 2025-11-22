@@ -94,9 +94,18 @@ namespace slideproj::file_collector
 		timestamp
 	};
 
+	class file_clock
+	{
+	public:
+		using rep = __int128;
+		using period = std::nano;
+		using duration = std::chrono::duration<rep, period>;
+		using time_point = std::chrono::time_point<file_clock>;
+	};
+
 	struct file_metadata
 	{
-		std::chrono::file_clock::time_point timestamp;
+		file_clock::time_point timestamp;
 		std::string in_group;
 		std::string caption;
 	};
