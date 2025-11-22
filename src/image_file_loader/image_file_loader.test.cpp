@@ -13,7 +13,7 @@ TESTCASE(slideproj_image_file_get_metadata)
 	auto const& res = repo.get_metadata(
 		slideproj::file_collector::file_list_entry{
 			slideproj::file_collector::file_id{0},
-			std::filesystem::path{"/usr/share/backgrounds/linuxmint-wilma/mnohassi_ocean.jpg"}
+			std::filesystem::path{"/home/torbjorr/Bilder/foto/IMG_2642.JPG"}
 		}
 	);
 

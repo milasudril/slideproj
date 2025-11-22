@@ -5,10 +5,27 @@
 
 #include "src/file_collector/file_collector.hpp"
 
+#include <algorithm>
 #include <unordered_map>
+#include <OpenImageIO/imageio.h>
 
 namespace slideproj::image_file_loader
 {
+	// FIXME: Should be moved to a directory with common helpers
+	template<std::integral T>
+	constexpr std::optional<T> to_number(std::string_view sv, std::ranges::minmax_result<T> accepted_range)
+	{
+		T value;
+		auto res = std::from_chars(std::begin(sv), std::end(sv), value);
+		if(res.ec != std::errc{} || res.ptr != std::end(sv))
+		{ return std::nullopt;}
+
+		if(value < accepted_range.min || value > accepted_range.max)
+		{ return std::nullopt; }
+
+		return value;
+	}
+
 	enum class pixel_ordering{
 		top_to_bottom_left_to_right,
 		top_to_bottom_right_to_left,
@@ -19,6 +36,29 @@ namespace slideproj::image_file_loader
 		right_to_left_bottom_to_top,
 		left_to_right_bottom_to_top
 	};
+
+	std::optional<file_collector::file_clock::time_point>
+	get_timestamp(OIIO::ImageSpec const& spec, std::string_view field_name);
+
+	std::optional<file_collector::file_clock::time_point>
+	inline get_timestamp(OIIO::ImageSpec const& spec)
+	{
+		auto ret = get_timestamp(spec, "Exif:DateTimeOriginal");
+		if(!ret)
+		{ return get_timestamp(spec, "DateTime"); }
+		return ret;
+	}
+
+	template<class Rep>
+	struct exif_date_time_value
+	{
+		Rep value;
+	};
+
+	std::optional<statx_timestamp> make_statx_timestamp(exif_date_time_value<std::string_view> edtv);
+
+	inline auto make_statx_timestamp(exif_date_time_value<std::string> const& edtv)
+	{ return make_statx_timestamp(exif_date_time_value{std::string_view{edtv.value}}); }
 
 	class exif_query_result
 	{

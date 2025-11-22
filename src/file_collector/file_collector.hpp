@@ -4,6 +4,7 @@
 #define SLIDEPROJ_FILE_COLLECTOR_FILE_COLLECTOR_HPP
 
 #include <chrono>
+#include <linux/stat.h>
 #include <sys/stat.h>
 #include <vector>
 #include <algorithm>
