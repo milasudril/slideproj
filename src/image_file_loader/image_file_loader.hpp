@@ -9,9 +9,47 @@
 
 namespace slideproj::image_file_loader
 {
+	enum class pixel_ordering{
+		top_to_bottom_left_to_right,
+		top_to_bottom_right_to_left,
+		bottom_to_top_right_to_left,
+		bottom_to_top_left_to_right,
+		left_to_right_top_to_bottom,
+		right_to_left_top_to_bottom,
+		right_to_left_bottom_to_top,
+		left_to_right_bottom_to_top
+	};
+
+	class exif_query_result
+	{
+	public:
+		explicit exif_query_result(std::filesystem::path const& path);
+
+		// TODO(c++26) Use optional reference
+		std::string const* description() const
+		{ return (m_valid_fields & description_valid)? &m_description : nullptr; }
+
+		// TODO(c++26) Use optional reference
+		file_collector::file_clock::time_point const* timestamp() const
+		{ return (m_valid_fields&timestamp_valid)? &m_timestamp : nullptr; }
+
+		enum pixel_ordering pixel_ordering() const
+		{ return m_pixel_ordering; }
+
+	private:
+		static constexpr size_t description_valid = 0x1;
+		static constexpr size_t timestamp_valid = 0x2;
+
+		size_t m_valid_fields = 0;
+		std::string m_description;
+		file_collector::file_clock::time_point m_timestamp;
+		enum pixel_ordering m_pixel_ordering = pixel_ordering::top_to_bottom_left_to_right;
+
+	};
+
 	struct image_file_info:file_collector::file_metadata
 	{
-
+		enum pixel_ordering pixel_ordering;
 	};
 
 	image_file_info load_metadata(std::filesystem::path const& path);

@@ -1,4 +1,7 @@
-//@	{"target": {"name":"image_file_loader.o"}}
+//@	{
+//@	 "target": {"name":"image_file_loader.o"},
+//@	 "dependencies":[{"ref":"OpenImageIO", "origin":"pkg-config"}]
+//@	}
 
 #include "./image_file_loader.hpp"
 #include "src/file_collector/file_collector.hpp"
@@ -8,10 +11,20 @@
 #include <stdexcept>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
+#include <OpenImageIO/imageio.h>
 
 slideproj::image_file_loader::image_file_info
 slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 {
+	auto img_reader = OIIO::ImageInput::open(path);
+	if(!img_reader)
+	{ throw std::runtime_error{img_reader->geterror()}; }
+
+	auto const& info = img_reader->spec();
+	printf("%s\n",info.get_string_attribute("DateTime").c_str());
+	printf("%s\n",info.get_string_attribute("Exif:DateTimeOriginal").c_str());
+
+
 	struct statx statxbuf{};
 	auto res = statx(AT_FDCWD, path.c_str(), AT_NO_AUTOMOUNT, STATX_BTIME | STATX_MTIME, &statxbuf);
 	if(res == -1)
