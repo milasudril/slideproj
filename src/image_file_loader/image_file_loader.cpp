@@ -117,6 +117,19 @@ slideproj::image_file_loader::exif_query_result::exif_query_result(std::filesyst
 		m_valid_fields |= timestamp_valid;
 		m_timestamp = *timestamp;
 	}
+
+	OIIO::ustring desc_val;
+	if(spec.getattribute("ImageDescription", OIIO::TypeString, &desc_val))
+	{
+		m_valid_fields |= description_valid;
+		m_description = desc_val.string();
+	}
+
+	// TODO: Want to fetch ImageTitle as well, but it appears like OpenImageIO does not support that
+	// field
+	auto const orientation = spec.get_int_attribute("Orientation", 1);
+	m_pixel_ordering = orientation>= 1 && orientation <=8?
+		static_cast<enum pixel_ordering>(orientation - 1):pixel_ordering::top_to_bottom_left_to_right;
 }
 
 slideproj::image_file_loader::image_file_info
@@ -127,10 +140,12 @@ slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 	ret.timestamp = exif_info.timestamp() != nullptr?
 			*exif_info.timestamp()
 			: file_collector::get_timestamp(path).value_or(file_collector::file_clock::time_point{});
-	// TODO: Use EXIF data as primary source of truth
-	ret.caption = path.stem();
+	ret.caption = exif_info.description() != nullptr?
+			*exif_info.description():
+			path.stem().string();
 	// TODO: Look for a file in parent directory with a descriptive name
 	ret.in_group = path.parent_path();
+	ret.pixel_ordering = exif_info.pixel_ordering();
 
 	return ret;
 }
