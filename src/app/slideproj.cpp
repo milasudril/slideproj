@@ -2,6 +2,7 @@
 
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
+#include "src/image_presenter/image_presenter.hpp"
 
 int main()
 {
@@ -19,6 +20,8 @@ int main()
 			return a <=> b;
 		}
 	);
+
+	slideproj::image_presenter::glfw_context gui_ctxt;
 #if 0
 	for(auto const& item : files)
 	{
