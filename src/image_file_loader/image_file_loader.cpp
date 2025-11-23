@@ -18,7 +18,8 @@
 #include <OpenImageIO/imageio.h>
 #include <ctime>
 
-std::optional<statx_timestamp> slideproj::image_file_loader::make_statx_timestamp(exif_date_time_value<std::string_view> edtv)
+std::optional<std::array<int, 6>>
+slideproj::image_file_loader::make_ymdhms(exif_date_time_value<std::string_view> edtv)
 {
 	std::array<std::string_view, 6> tokens{};
 	auto tok_start = edtv.value.begin();
@@ -71,6 +72,16 @@ std::optional<statx_timestamp> slideproj::image_file_loader::make_statx_timestam
 		converted_values[k] = *res;
 	}
 
+	return converted_values;
+}
+
+std::optional<statx_timestamp> slideproj::image_file_loader::make_statx_timestamp(exif_date_time_value<std::string_view> edtv)
+{
+	auto const res = make_ymdhms(edtv);
+	if(!res.has_value())
+	{ return std::nullopt; }
+
+	auto const& converted_values = *res;
 	tm timestruct{};
 	timestruct.tm_year = converted_values[0] - 1900;
 	timestruct.tm_mon = converted_values[1] - 1;

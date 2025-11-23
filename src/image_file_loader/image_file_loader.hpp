@@ -22,6 +22,14 @@ namespace slideproj::image_file_loader
 		left_to_right_bottom_to_top
 	};
 
+	template<class Rep>
+	struct exif_date_time_value
+	{
+		Rep value;
+	};
+
+	std::optional<std::array<int, 6>> make_ymdhms(exif_date_time_value<std::string_view> edtv);
+
 	std::optional<file_collector::file_clock::time_point>
 	get_timestamp(OIIO::ImageSpec const& spec, std::string_view field_name);
 
@@ -37,11 +45,6 @@ namespace slideproj::image_file_loader
 	std::optional<file_collector::file_clock::time_point>
 	get_timestamp_from_fs(std::filesystem::path const& path);
 
-	template<class Rep>
-	struct exif_date_time_value
-	{
-		Rep value;
-	};
 
 	std::optional<statx_timestamp> make_statx_timestamp(exif_date_time_value<std::string_view> edtv);
 
