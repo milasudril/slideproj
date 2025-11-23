@@ -30,8 +30,6 @@ namespace slideproj::image_file_loader
 
 	std::optional<std::array<int, 6>> make_ymdhms(exif_date_time_value<std::string_view> edtv);
 
-	std::optional<statx_timestamp> make_statx_timestamp(exif_date_time_value<std::string_view> edtv);
-
 	std::optional<file_collector::file_clock::time_point>
 	get_timestamp(OIIO::ImageSpec const& spec, std::string_view field_name);
 
@@ -48,6 +46,7 @@ namespace slideproj::image_file_loader
 	get_timestamp_from_fs(std::filesystem::path const& path);
 
 
+	std::optional<statx_timestamp> make_statx_timestamp(exif_date_time_value<std::string_view> edtv);
 
 	inline auto make_statx_timestamp(exif_date_time_value<std::string> const& edtv)
 	{ return make_statx_timestamp(exif_date_time_value{std::string_view{edtv.value}}); }

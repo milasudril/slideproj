@@ -7,11 +7,137 @@
 #include "testfwk/testsuite.hpp"
 #include "testfwk/validation.hpp"
 
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_empty_string)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_valid)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:00:00"
+	});
+	REQUIRE_EQ(res.has_value(), true);
+	auto const& values = *res;
+	EXPECT_EQ(values[0], 1582);
+	EXPECT_EQ(values[1], 10);
+	EXPECT_EQ(values[2], 15);
+	EXPECT_EQ(values[3], 0);
+	EXPECT_EQ(values[4], 0);
+	EXPECT_EQ(values[5], 0);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_colon_after_sec)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:00:00:"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_end_with_colon_after_min)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:00:"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_end_with_colon_after_hour)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_end_after_min)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:00"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_invalid_month)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:0:15 00:00:00"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_invalid_day)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:0 00:00:00"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_invalid_hour)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 24:00:00"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_invalid_min)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:60:00"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_invalid_sec)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:00:61"
+	});
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_leap_second_is_valid)
+{
+	auto res = make_ymdhms(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1582:10:15 00:00:60"
+	});
+	REQUIRE_EQ(res.has_value(), true);
+
+	auto const& values = *res;
+	EXPECT_EQ(values[0], 1582);
+	EXPECT_EQ(values[1], 10);
+	EXPECT_EQ(values[2], 15);
+	EXPECT_EQ(values[3], 0);
+	EXPECT_EQ(values[4], 0);
+	EXPECT_EQ(values[5], 60);
+}
+
+TESTCASE(slideproj_image_file_loader_make_statx_timestamp_from_edtv)
+{
+	auto res1 = make_statx_timestamp(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1970:01:01 00:00:00"
+	});
+	REQUIRE_EQ(res1.has_value(), true);
+	EXPECT_EQ(res1->tv_sec, 0);
+	EXPECT_EQ(res1->tv_nsec, 0);
+
+	auto res2 = make_statx_timestamp(slideproj::image_file_loader::exif_date_time_value<std::string_view>{
+		"1970:01:02 00:00:00"
+	});
+	REQUIRE_EQ(res2.has_value(), true);
+	EXPECT_EQ(res2->tv_sec, 86400);
+	EXPECT_EQ(res2->tv_nsec, 0);
+}
+
+#if 0
 TESTCASE(slideproj_image_file_get_metadata)
 {
 	// TODO: Go and take some pictures that can be used as test data
 
-#if 0
 	slideproj::image_file_loader::image_file_metadata_repository repo;
 	auto const& res = repo.get_metadata(
 		slideproj::file_collector::file_list_entry{
@@ -23,5 +149,5 @@ TESTCASE(slideproj_image_file_get_metadata)
 	auto timestamp = std::format("{}", res.timestamp.time_since_epoch().count());
 	printf("%s %s %s\n", timestamp.c_str(), res.caption.c_str(), res.in_group.c_str());
 	//EXPECT_EQ(timestamp, "9223372036854775807999999999");
-#endif
 }
+#endif

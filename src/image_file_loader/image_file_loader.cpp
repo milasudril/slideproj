@@ -50,7 +50,8 @@ slideproj::image_file_loader::make_ymdhms(exif_date_time_value<std::string_view>
 		}
 		++tok_end;
 	}
-	if(token_index == std::size(tokens))
+
+	if(token_index != std::size(tokens) - 1)
 	{ return std::nullopt; }
 
 	tokens[token_index] = std::string_view{tok_start, tok_end};
