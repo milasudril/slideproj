@@ -35,11 +35,10 @@ namespace slideproj::image_file_loader
 	inline auto make_statx_timestamp(exif_date_time_value<std::string> const& edtv)
 	{ return make_statx_timestamp(exif_date_time_value{std::string_view{edtv.value}}); }
 
-	std::optional<file_collector::file_clock::time_point>
+	std::optional<statx_timestamp>
 	get_timestamp(OIIO::ImageSpec const& spec, std::string_view field_name);
 
-	std::optional<file_collector::file_clock::time_point>
-	inline get_timestamp(OIIO::ImageSpec const& spec)
+	inline auto get_timestamp(OIIO::ImageSpec const& spec)
 	{
 		auto ret = get_timestamp(spec, "Exif:DateTimeOriginal");
 		if(!ret)

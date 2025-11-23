@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <linux/stat.h>
 #include <ranges>
 #include <stdexcept>
 #include <OpenImageIO/imageio.h>
@@ -103,18 +104,14 @@ std::optional<statx_timestamp> slideproj::image_file_loader::make_statx_timestam
 	};
 }
 
-std::optional<slideproj::file_collector::file_clock::time_point>
+std::optional<statx_timestamp>
 slideproj::image_file_loader::get_timestamp(OIIO::ImageSpec const& spec, std::string_view field_name)
 {
 	OIIO::ustring attr_val;
 	if(!spec.getattribute(field_name, OIIO::TypeString, &attr_val))
 	{ return std::nullopt; }
 
-	auto timestamp = make_statx_timestamp(exif_date_time_value{attr_val.string()});
-	if(!timestamp.has_value())
-	{ return std::nullopt; }
-
-	return slideproj::file_collector::file_clock::create(*timestamp);
+	return make_statx_timestamp(exif_date_time_value{attr_val.string()});
 }
 
 slideproj::image_file_loader::exif_query_result::exif_query_result(std::filesystem::path const& path):
@@ -130,7 +127,7 @@ slideproj::image_file_loader::exif_query_result::exif_query_result(std::filesyst
 	if(timestamp)
 	{
 		m_valid_fields |= timestamp_valid;
-		m_timestamp = *timestamp;
+		m_timestamp = file_collector::file_clock::create(*timestamp);
 	}
 
 	OIIO::ustring desc_val;
