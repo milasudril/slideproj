@@ -11,9 +11,11 @@
 #include <OpenImageIO/typedesc.h>
 #include <OpenImageIO/ustring.h>
 #include <algorithm>
+#include <any>
 #include <cstdio>
 #include <cstring>
 #include <linux/stat.h>
+#include <memory>
 #include <ranges>
 #include <stdexcept>
 #include <OpenImageIO/imageio.h>
@@ -170,4 +172,55 @@ slideproj::image_file_loader::image_file_metadata_repository::get_metadata(
 	printf("Loading metadata for %s\n", entry.path().c_str());
 
 	return m_cache.insert(std::pair{entry.id(), load_metadata(entry.path())}).first->second;
+}
+
+void slideproj::image_file_loader::load_one_channel_image_as_grayscale_image(
+	OIIO::ImageInput& input,
+	std::span<color_value> output
+)
+{
+	constexpr auto nchannels = 1;
+	auto const& spec = input.spec();
+	auto const tempbuff_size = spec.width*spec.height;
+	auto const tempbuff = std::make_unique_for_overwrite<float[]>(tempbuff_size);
+	input.read_image(0, 0, 0, nchannels, OIIO::TypeDesc::TypeFloat, tempbuff.get());
+
+	std::transform(tempbuff.get(), tempbuff.get() + tempbuff_size, std::begin(output), [](auto val){
+		return color_value{val, val, val, 1.0f};
+	});
+}
+
+slideproj::image_file_loader::image::image(std::filesystem::path& path)
+{
+	auto img_reader = OIIO::ImageInput::open(path);
+	if(img_reader == nullptr)
+	{ return; }
+
+	auto const& spec = img_reader->spec();
+	if(spec.width <= 0 || spec.height <= 0)
+	{ return; }
+
+	m_pixels = std::make_unique<color_value[]>(spec.width*spec.height);
+	m_width = static_cast<uint32_t>(spec.width);
+	m_height = static_cast<uint32_t>(spec.height);
+
+	switch(spec.nchannels)
+	{
+		case 1:
+			load_one_channel_image_as_grayscale_image(*img_reader, pixels());
+			break;
+#if 0
+		case 2:
+			load_two_channel_image_as_grayalpha_image(*img_reader, pixels());
+			break;
+		case 3:
+			load_three_channel_image_as_rgb_image(*img_reader, pixels());
+			break;
+		case 4:
+			load_four_channel_image_as_rgba_image(*img_reader, pixels());
+			break;
+#endif
+		default:
+			*this = image{};
+	}
 }

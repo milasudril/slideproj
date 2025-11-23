@@ -111,6 +111,11 @@ namespace slideproj::image_file_loader
 		float alpha;
 	};
 
+	void load_one_channel_image_as_grayscale_image(
+		OIIO::ImageInput& input,
+		std::span<color_value> output
+	);
+
 	class image
 	{
 	public:
