@@ -133,6 +133,69 @@ TESTCASE(slideproj_image_file_loader_make_statx_timestamp_from_edtv)
 	EXPECT_EQ(res2->tv_nsec, 0);
 }
 
+TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_field_field_not_present)
+{
+	OIIO::ImageSpec spec{};
+	auto res = slideproj::image_file_loader::get_statx_timestamp(spec, "foobar");
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_field_field_wrong_type)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("foobar", 466);
+	auto res = slideproj::image_file_loader::get_statx_timestamp(spec, "foobar");
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_field)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("foobar", "1582:10:15 00:00:00");
+	auto res = slideproj::image_file_loader::get_statx_timestamp(spec, "foobar");
+	EXPECT_EQ(res.has_value(), true);
+	EXPECT_EQ(res->tv_sec, -12219292800);
+	EXPECT_EQ(res->tv_nsec, 0);
+}
+
+TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_no_exif_date_and_time)
+{
+	OIIO::ImageSpec spec{};
+	auto res = slideproj::image_file_loader::get_statx_timestamp(spec);
+	EXPECT_EQ(res.has_value(), false);
+}
+
+TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_dto_takes_precedence)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("DateTime", "1582:10:15 00:00:00");
+	spec.attribute("Exif:DateTimeOriginal", "1583:10:15 00:00:00");
+	auto res = slideproj::image_file_loader::get_statx_timestamp(spec);
+	REQUIRE_EQ(res.has_value(), true);
+	EXPECT_EQ(res->tv_sec, -12187756800);
+	EXPECT_EQ(res->tv_nsec, 0);
+}
+
+TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_only_dt_set)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("DateTime", "1582:10:15 00:00:00");
+	auto res = slideproj::image_file_loader::get_statx_timestamp(spec);
+	REQUIRE_EQ(res.has_value(), true);
+	EXPECT_EQ(res->tv_sec, -12219292800);
+	EXPECT_EQ(res->tv_nsec, 0);
+}
+
+TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_only_dto_set)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("Exif:DateTimeOriginal", "1582:10:15 00:00:00");
+	auto res = slideproj::image_file_loader::get_statx_timestamp(spec);
+	REQUIRE_EQ(res.has_value(), true);
+	EXPECT_EQ(res->tv_sec, -12219292800);
+	EXPECT_EQ(res->tv_nsec, 0);
+}
+
 #if 0
 TESTCASE(slideproj_image_file_get_metadata)
 {
