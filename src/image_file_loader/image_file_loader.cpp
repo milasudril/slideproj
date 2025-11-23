@@ -114,15 +114,10 @@ slideproj::image_file_loader::get_statx_timestamp(OIIO::ImageSpec const& spec, s
 	return make_statx_timestamp(exif_date_time_value{attr_val.string()});
 }
 
-slideproj::image_file_loader::exif_query_result::exif_query_result(std::filesystem::path const& path):
+slideproj::image_file_loader::exif_query_result::exif_query_result(OIIO::ImageSpec const& spec):
 	m_valid_fields{0},
 	m_pixel_ordering{pixel_ordering::top_to_bottom_left_to_right}
 {
-	auto img_reader = OIIO::ImageInput::open(path);
-	if(!img_reader)
-	{ return; }
-
-	auto const& spec = img_reader->spec();
 	auto timestamp = get_statx_timestamp(spec);
 	if(timestamp)
 	{
@@ -139,6 +134,7 @@ slideproj::image_file_loader::exif_query_result::exif_query_result(std::filesyst
 
 	// TODO: Want to fetch ImageTitle as well, but it appears like OpenImageIO does not support that
 	// field
+
 	auto const orientation = spec.get_int_attribute("Orientation", 1);
 	m_pixel_ordering = orientation>= 1 && orientation <=8?
 		static_cast<enum pixel_ordering>(orientation - 1):pixel_ordering::top_to_bottom_left_to_right;
@@ -147,7 +143,7 @@ slideproj::image_file_loader::exif_query_result::exif_query_result(std::filesyst
 slideproj::image_file_loader::image_file_info
 slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 {
-	exif_query_result exif_info{path};
+	auto const exif_info = load_exif_query_result(path);
 	image_file_info ret{};
 	ret.timestamp = exif_info.timestamp() != nullptr?
 			*exif_info.timestamp()

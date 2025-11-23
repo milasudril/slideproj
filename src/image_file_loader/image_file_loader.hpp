@@ -52,7 +52,9 @@ namespace slideproj::image_file_loader
 	class exif_query_result
 	{
 	public:
-		explicit exif_query_result(std::filesystem::path const& path);
+		exif_query_result() = default;
+
+		explicit exif_query_result(OIIO::ImageSpec const& spec);
 
 		// TODO(c++26) Use optional reference
 		std::string const* description() const
@@ -71,9 +73,19 @@ namespace slideproj::image_file_loader
 
 		size_t m_valid_fields = 0;
 		std::string m_description;
-		file_collector::file_clock::time_point m_timestamp;
+		file_collector::file_clock::time_point m_timestamp{};
 		enum pixel_ordering m_pixel_ordering = pixel_ordering::top_to_bottom_left_to_right;
 	};
+
+	inline auto load_exif_query_result(std::filesystem::path const& path)
+	{
+		auto img_reader = OIIO::ImageInput::open(path);
+		if(!img_reader)
+		{ return exif_query_result{}; }
+
+		// TODO: Need test image in order to test this
+		return exif_query_result{img_reader->spec()};
+	}
 
 	struct image_file_info:file_collector::file_metadata
 	{

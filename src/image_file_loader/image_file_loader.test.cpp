@@ -6,6 +6,7 @@
 #include "testfwk/testfwk.hpp"
 #include "testfwk/testsuite.hpp"
 #include "testfwk/validation.hpp"
+#include <OpenImageIO/imageio.h>
 
 TESTCASE(slideproj_image_file_loader_make_ydhms_from_edtv_empty_string)
 {
@@ -194,6 +195,71 @@ TESTCASE(slideproj_image_file_loader_get_statx_timestamp_from_oiio_spec_only_dto
 	REQUIRE_EQ(res.has_value(), true);
 	EXPECT_EQ(res->tv_sec, -12219292800);
 	EXPECT_EQ(res->tv_nsec, 0);
+}
+
+TESTCASE(slideproj_image_file_loader_exif_query_result_default_state)
+{
+	slideproj::image_file_loader::exif_query_result const result{};
+	EXPECT_EQ(result.description(), nullptr);
+	EXPECT_EQ(result.timestamp(), nullptr);
+	EXPECT_EQ(
+		result.pixel_ordering(),
+		slideproj::image_file_loader::pixel_ordering::top_to_bottom_left_to_right
+	);
+}
+
+TESTCASE(slideproj_image_file_loader_exif_query_result_from_oiio_sepc_no_field_set)
+{
+	OIIO::ImageSpec const spec{};
+	slideproj::image_file_loader::exif_query_result const result{spec};
+	EXPECT_EQ(result.description(), nullptr);
+	EXPECT_EQ(result.timestamp(), nullptr);
+	EXPECT_EQ(
+		result.pixel_ordering(),
+		slideproj::image_file_loader::pixel_ordering::top_to_bottom_left_to_right
+	);
+}
+
+TESTCASE(slideproj_image_file_loader_exif_query_result_from_oiio_sepc_with_timestamp)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("Exif:DateTimeOriginal", "1582:10:15 00:00:00");
+	slideproj::image_file_loader::exif_query_result const result{std::as_const(spec)};
+	EXPECT_EQ(result.description(), nullptr);
+	REQUIRE_NE(result.timestamp(), nullptr);
+	EXPECT_EQ
+		(std::chrono::duration_cast<std::chrono::seconds>(result.timestamp()->time_since_epoch()).count(), -12219292800);
+	EXPECT_EQ(
+		result.pixel_ordering(),
+		slideproj::image_file_loader::pixel_ordering::top_to_bottom_left_to_right
+	);
+}
+
+TESTCASE(slideproj_image_file_loader_exif_query_result_from_oiio_sepc_with_description)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("ImageDescription", "This is a test");
+	slideproj::image_file_loader::exif_query_result const result{std::as_const(spec)};
+	REQUIRE_NE(result.description(), nullptr);
+	EXPECT_EQ(*result.description(), "This is a test");
+	EXPECT_EQ(result.timestamp(), nullptr);
+	EXPECT_EQ(
+		result.pixel_ordering(),
+		slideproj::image_file_loader::pixel_ordering::top_to_bottom_left_to_right
+	);
+}
+
+TESTCASE(slideproj_image_file_loader_exif_query_result_from_oiio_sepc_with_orientation)
+{
+	OIIO::ImageSpec spec{};
+	spec.attribute("Orientation", 2);
+	slideproj::image_file_loader::exif_query_result const result{std::as_const(spec)};
+	EXPECT_EQ(result.description(), nullptr);
+	EXPECT_EQ(result.timestamp(), nullptr);
+	EXPECT_EQ(
+		result.pixel_ordering(),
+		slideproj::image_file_loader::pixel_ordering::top_to_bottom_right_to_left
+	);
 }
 
 #if 0
