@@ -101,9 +101,48 @@ namespace slideproj::image_file_loader
 
 	private:
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
+	};	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
+
+	struct color_value
+	{
+		float red;
+		float green;
+		float blue;
+		float alpha;
 	};
 
-	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
+	class image
+	{
+	public:
+		image() = default;
+
+		explicit image(std::filesystem::path& path);
+
+		auto width() const
+		{ return m_width; }
+
+		auto height() const
+		{ return m_height; }
+
+		auto pixel_count() const
+		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
+
+		auto pixels() const
+		{
+			return std::span{
+				m_pixels.get(),
+				pixel_count()
+			};
+		}
+
+		bool is_empty() const
+		{ return m_width == 0 || m_height == 0 || m_pixels == nullptr; }
+
+	private:
+		uint32_t m_width{0};
+		uint32_t m_height{0};
+		std::unique_ptr<color_value[]> m_pixels;
+	};
 };
 
 #endif
