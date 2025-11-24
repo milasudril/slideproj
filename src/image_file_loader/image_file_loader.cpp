@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <OpenImageIO/imageio.h>
 #include <ctime>
+#include <variant>
 
 std::optional<std::array<int, 6>>
 slideproj::image_file_loader::make_ymdhms(exif_date_time_value<std::string_view> edtv)
@@ -174,40 +175,43 @@ slideproj::image_file_loader::image_file_metadata_repository::get_metadata(
 	return m_cache.insert(std::pair{entry.id(), load_metadata(entry.path())}).first->second;
 }
 
-void slideproj::image_file_loader::load_one_channel_image_as_grayscale_image(
-	OIIO::ImageInput& input,
-	std::span<color_value> output
-)
+namespace
 {
-	constexpr auto nchannels = 1;
-	auto const& spec = input.spec();
-	auto const tempbuff_size = spec.width*spec.height;
-	auto const tempbuff = std::make_unique_for_overwrite<float[]>(tempbuff_size);
-	input.read_image(0, 0, 0, nchannels, OIIO::TypeDesc::TypeFloat, tempbuff.get());
-
-	std::transform(tempbuff.get(), tempbuff.get() + tempbuff_size, std::begin(output), [](auto val){
-		return color_value{val, val, val, 1.0f};
-	});
+	template<size_t Index>
+	auto get_rgba_image_loader_impl(OIIO::TypeDesc format)
+	{
+		using slideproj::image_file_loader::dynamic_pixel_storage;
+		if constexpr(Index == std::variant_size_v<dynamic_pixel_storage>)
+		{ return slideproj::image_file_loader::load_unsupported_rgba_image; }
+		else
+		{
+			using slideproj::image_file_loader::oiio_type_desc;
+			using current_type = std::variant_alternative_t<Index, dynamic_pixel_storage>::value_type::value_type;
+			if(oiio_type_desc<current_type>::value == format)
+			{ return slideproj::image_file_loader::load_as_dynamic_pixel_storage<current_type>; }
+			else
+			{ return get_rgba_image_loader_impl<Index + 1>(format); }
+		}
+	}
 }
 
-slideproj::image_file_loader::image::image(std::filesystem::path& path)
+slideproj::image_file_loader::rgba_image_loader
+slideproj::image_file_loader::get_rgba_image_loader(OIIO::TypeDesc format)
+{ return get_rgba_image_loader_impl<0>(format); }
+
+slideproj::image_file_loader::image
+slideproj::image_file_loader::load(std::filesystem::path const& path)
 {
 	auto img_reader = OIIO::ImageInput::open(path);
 	if(img_reader == nullptr)
-	{ return; }
+	{ return image{}; }
 
+	image ret;
 	auto const& spec = img_reader->spec();
-	if(spec.width <= 0 || spec.height <= 0)
-	{ return; }
-
-	m_pixels = std::make_unique<color_value[]>(spec.width*spec.height);
-	m_width = static_cast<uint32_t>(spec.width);
-	m_height = static_cast<uint32_t>(spec.height);
-
 	switch(spec.nchannels)
 	{
-		case 1:
-			load_one_channel_image_as_grayscale_image(*img_reader, pixels());
+		case 4:
+			ret.pixels = (get_rgba_image_loader(spec.format))(*img_reader);
 			break;
 #if 0
 		case 2:
@@ -221,6 +225,7 @@ slideproj::image_file_loader::image::image(std::filesystem::path& path)
 			break;
 #endif
 		default:
-			*this = image{};
+			return ret;
 	}
+	return ret;
 }

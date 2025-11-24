@@ -1,4 +1,9 @@
-//@	{"dependencies_extra":[{"ref":"./image_file_loader.o", "rel":"implementation"}]}
+//@	{
+//@		"dependencies_extra":[
+//@			{"ref":"./image_file_loader.o", "rel":"implementation"},
+//@			{"ref":"OpenImageIO", "rel":"implementation", "origin":"pkg-config"}
+//@		]
+//@	}
 
 #ifndef SLIDEPROJ_IMAGE_FILE_LOADER_IMAGE_FILE_LOADER_HPP
 #define SLIDEPROJ_IMAGE_FILE_LOADER_IMAGE_FILE_LOADER_HPP
@@ -6,6 +11,7 @@
 #include "src/file_collector/file_collector.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <unordered_map>
 #include <OpenImageIO/imageio.h>
 
@@ -103,25 +109,29 @@ namespace slideproj::image_file_loader
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
 	};	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
 
-	struct color_value
-	{
-		float red;
-		float green;
-		float blue;
-		float alpha;
-	};
+	struct make_uninitialized_pixel_storage_tag{};
 
-	void load_one_channel_image_as_grayscale_image(
-		OIIO::ImageInput& input,
-		std::span<color_value> output
-	);
-
-	class image
+	template<class PixelType>
+	class pixel_storage
 	{
 	public:
-		image() = default;
+		using value_type = PixelType;
 
-		explicit image(std::filesystem::path& path);
+		pixel_storage() = default;
+
+		explicit pixel_storage(uint32_t w, uint32_t h, make_uninitialized_pixel_storage_tag):
+			m_width{w},
+			m_height{h},
+			m_pixels{
+				std::make_unique_for_overwrite<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))
+			}
+		{}
+
+		explicit pixel_storage(uint32_t w, uint32_t h):
+			m_width{w},
+			m_height{h},
+			m_pixels{std::make_unique<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))}
+		{}
 
 		auto width() const
 		{ return m_width; }
@@ -146,8 +156,78 @@ namespace slideproj::image_file_loader
 	private:
 		uint32_t m_width{0};
 		uint32_t m_height{0};
-		std::unique_ptr<color_value[]> m_pixels;
+		std::unique_ptr<PixelType[]> m_pixels;
 	};
+
+	template<class ValueType>
+	struct color_value
+	{
+		using value_type = ValueType;
+		ValueType r;
+		ValueType g;
+		ValueType b;
+		ValueType a;
+	};
+
+	enum class intensity_transfer_function{linear, srgb, gamma_22};
+
+	// TODO: Add support for more color types
+	using dynamic_pixel_storage = std::variant<
+		pixel_storage<color_value<uint8_t>>
+	>;
+
+	struct image
+	{
+		intensity_transfer_function transfer_function{intensity_transfer_function::linear};
+		dynamic_pixel_storage pixels;
+	};
+
+	template<class T>
+	struct oiio_type_desc
+	{};
+
+	template<>
+	struct oiio_type_desc<uint8_t>
+	{
+		static constexpr auto value = OIIO::TypeDesc::UINT8;
+	};
+
+	template<class T>
+	constexpr OIIO::TypeDesc oiio_type_desc_v = oiio_type_desc<T>::value;
+
+	template<class ValueType>
+	pixel_storage<color_value<ValueType>> load_rgba_image(OIIO::ImageInput& input)
+	{
+		auto const& spec = input.spec();
+		static constexpr auto nchannels = 4;
+		static constexpr auto format = oiio_type_desc_v<ValueType>;
+		assert(spec.nchannels == nchannels);
+		assert(spec.format == format);
+
+		if(spec.width <= 0 || spec.height <= 0)
+		{ return pixel_storage<color_value<ValueType>>{}; }
+
+		pixel_storage<color_value<ValueType>> ret{
+			static_cast<uint32_t>(spec.width),
+			static_cast<uint32_t>(spec.height)
+		};
+		input.read_image(0, 0, 0, nchannels, format, ret.pixels().data());
+
+		return ret;
+	}
+
+	template<class ValueType>
+	dynamic_pixel_storage load_as_dynamic_pixel_storage(OIIO::ImageInput& input)
+	{ return dynamic_pixel_storage{load_rgba_image<ValueType>(input)}; }
+
+	inline dynamic_pixel_storage load_unsupported_rgba_image(OIIO::ImageInput&)
+	{ return dynamic_pixel_storage{}; }
+
+	using rgba_image_loader = dynamic_pixel_storage (*)(OIIO::ImageInput&);
+
+	rgba_image_loader get_rgba_image_loader(OIIO::TypeDesc format);
+
+	image load(std::filesystem::path const&);
 };
 
 #endif
