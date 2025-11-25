@@ -196,6 +196,36 @@ namespace slideproj::image_file_loader
 	template<class T>
 	constexpr OIIO::TypeDesc oiio_type_desc_v = oiio_type_desc<T>::value;
 
+	template<class T>
+	struct rgba_value
+	{
+		T red;
+		T green;
+		T blue;
+		T alpha;
+	};
+
+	template<class T>
+	struct rgb_value
+	{
+		T red;
+		T green;
+		T blue;
+	};
+
+	template<class T>
+	struct gray_alpha_value
+	{
+		T gray;
+		T alpha;
+	};
+
+	template<class T>
+	struct gray_value
+	{
+		T gray;
+	};
+
 	template<class... SupportedTypes>
 	class pixel_storage_2
 	{
