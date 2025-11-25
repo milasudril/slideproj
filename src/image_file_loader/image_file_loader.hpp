@@ -177,12 +177,6 @@ namespace slideproj::image_file_loader
 		pixel_storage<color_value<float>>
 	>;
 
-	struct image
-	{
-		intensity_transfer_function transfer_function{intensity_transfer_function::linear};
-		dynamic_pixel_storage pixels;
-	};
-
 	template<class T>
 	struct oiio_type_desc
 	{};
@@ -201,6 +195,69 @@ namespace slideproj::image_file_loader
 
 	template<class T>
 	constexpr OIIO::TypeDesc oiio_type_desc_v = oiio_type_desc<T>::value;
+
+	template<class... SupportedTypes>
+	class pixel_storage_2
+	{
+	public:
+		pixel_storage_2() = default;
+
+		template<class PixelType>
+		explicit pixel_storage_2(
+			uint32_t w,
+			uint32_t h,
+			std::reference_wrapper<PixelType*> stored_pointer,
+			make_uninitialized_pixel_storage_tag
+		):
+			m_width{w},
+			m_height{h},
+			m_pixels{
+				std::make_unique_for_overwrite<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))
+			}
+		{ stored_pointer = m_pixels.get(); }
+
+		template<class PixelType>
+		explicit pixel_storage_2(
+			uint32_t w,
+			uint32_t h,
+			std::reference_wrapper<PixelType*> stored_pointer
+		):
+			m_width{w},
+			m_height{h},
+			m_pixels{std::make_unique<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))}
+		{ stored_pointer = m_pixels.get(); }
+
+		auto width() const
+		{ return m_width; }
+
+		auto height() const
+		{ return m_height; }
+
+		auto pixel_count() const
+		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
+
+		auto pixels() const
+		{
+			return std::span{
+				m_pixels.get(),
+				pixel_count()
+			};
+		}
+
+		bool is_empty() const
+		{ return m_width == 0 || m_height == 0 || m_pixels == nullptr; }
+
+	private:
+		uint32_t m_width{0};
+		uint32_t m_height{0};
+		std::variant<std::unique_ptr<SupportedTypes[]>...> m_pixels;
+	};
+
+	struct image
+	{
+		intensity_transfer_function transfer_function{intensity_transfer_function::linear};
+		dynamic_pixel_storage pixels;
+	};
 
 	template<class ValueType>
 	pixel_storage<color_value<ValueType>> load_rgba_image(OIIO::ImageInput& input)
