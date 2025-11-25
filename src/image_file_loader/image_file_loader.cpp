@@ -202,12 +202,15 @@ slideproj::image_file_loader::get_rgba_image_loader(OIIO::TypeDesc format)
 slideproj::image_file_loader::image
 slideproj::image_file_loader::load(std::filesystem::path const& path)
 {
-	auto img_reader = OIIO::ImageInput::open(path);
+	OIIO::ImageSpec spec_in;
+	spec_in.attribute("oiio:UnassociatedAlpha", 1);
+	auto img_reader = OIIO::ImageInput::open(path, &spec_in);
 	if(img_reader == nullptr)
 	{ return image{}; }
 
 	image ret;
-	auto const& spec = img_reader->spec();
+	auto& spec = img_reader->spec();
+	printf("%d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
 	switch(spec.nchannels)
 	{
 		case 4:

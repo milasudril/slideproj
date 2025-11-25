@@ -173,7 +173,8 @@ namespace slideproj::image_file_loader
 
 	// TODO: Add support for more color types
 	using dynamic_pixel_storage = std::variant<
-		pixel_storage<color_value<uint8_t>>
+		pixel_storage<color_value<uint8_t>>,
+		pixel_storage<color_value<float>>
 	>;
 
 	struct image
@@ -190,6 +191,12 @@ namespace slideproj::image_file_loader
 	struct oiio_type_desc<uint8_t>
 	{
 		static constexpr auto value = OIIO::TypeDesc::UINT8;
+	};
+
+	template<>
+	struct oiio_type_desc<float>
+	{
+		static constexpr auto value = OIIO::TypeDesc::FLOAT;
 	};
 
 	template<class T>
