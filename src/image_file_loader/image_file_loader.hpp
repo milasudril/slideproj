@@ -159,6 +159,21 @@ namespace slideproj::image_file_loader
 		std::unique_ptr<PixelType[]> m_pixels;
 	};
 
+	// Image conversion pipeline
+	//
+	// 1.
+	//    template<class PixelValue>
+	//    pixel_storage<rgba_value<float>> downsample_to_linear(span_2d<PixelValue const> input)
+	//
+	//    PixelValue: gray, gray + alpha, rgb, rgba
+	//    SampleValue: uint8_t, uint16_t, half, float
+	//    TransferFunction linear, sRGB, g22
+	//
+	//    Total number of overloads 4*4*3 = 12*4 = 48
+	//
+	// 2. Convert to premultiplied RGBA (if necessary)
+	// 3. Fix orientation (if necessary)
+
 	template<class ValueType>
 	struct color_value
 	{

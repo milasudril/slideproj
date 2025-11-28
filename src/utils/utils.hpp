@@ -120,5 +120,28 @@ namespace slideproj::utils
 
 		return vtable[kind](std::forward<Factory>(factory));
 	}
+
+	template<class VariantType, class... TypesToAppend>
+	struct append_to_variant
+	{
+	private:
+		template<size_t... I>
+		static consteval auto resolve_type(std::index_sequence<I...>)
+		{
+			return std::type_identity<
+				std::variant<
+					std::variant_alternative_t<I, VariantType>...,
+					TypesToAppend...
+				>
+			>{};
+		}
+	public:
+		using type = decltype(resolve_type(std::make_index_sequence<std::variant_size_v<VariantType>>{}))::type;
+	};
+
+	template<class VariantType, class... TypesToAppend>
+	using append_to_variant_t = append_to_variant<VariantType,TypesToAppend...>::type;
+
+	static_assert(std::is_same_v<append_to_variant_t<std::variant<>,int, double>, std::variant<int, double>>);
 }
 #endif

@@ -210,7 +210,8 @@ slideproj::image_file_loader::load(std::filesystem::path const& path)
 
 	image ret;
 	auto& spec = img_reader->spec();
-	printf("%d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
+	printf("Alpha mode: %d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
+	printf("Color space: %s\n", spec.get_string_attribute("oiio:ColorSpace", "").c_str());
 	switch(spec.nchannels)
 	{
 		case 4:
