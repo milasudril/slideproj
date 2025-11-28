@@ -181,7 +181,7 @@ namespace slideproj::image_file_loader
 	{
 		Type value;
 		constexpr float to_float() const
-		{ return IntensityTransferFunction{}(value); }
+		{ return IntensityTransferFunction::to_linear_float(value); }
 	};
 
 	template<size_t TypeId>
@@ -203,6 +203,31 @@ namespace slideproj::image_file_loader
 	template<>
 	struct sample_storage_type<3>
 	{ using type = float; };
+
+	struct linear_intensity_mapping
+	{};
+
+	struct srgb_intensity_mapping
+	{};
+
+	struct g22_intensity_mapping
+	{};
+
+	template<size_t IntensityTransferFunctionId>
+	struct intensity_transfer_function_type
+	{};
+
+	template<>
+	struct intensity_transfer_function_type<0>
+	{ using type = linear_intensity_mapping; };
+
+	template<>
+	struct intensity_transfer_function_type<1>
+	{ using type = srgb_intensity_mapping; };
+
+	template<>
+	struct intensity_transfer_function_type<2>
+	{ using type = g22_intensity_mapping; };
 
 	template<class ValueType>
 	struct color_value
