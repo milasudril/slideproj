@@ -185,27 +185,8 @@ namespace slideproj::image_file_loader
 		{ return IntensityTransferFunction::to_linear_float(value); }
 	};
 
-	template<size_t TypeId>
-	struct sample_storage_type
-	{};
-
-	template<>
-	struct sample_storage_type<0>
-	{ using type = std::uint8_t; };
-
-	template<>
-	struct sample_storage_type<1>
-	{ using type = std::uint16_t; };
-
-	template<>
-	struct sample_storage_type<2>
-	{ using type = Imath::half; };
-
-	template<>
-	struct sample_storage_type<3>
-	{ using type = float; };
-
-	constexpr size_t sample_storage_type_end = 4;
+	template<class IntensityTransferFunction, class ... Types>
+	using sample_types_with_itf = std::variant<sample_type<Types, IntensityTransferFunction>...>;
 
 	struct linear_intensity_mapping
 	{};
@@ -216,59 +197,46 @@ namespace slideproj::image_file_loader
 	struct g22_intensity_mapping
 	{};
 
-	template<size_t IntensityTransferFunctionId>
-	struct intensity_transfer_function_type
+	using sample_types = utils::concatenate_variants_t<
+		sample_types_with_itf<linear_intensity_mapping>,
+		sample_types_with_itf<srgb_intensity_mapping>,
+		sample_types_with_itf<g22_intensity_mapping>
+	>;
+
+	template<class SampleType, size_t ChannelCount>
+	struct pixel_type
 	{};
 
-	template<>
-	struct intensity_transfer_function_type<0>
-	{ using type = linear_intensity_mapping; };
-
-	template<>
-	struct intensity_transfer_function_type<1>
-	{ using type = srgb_intensity_mapping; };
-
-	template<>
-	struct intensity_transfer_function_type<2>
-	{ using type = g22_intensity_mapping; };
-
-	constexpr size_t intensity_transfer_function_type_end = 3;
-
-	template<class PendingVariantType, size_t IntensityTransferFunctionId, size_t TypeId>
-	consteval auto build_pixel_type_variant_per_type()
+	template<class SampleType>
+	struct pixel_type<SampleType, 1>
 	{
-		if constexpr(TypeId != sample_storage_type_end)
-		{
-			using next_variant = utils::append_to_variant_t<
-				PendingVariantType,
-				sample_type<
-					typename sample_storage_type<TypeId>::type,
-					typename intensity_transfer_function_type<IntensityTransferFunctionId>::type
-				>
-			>;
+		SampleType gray;
+	};
 
-			return build_pixel_type_variant_per_type<next_variant, IntensityTransferFunctionId, TypeId + 1>();
-		}
-		else
-		{ return std::type_identity<PendingVariantType>{}; }
-	}
+	template<class SampleType>
+	struct pixel_type<SampleType, 2>
+	{
+		SampleType gray;
+		SampleType alpha;
+	};
 
-	template<class PendingVariantType, size_t IntensityTransferFunctionId>
-	using sample_types = decltype(
-		build_pixel_type_variant_per_type<PendingVariantType, IntensityTransferFunctionId, 0>()
-	)::type;
+	template<class SampleType>
+	struct pixel_type<SampleType, 3>
+	{
+		SampleType red;
+		SampleType green;
+		SampleType blue;
+	};
 
-	static_assert(
-		std::is_same_v<
-			sample_types<std::variant<>, 0>,
-			std::variant<
-				sample_type<std::uint8_t, linear_intensity_mapping>,
-				sample_type<std::uint16_t, linear_intensity_mapping>,
-				sample_type<Imath::half, linear_intensity_mapping>,
-				sample_type<float, linear_intensity_mapping>
-			>
-		>
-	);
+	template<class SampleType>
+	struct pixel_type<SampleType, 4>
+	{
+		SampleType red;
+		SampleType green;
+		SampleType blue;
+		SampleType alpha;
+	};
+
 
 	template<class ValueType>
 	struct color_value
