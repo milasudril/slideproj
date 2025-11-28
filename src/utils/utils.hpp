@@ -136,12 +136,45 @@ namespace slideproj::utils
 			>{};
 		}
 	public:
-		using type = decltype(resolve_type(std::make_index_sequence<std::variant_size_v<VariantType>>{}))::type;
+		using type = decltype(
+			resolve_type(std::make_index_sequence<std::variant_size_v<VariantType>>{})
+		)::type;
 	};
 
 	template<class VariantType, class... TypesToAppend>
 	using append_to_variant_t = append_to_variant<VariantType,TypesToAppend...>::type;
 
-	static_assert(std::is_same_v<append_to_variant_t<std::variant<>,int, double>, std::variant<int, double>>);
+	template<class VariantA, class VariantB, class... Tail>
+	struct concatenate_variants
+	{
+	private:
+		template<size_t... I>
+		static consteval auto resolve_type(std::index_sequence<I...>)
+		{
+			using next_type = append_to_variant_t<
+				VariantA,
+				std::variant_alternative_t<I, VariantB>...
+			>;
+
+			if constexpr(sizeof...(Tail) == 0)
+			{ return std::type_identity<next_type>{}; }
+			else
+			{ return std::type_identity<typename concatenate_variants<next_type, Tail...>::type>{}; }
+		}
+	public:
+		using type = decltype(
+			resolve_type(std::make_index_sequence<std::variant_size_v<VariantB>>{})
+		)::type;
+	};
+
+	template<class VariantA, class VariantB, class... Tail>
+	using concatenate_variants_t = concatenate_variants<VariantA, VariantB, Tail...>::type;
+
+	static_assert(
+		std::is_same_v<
+			concatenate_variants_t<std::variant<uint8_t>, std::variant<uint16_t>, std::variant<uint32_t>>,
+			std::variant<uint8_t, uint16_t, uint32_t>
+		>
+	);
 }
 #endif
