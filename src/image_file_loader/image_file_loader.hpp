@@ -238,26 +238,28 @@ namespace slideproj::image_file_loader
 	};
 
 	template<size_t ChannelCount, class IntensityTransferFunction>
-	using pixel_type_varying_sample_size = std::variant<
-		pixel_type<sample_type<uint8_t, IntensityTransferFunction>, ChannelCount>,
-		pixel_type<sample_type<uint16_t, IntensityTransferFunction>, ChannelCount>,
-		pixel_type<sample_type<Imath::half, IntensityTransferFunction>, ChannelCount>,
-		pixel_type<sample_type<float, IntensityTransferFunction>, ChannelCount>
+	using pixel_buffer_varying_sample_size = std::variant<
+		std::unique_ptr<pixel_type<sample_type<uint8_t, IntensityTransferFunction>, ChannelCount>[]>,
+		std::unique_ptr<pixel_type<sample_type<uint16_t, IntensityTransferFunction>, ChannelCount>[]>,
+		std::unique_ptr<pixel_type<sample_type<Imath::half, IntensityTransferFunction>, ChannelCount>[]>,
+		std::unique_ptr<pixel_type<sample_type<float, IntensityTransferFunction>, ChannelCount>[]>
 	>;
 
 	template<class IntensityTransferFunction>
-	using pixel_type_varying_channel_count = utils::concatenate_variants_t<
-		pixel_type_varying_sample_size<1, IntensityTransferFunction>,
-		pixel_type_varying_sample_size<2, IntensityTransferFunction>,
-		pixel_type_varying_sample_size<3, IntensityTransferFunction>,
-		pixel_type_varying_sample_size<4, IntensityTransferFunction>
+	using pixel_buffer_varying_channel_count = utils::concatenate_variants_t<
+		pixel_buffer_varying_sample_size<1, IntensityTransferFunction>,
+		pixel_buffer_varying_sample_size<2, IntensityTransferFunction>,
+		pixel_buffer_varying_sample_size<3, IntensityTransferFunction>,
+		pixel_buffer_varying_sample_size<4, IntensityTransferFunction>
 	>;
 
-	using pixel_types = utils::concatenate_variants_t<
-		pixel_type_varying_channel_count<linear_intensity_mapping>,
-		pixel_type_varying_channel_count<srgb_intensity_mapping>,
-		pixel_type_varying_channel_count<g22_intensity_mapping>
+	using pixel_buffer = utils::concatenate_variants_t<
+		pixel_buffer_varying_channel_count<linear_intensity_mapping>,
+		pixel_buffer_varying_channel_count<srgb_intensity_mapping>,
+		pixel_buffer_varying_channel_count<g22_intensity_mapping>
 	>;
+
+	static_assert(std::variant_size_v<pixel_buffer> == 48);
 
 
 	template<class ValueType>
