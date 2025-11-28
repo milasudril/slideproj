@@ -14,6 +14,7 @@
 #include <memory>
 #include <unordered_map>
 #include <OpenImageIO/imageio.h>
+#include <Imath/half.h>
 
 namespace slideproj::image_file_loader
 {
@@ -174,6 +175,35 @@ namespace slideproj::image_file_loader
 	// 2. Convert to premultiplied RGBA (if necessary)
 	// 3. Fix orientation (if necessary)
 
+	template<class Type, class IntensityTransferFunction>
+	requires(std::is_empty_v<IntensityTransferFunction>)
+	struct sample_type
+	{
+		Type value;
+		constexpr float to_float() const
+		{ return IntensityTransferFunction{}(value); }
+	};
+
+	template<size_t TypeId>
+	struct sample_storage_type
+	{};
+
+	template<>
+	struct sample_storage_type<0>
+	{ using type = std::uint8_t; };
+
+	template<>
+	struct sample_storage_type<1>
+	{ using type = std::uint16_t; };
+
+	template<>
+	struct sample_storage_type<2>
+	{ using type = Imath::half; };
+
+	template<>
+	struct sample_storage_type<3>
+	{ using type = float; };
+
 	template<class ValueType>
 	struct color_value
 	{
@@ -183,8 +213,6 @@ namespace slideproj::image_file_loader
 		ValueType b;
 		ValueType a;
 	};
-
-	enum class intensity_transfer_function{linear, srgb, gamma_22};
 
 	// TODO: Add support for more color types
 	using dynamic_pixel_storage = std::variant<
@@ -297,6 +325,8 @@ namespace slideproj::image_file_loader
 		uint32_t m_height{0};
 		std::variant<std::unique_ptr<SupportedTypes[]>...> m_pixels;
 	};
+
+	enum class intensity_transfer_function{linear, srgb, g22};
 
 	struct image
 	{
