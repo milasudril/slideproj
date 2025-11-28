@@ -9,6 +9,7 @@
 #define SLIDEPROJ_IMAGE_FILE_LOADER_IMAGE_FILE_LOADER_HPP
 
 #include "src/file_collector/file_collector.hpp"
+#include "src/utils/utils.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -204,6 +205,8 @@ namespace slideproj::image_file_loader
 	struct sample_storage_type<3>
 	{ using type = float; };
 
+	constexpr size_t sample_storage_type_end = 4;
+
 	struct linear_intensity_mapping
 	{};
 
@@ -228,6 +231,44 @@ namespace slideproj::image_file_loader
 	template<>
 	struct intensity_transfer_function_type<2>
 	{ using type = g22_intensity_mapping; };
+
+	constexpr size_t intensity_transfer_function_type_end = 3;
+
+	template<class PendingVariantType, size_t IntensityTransferFunctionId, size_t TypeId>
+	consteval auto build_pixel_type_variant_per_type()
+	{
+		if constexpr(TypeId != sample_storage_type_end)
+		{
+			using next_variant = utils::append_to_variant_t<
+				PendingVariantType,
+				sample_type<
+					typename sample_storage_type<TypeId>::type,
+					typename intensity_transfer_function_type<IntensityTransferFunctionId>::type
+				>
+			>;
+
+			return build_pixel_type_variant_per_type<next_variant, IntensityTransferFunctionId, TypeId + 1>();
+		}
+		else
+		{ return std::type_identity<PendingVariantType>{}; }
+	}
+
+	template<class PendingVariantType, size_t IntensityTransferFunctionId>
+	using sample_types = decltype(
+		build_pixel_type_variant_per_type<PendingVariantType, IntensityTransferFunctionId, 0>()
+	)::type;
+
+	static_assert(
+		std::is_same_v<
+			sample_types<std::variant<>, 0>,
+			std::variant<
+				sample_type<std::uint8_t, linear_intensity_mapping>,
+				sample_type<std::uint16_t, linear_intensity_mapping>,
+				sample_type<Imath::half, linear_intensity_mapping>,
+				sample_type<float, linear_intensity_mapping>
+			>
+		>
+	);
 
 	template<class ValueType>
 	struct color_value
