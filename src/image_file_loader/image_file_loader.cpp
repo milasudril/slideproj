@@ -245,17 +245,10 @@ slideproj::image_file_loader::make_linear_rgba_image(
 	uint32_t scaling_factor
 )
 {
-	input.visit([scaling_factor](auto pixels, uint32_t w, uint32_t h) {
+	auto ret = input.visit([scaling_factor](auto pixels, uint32_t w, uint32_t h) {
 		auto const downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
-		auto const rgba = to_rgba(downsampled.pixels(), downsampled.width(), downsampled.height());
+		return to_rgba(downsampled.pixels(), downsampled.width(), downsampled.height());
 	});
-
-
-	slideproj::image_file_loader::fixed_typed_image<pixel_type<float, 4>> ret{
-		input.width(),
-		input.height(),
-		make_uninitialized_pixel_buffer_tag{}
-	};
 
 	return ret;
 }
