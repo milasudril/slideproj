@@ -175,7 +175,7 @@ slideproj::image_file_loader::image_file_metadata_repository::get_metadata(
 	return m_cache.insert(std::pair{entry.id(), load_metadata(entry.path())}).first->second;
 }
 
-slideproj::image_file_loader::image::image(
+slideproj::image_file_loader::variant_image::variant_image(
 	pixel_type_id pixel_type,
 	uint32_t w,
 	uint32_t h,
@@ -199,17 +199,17 @@ slideproj::image_file_loader::image::image(
 	m_height = h;
 }
 
-slideproj::image_file_loader::image
+slideproj::image_file_loader::variant_image
 slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 {
 	auto const& spec = input.spec();
 	if(spec.width <= 0 || spec.height <= 0 || spec.nchannels <= 0)
-	{ return image{}; }
+	{ return variant_image{}; }
 
 	printf("Alpha mode: %d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
 	printf("Color space: %s\n", spec.get_string_attribute("oiio:ColorSpace", "").c_str());
 
-	image ret{
+	variant_image ret{
 		pixel_type_id{
 			to_intensity_transfer_function_id(spec.get_string_attribute("OIIO:ColorSpace")),
 			static_cast<size_t>(spec.nchannels),
@@ -225,14 +225,14 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 	return ret;
 }
 
-slideproj::image_file_loader::image
+slideproj::image_file_loader::variant_image
 slideproj::image_file_loader::load_image(std::filesystem::path const& path)
 {
 	OIIO::ImageSpec spec_in;
 	spec_in.attribute("oiio:UnassociatedAlpha", 1);
 	auto img_reader = OIIO::ImageInput::open(path, &spec_in);
 	if(img_reader == nullptr)
-	{ return image{}; }
+	{ return variant_image{}; }
 
 	return load_image(*img_reader);
 }

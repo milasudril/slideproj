@@ -343,12 +343,12 @@ namespace slideproj::image_file_loader
 
 	struct make_uninitialized_pixel_buffer_tag{};
 
-	class image
+	class variant_image
 	{
 	public:
-		image() = default;
+		variant_image() = default;
 
-		explicit image(
+		explicit variant_image(
 			pixel_type_id pixel_type,
 			uint32_t w,
 			uint32_t h,
@@ -406,9 +406,9 @@ namespace slideproj::image_file_loader
 		pixel_buffer m_pixels;
 	};
 
-	image load_image(OIIO::ImageInput& input);
+	variant_image load_image(OIIO::ImageInput& input);
 
-	image load_image(std::filesystem::path const&);
+	variant_image load_image(std::filesystem::path const&);
 
 	template<class PixelType>
 	auto downsample_to_linear(PixelType const* pixels, uint32_t w, uint32_t h, uint32_t scaling_factor)
