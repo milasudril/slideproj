@@ -210,7 +210,8 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 
 	printf("Alpha mode: %d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
 	printf("Color space: %s\n", spec.get_string_attribute("oiio:ColorSpace", "").c_str());
-	auto const alpha_mode = spec.get_int_attribute("oiio:UnassociatedAlpha") == 0?
+	auto const alpha_mode =
+		(spec.nchannels%2 == 0 && spec.get_int_attribute("oiio:UnassociatedAlpha")) == 0?
 		alpha_mode::premultiplied: alpha_mode::straight;
 
 	variant_image ret{
@@ -257,7 +258,20 @@ slideproj::image_file_loader::make_linear_rgba_image(
 
 	if(input.alpha_mode() == alpha_mode::straight)
 	{
+		auto const pixels = ret.pixels();
+		std::transform(
+			pixels, pixels + ret.pixel_count(),
+			pixels,
+			[](auto item){
+				auto const alpha = item.alpha;
+				return slideproj::image_file_loader::pixel_type<float, 4>{
+					.red = alpha*item.alpha,
+					.green = alpha*item.alpha,
+					.blue = alpha*item.alpha,
+					.alpha = alpha
+				};
+			}
+		);
 	}
-
 	return ret;
 }
