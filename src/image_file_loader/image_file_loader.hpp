@@ -471,7 +471,19 @@ namespace slideproj::image_file_loader
 				ret[x + y*w] = avg;
 			}
 		}
+		return ret;
+	}
 
+	template<class PixelType>
+	auto to_rgba(PixelType const* pixels, uint32_t w, uint32_t h)
+	{
+		using pixel_type_ret = pixel_type<typename PixelType::value_type, 4>;
+		fixed_typed_image<pixel_type_ret> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+		for(uint32_t y = 0; y != h_out; ++y)
+		{
+			for(uint32_t x = 0; x != w_out; ++x)
+			{ ret[x + y*w] = pixles[x + y*w].to_rgba(); }
+		}
 		return ret;
 	}
 };
