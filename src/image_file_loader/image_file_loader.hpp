@@ -437,6 +437,8 @@ namespace slideproj::image_file_loader
 
 	struct make_uninitialized_pixel_buffer_tag{};
 
+	enum class alpha_mode{straight, premultiplied};
+
 	class variant_image
 	{
 	public:
@@ -444,6 +446,7 @@ namespace slideproj::image_file_loader
 
 		explicit variant_image(
 			pixel_type_id pixel_type,
+			enum alpha_mode alpha_mode,
 			uint32_t w,
 			uint32_t h,
 			make_uninitialized_pixel_buffer_tag
@@ -460,6 +463,9 @@ namespace slideproj::image_file_loader
 
 		bool is_empty() const
 		{ return m_width == 0 || m_height == 0; }
+
+		auto alpha_mode() const
+		{ return m_alpha_mode; }
 
 		template<class Callable>
 		decltype(auto) visit(Callable&& cb)
@@ -495,6 +501,7 @@ namespace slideproj::image_file_loader
 
 
 	private:
+		enum alpha_mode m_alpha_mode{alpha_mode::straight};
 		uint32_t m_width{0};
 		uint32_t m_height{0};
 		pixel_buffer m_pixels;

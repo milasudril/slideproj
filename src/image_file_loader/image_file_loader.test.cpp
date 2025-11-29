@@ -286,6 +286,7 @@ TESTCASE(slideproj_image_file_loader_load_rgba_imgage_uint8t_from_png_srbg)
 	auto res = slideproj::image_file_loader::load_image("testdata/rgba_8bit_srgb.png");
 	EXPECT_EQ(res.width(), 96);
 	EXPECT_EQ(res.height(), 32);
+	EXPECT_EQ(res.alpha_mode(), slideproj::image_file_loader::alpha_mode::straight);
 
 	using expected_pixel_type = slideproj::image_file_loader::pixel_type<
 		slideproj::image_file_loader::sample_type<
