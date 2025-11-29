@@ -455,19 +455,28 @@ namespace slideproj::image_file_loader
 	{
 		auto const w_out = w/scaling_factor;
 		auto const h_out = h/scaling_factor;
+		using pixel_type_ret = pixel_type<
+			sample_type<float, linear_intensity_mapping>,
+			PixelType::channel_count
+		>;
+
+		fixed_typed_image<pixel_type_ret> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
 		for(uint32_t y = 0; y != h_out; ++y)
 		{
 			for(uint32_t x = 0; x != w_out; ++x)
 			{
-				auto avg = 0.0f;
+				pixel_type_ret avg{};
 				for(uint32_t eta = 0; eta != scaling_factor; ++eta)
 				{
 					for(uint32_t xi = 0; xi != scaling_factor; ++xi)
 					{ avg += pixels[(x + xi) + (y + eta)*w].to_linear_float(); }
 				}
 				avg /= static_cast<float>(scaling_factor*scaling_factor);
+				ret[x + y*w] = avg;
 			}
 		}
+
+		return ret;
 	}
 };
 
