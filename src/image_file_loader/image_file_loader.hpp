@@ -396,6 +396,54 @@ namespace slideproj::image_file_loader
 		size_t m_value = std::numeric_limits<size_t>::max();
 	};
 
+	class pixel_storage_2
+	{
+	public:
+		pixel_storage_2() = default;
+
+		explicit pixel_storage_2(
+			pixel_type_id pixel_type,
+			uint32_t w,
+			uint32_t h,
+			make_uninitialized_pixel_storage_tag
+		):
+			m_width{0},
+			m_height{0}
+		{
+			if(!pixel_type.is_valid())
+			{ return; }
+
+			m_pixels = utils::make_variant<pixel_buffer>(
+				pixel_type.value(), [
+					array_len = static_cast<size_t>(w) * static_cast<size_t>(h)
+				]<class T>(utils::make_variant_type_tag<T>){
+					using elem_type = typename T::element_type;
+					return std::make_unique_for_overwrite<elem_type[]>(array_len);
+				}
+			);
+			m_width = w;
+			m_height = h;
+		}
+
+		auto width() const
+		{ return m_width; }
+
+		auto height() const
+		{ return m_height; }
+
+		auto pixel_count() const
+		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
+
+		bool is_empty() const
+		{ return m_width == 0 || m_height == 0; }
+
+	private:
+		uint32_t m_width{0};
+		uint32_t m_height{0};
+		pixel_buffer m_pixels;
+	};
+
+
 	template<class ValueType>
 	struct color_value
 	{
@@ -459,63 +507,6 @@ namespace slideproj::image_file_loader
 	struct gray_value
 	{
 		T gray;
-	};
-
-	template<class... SupportedTypes>
-	class pixel_storage_2
-	{
-	public:
-		pixel_storage_2() = default;
-
-		template<class PixelType>
-		explicit pixel_storage_2(
-			uint32_t w,
-			uint32_t h,
-			std::reference_wrapper<PixelType*> stored_pointer,
-			make_uninitialized_pixel_storage_tag
-		):
-			m_width{w},
-			m_height{h},
-			m_pixels{
-				std::make_unique_for_overwrite<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))
-			}
-		{ stored_pointer = m_pixels.get(); }
-
-		template<class PixelType>
-		explicit pixel_storage_2(
-			uint32_t w,
-			uint32_t h,
-			std::reference_wrapper<PixelType*> stored_pointer
-		):
-			m_width{w},
-			m_height{h},
-			m_pixels{std::make_unique<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))}
-		{ stored_pointer = m_pixels.get(); }
-
-		auto width() const
-		{ return m_width; }
-
-		auto height() const
-		{ return m_height; }
-
-		auto pixel_count() const
-		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
-
-		auto pixels() const
-		{
-			return std::span{
-				m_pixels.get(),
-				pixel_count()
-			};
-		}
-
-		bool is_empty() const
-		{ return m_width == 0 || m_height == 0 || m_pixels == nullptr; }
-
-	private:
-		uint32_t m_width{0};
-		uint32_t m_height{0};
-		std::variant<std::unique_ptr<SupportedTypes[]>...> m_pixels;
 	};
 
 	struct image
