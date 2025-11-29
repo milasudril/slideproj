@@ -391,7 +391,7 @@ namespace slideproj::image_file_loader
 		}
 
 		template<class PixelType>
-		PixelType const* pixels()
+		PixelType const* pixels() const
 		{
 			auto item = std::get_if<std::unique_ptr<PixelType[]>>(&m_pixels);
 			if(item == nullptr)
