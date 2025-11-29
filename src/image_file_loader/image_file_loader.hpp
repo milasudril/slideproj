@@ -455,11 +455,7 @@ namespace slideproj::image_file_loader
 	{
 		auto const w_out = w/scaling_factor;
 		auto const h_out = h/scaling_factor;
-		using pixel_type_ret = pixel_type<
-			sample_type<float, linear_intensity_mapping>,
-			PixelType::channel_count
-		>;
-
+		using pixel_type_ret = pixel_type<float, PixelType::channel_count>;
 		fixed_typed_image<pixel_type_ret> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
 		for(uint32_t y = 0; y != h_out; ++y)
 		{
