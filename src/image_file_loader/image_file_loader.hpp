@@ -12,6 +12,7 @@
 #include "src/utils/utils.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <unordered_map>
 #include <OpenImageIO/imageio.h>
@@ -328,6 +329,23 @@ namespace slideproj::image_file_loader
 
 	static_assert(std::variant_size_v<pixel_buffer> == 48);
 
+	enum class intensity_transfer_function_id{linear, srgb, g22};
+	enum class sample_value_type_id{uint8, uint16, float16, float32};
+
+	constexpr auto make_pixel_type_id(
+		intensity_transfer_function_id transfer_function_id,
+		size_t channel_count,
+		sample_value_type_id type_id
+	)
+	{
+		if(channel_count < 1 || channel_count > 4)
+		{ return std::numeric_limits<size_t>::max(); }
+
+		auto const tf = static_cast<size_t>(transfer_function_id);
+		auto const channel_index = channel_count - 1;
+		return static_cast<size_t>(type_id) + 4*channel_index + 16*tf;
+	}
+
 
 	template<class ValueType>
 	struct color_value
@@ -451,11 +469,9 @@ namespace slideproj::image_file_loader
 		std::variant<std::unique_ptr<SupportedTypes[]>...> m_pixels;
 	};
 
-	enum class intensity_transfer_function{linear, srgb, g22};
-
 	struct image
 	{
-		intensity_transfer_function transfer_function{intensity_transfer_function::linear};
+		intensity_transfer_function_id transfer_function{intensity_transfer_function_id::linear};
 		dynamic_pixel_storage pixels;
 	};
 
