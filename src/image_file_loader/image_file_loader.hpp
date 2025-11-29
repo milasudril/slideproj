@@ -112,11 +112,12 @@ namespace slideproj::image_file_loader
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
 	};	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
 
+	//    image<rgba_value<float>> downsample_to_linear(span_2d<PixelValue const> input)
+
 	// Image conversion pipeline
 	//
 	// 1.
-	//    template<class PixelValue>
-	//    image<rgba_value<float>> downsample_to_linear(span_2d<PixelValue const> input)
+
 	//
 	//    PixelValue: gray, gray + alpha, rgb, rgba
 	//    SampleValue: uint8_t, uint16_t, half, float
@@ -408,6 +409,26 @@ namespace slideproj::image_file_loader
 	image load_image(OIIO::ImageInput& input);
 
 	image load_image(std::filesystem::path const&);
+
+	template<class PixelType>
+	auto downsample_to_linear(PixelType const* pixels, uint32_t w, uint32_t h, uint32_t scaling_factor)
+	{
+		auto const w_out = w/scaling_factor;
+		auto const h_out = h/scaling_factor;
+		for(uint32_t y = 0; y != h_out; ++y)
+		{
+			for(uint32_t x = 0; x != w_out; ++x)
+			{
+				auto avg = 0.0f;
+				for(uint32_t eta = 0; eta != scaling_factor; ++eta)
+				{
+					for(uint32_t xi = 0; xi != scaling_factor; ++xi)
+					{ avg += pixels[(x + xi) + (y + eta)*w].to_linear_float(); }
+				}
+				avg /= static_cast<float>(scaling_factor*scaling_factor);
+			}
+		}
+	}
 };
 
 #endif
