@@ -330,6 +330,18 @@ namespace slideproj::image_file_loader
 	static_assert(std::variant_size_v<pixel_buffer> == 48);
 
 	enum class intensity_transfer_function_id{linear, srgb, g22, invalid = -1};
+
+	constexpr auto to_intensity_transfer_function_id(std::string_view sv)
+	{
+		if(sv == "Linear")
+		{ return intensity_transfer_function_id::linear; }
+		if(sv == "sRGB")
+		{ return intensity_transfer_function_id::srgb; }
+		if(sv == "Gamma2.2")
+		{ return intensity_transfer_function_id::g22; }
+		return intensity_transfer_function_id::invalid;
+	}
+
 	enum class sample_value_type_id{uint8, uint16, float16, float32, invalid = -1};
 
 	constexpr auto to_value_type_id(OIIO::TypeDesc const& type)
