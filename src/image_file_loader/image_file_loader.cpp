@@ -210,6 +210,7 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 
 	printf("Alpha mode: %d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
 	printf("Color space: %s\n", spec.get_string_attribute("oiio:ColorSpace", "").c_str());
+	printf("Orientation: %d\n", spec.get_int_attribute("Orientation"));
 	auto const alpha_mode =
 		(spec.nchannels%2 == 0 && spec.get_int_attribute("oiio:UnassociatedAlpha")) == 0?
 		alpha_mode::premultiplied: alpha_mode::straight;

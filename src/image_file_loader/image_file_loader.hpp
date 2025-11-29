@@ -114,8 +114,6 @@ namespace slideproj::image_file_loader
 	};	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
 
 	// Image conversion pipeline
-	//
-	// 2. Convert to premultiplied RGBA (if necessary)
 	// 3. Fix orientation (if necessary)
 
 	template<class Type, class IntensityTransferFunction>

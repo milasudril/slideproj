@@ -278,6 +278,13 @@ TESTCASE(slideproj_image_file_get_metadata)
 	EXPECT_EQ(res.in_group, "testdata");
 }
 
+TESTCASE(slideproj_image_file_loader_load_rotated_jpeg)
+{
+	auto res = slideproj::image_file_loader::load_image("testdata/IMG_1109.JPG");
+	EXPECT_EQ(res.width(), 6000);
+	EXPECT_EQ(res.height(), 4000);
+}
+
 TESTCASE(slideproj_image_file_loader_load_uint8_rgba_from_png_srbg)
 {
 	auto res = slideproj::image_file_loader::load_image("testdata/rgba_8bit_srgb.png");
