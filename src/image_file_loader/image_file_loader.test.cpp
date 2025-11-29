@@ -357,35 +357,26 @@ TESTCASE(slideproj_image_file_loader_load_rgba_imgage_32bit_from_exr)
 #endif
 
 
-TESTCASE(slideproj_image_file_loader_load_rgba_image_from_png_srbg)
+TESTCASE(slideproj_image_file_loader_load_rgba_image_from_png_srbg_scale_by_2)
 {
 	auto res = slideproj::image_file_loader::load_rgba_image("testdata/rgba_8bit_srgb.png", 2);
-#if 0
-	EXPECT_EQ(res.width(), 96);
-	EXPECT_EQ(res.height(), 32);
-	EXPECT_EQ(res.alpha_mode(), slideproj::image_file_loader::alpha_mode::straight);
 
-	using expected_pixel_type = slideproj::image_file_loader::pixel_type<
-		slideproj::image_file_loader::sample_type<
-			uint8_t,
-			slideproj::image_file_loader::srgb_intensity_mapping
-		>,
-		4
-	>;
-	auto pixels = res.pixels<expected_pixel_type>();
-	EXPECT_EQ(pixels[0].red.value, 128);
-	EXPECT_EQ(pixels[0].green.value, 0);
-	EXPECT_EQ(pixels[0].blue.value, 0);
-	EXPECT_EQ(pixels[0].alpha.value, 128);
+	EXPECT_EQ(res.width(), 48);
+	EXPECT_EQ(res.height(), 16);
 
-	EXPECT_EQ(pixels[32].red.value, 0);
-	EXPECT_EQ(pixels[32].green.value, 128);
-	EXPECT_EQ(pixels[32].blue.value, 0);
-	EXPECT_EQ(pixels[32].alpha.value, 128);
+	auto const pixels = res.pixels();
+	EXPECT_EQ(pixels[0].red, 0.108353525f);
+	EXPECT_EQ(pixels[0].green, 0.0f);
+	EXPECT_EQ(pixels[0].blue, 0.0f);
+	EXPECT_EQ(pixels[0].alpha, 0.50196081f);
 
-	EXPECT_EQ(pixels[64].red.value, 0);
-	EXPECT_EQ(pixels[64].green.value, 0);
-	EXPECT_EQ(pixels[64].blue.value, 128);
-	EXPECT_EQ(pixels[64].alpha.value, 128);
-#endif
+	EXPECT_EQ(pixels[16].red, 0.0f);
+	EXPECT_EQ(pixels[16].green, 0.108353525f);
+	EXPECT_EQ(pixels[16].blue, 0.0f);
+	EXPECT_EQ(pixels[16].alpha, 0.50196081f);
+
+	EXPECT_EQ(pixels[32].red, 0.0f);
+	EXPECT_EQ(pixels[32].green, 0.0f);
+	EXPECT_EQ(pixels[32].blue, 0.108353525f);
+	EXPECT_EQ(pixels[32].alpha, 0.50196081f);
 }

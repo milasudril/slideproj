@@ -253,9 +253,9 @@ slideproj::image_file_loader::make_linear_rgba_image(
 			[](auto item){
 				auto const alpha = item.alpha;
 				return slideproj::image_file_loader::pixel_type<float, 4>{
-					.red = alpha*item.alpha,
-					.green = alpha*item.alpha,
-					.blue = alpha*item.alpha,
+					.red = alpha*item.red,
+					.green = alpha*item.green,
+					.blue = alpha*item.blue,
 					.alpha = alpha
 				};
 			}

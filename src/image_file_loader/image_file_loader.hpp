@@ -574,13 +574,15 @@ namespace slideproj::image_file_loader
 		auto const pixels_out = ret.pixels();
 		for(uint32_t y = 0; y != h_out; ++y)
 		{
+			auto const y_in = scaling_factor*y;
 			for(uint32_t x = 0; x != w_out; ++x)
 			{
 				pixel_type_ret avg{};
+				auto const x_in = scaling_factor*x;
 				for(uint32_t eta = 0; eta != scaling_factor; ++eta)
 				{
 					for(uint32_t xi = 0; xi != scaling_factor; ++xi)
-					{ avg += pixels[(x + xi) + (y + eta)*w_out].to_linear_float(); }
+					{ avg += pixels[x_in + xi + (y_in + eta)*w].to_linear_float(); }
 				}
 				avg /= static_cast<float>(scaling_factor*scaling_factor);
 				pixels_out[x + y*w_out] = avg;
