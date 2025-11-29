@@ -292,52 +292,6 @@ namespace slideproj::image_file_loader
 		}
 	};
 
-	template<class SampleType, size_t ChannelCount>
-	constexpr auto to_linear_rgba(pixel_type<SampleType, ChannelCount> value)
-	{
-		if constexpr(ChannelCount == 1)
-		{
-			auto const converted_value = value.gray.to_linear_float();
-			return pixel_type<float, 4>{
-				.red = converted_value,
-				.green = converted_value,
-				.blue = converted_value,
-				.alpha = 1.0f
-			};
-		}
-		else
-		if constexpr(ChannelCount == 2)
-		{
-			auto const conv_gray = value.gray.to_linear_float();
-			auto const conv_alpha = value.alpha.to_normalized_float();
-			return pixel_type<float, 4>{
-				.red = conv_gray,
-				.green = conv_gray,
-				.blue = conv_gray,
-				.alpha = conv_alpha
-			};
-		}
-		else
-		if constexpr(ChannelCount == 3)
-		{
-			return pixel_type<float, 4>{
-				.red = value.red.to_linear_float(),
-				.green = value.green.to_linear_float(),
-				.blue = value.blue.to_linear_float(),
-				.alpha = 1.0f
-			};
-		}
-		else
-		{
-			return pixel_type<float, 4>{
-				.red = value.red.to_linear_float(),
-				.green = value.green.to_linear_float(),
-				.blue = value.blue.to_linear_float(),
-				.alpha = value.alpha.to_normalized_float()
-			};
-		}
-	}
-
 	template<size_t ChannelCount, class IntensityTransferFunction>
 	using pixel_buffer_varying_sample_size = std::variant<
 		std::unique_ptr<pixel_type<sample_type<uint8_t, IntensityTransferFunction>, ChannelCount>[]>,
