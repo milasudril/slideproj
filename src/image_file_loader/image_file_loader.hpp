@@ -112,18 +112,7 @@ namespace slideproj::image_file_loader
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
 	};	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
 
-	//    image<rgba_value<float>> downsample_to_linear(span_2d<PixelValue const> input)
-
 	// Image conversion pipeline
-	//
-	// 1.
-
-	//
-	//    PixelValue: gray, gray + alpha, rgb, rgba
-	//    SampleValue: uint8_t, uint16_t, half, float
-	//    TransferFunction linear, sRGB, g22
-	//
-	//    Total number of overloads 4*4*3 = 12*4 = 48
 	//
 	// 2. Convert to premultiplied RGBA (if necessary)
 	// 3. Fix orientation (if necessary)
