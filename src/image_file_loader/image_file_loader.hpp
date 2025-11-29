@@ -582,11 +582,10 @@ namespace slideproj::image_file_loader
 		using pixel_type_ret = pixel_type<typename PixelType::sample_type, 4>;
 		fixed_typed_image<pixel_type_ret> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
 		auto const pixels_out = ret.pixels();
-		for(uint32_t y = 0; y != h; ++y)
-		{
-			for(uint32_t x = 0; x != w; ++x)
-			{ pixels_out[x + y*w] = pixels[x + y*w].to_rgba(); }
-		}
+		std::transform(
+			pixels, pixels + ret.pixel_count(), pixels_out, [](auto item){
+				return item.to_rgba();
+		});
 		return ret;
 	}
 

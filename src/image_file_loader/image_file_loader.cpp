@@ -255,5 +255,9 @@ slideproj::image_file_loader::make_linear_rgba_image(
 		return to_rgba(downsampled.pixels(), downsampled.width(), downsampled.height());
 	});
 
+	if(input.alpha_mode() == alpha_mode::straight)
+	{
+	}
+
 	return ret;
 }
