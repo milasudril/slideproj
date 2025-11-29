@@ -433,6 +433,9 @@ namespace slideproj::image_file_loader
 		invalid = -1
 	};
 
+	constexpr auto is_transposed(pixel_ordering value)
+	{ return static_cast<int>(value) >= 4; }
+
 	constexpr auto to_pixel_ordering_from_exif_orientation(int value)
 	{
 		if(value < 0 || value > 8)
