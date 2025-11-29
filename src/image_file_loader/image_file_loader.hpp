@@ -372,7 +372,7 @@ namespace slideproj::image_file_loader
 		{
 			return std::visit(
 				[cb = std::forward<Callable>(cb), w = m_width, h = m_height]<class T>(T const& item){
-					using elem_type = T::elem_type;
+					using elem_type = T::element_type;
 					return cb(static_cast<elem_type const*>(item.get()), w, h);
 				},
 				m_pixels
@@ -468,13 +468,16 @@ namespace slideproj::image_file_loader
 	{
 		using pixel_type_ret = pixel_type<typename PixelType::value_type, 4>;
 		fixed_typed_image<pixel_type_ret> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
-		for(uint32_t y = 0; y != h_out; ++y)
+		for(uint32_t y = 0; y != h; ++y)
 		{
-			for(uint32_t x = 0; x != w_out; ++x)
-			{ ret[x + y*w] = pixles[x + y*w].to_rgba(); }
+			for(uint32_t x = 0; x != w; ++x)
+			{ ret[x + y*w] = pixels[x + y*w].to_rgba(); }
 		}
 		return ret;
 	}
+
+	fixed_typed_image<pixel_type<float, 4>>
+	make_linear_rgba_image(variant_image const& input, uint32_t scaling_factor);
 };
 
 #endif

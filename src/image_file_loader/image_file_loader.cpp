@@ -236,3 +236,25 @@ slideproj::image_file_loader::load_image(std::filesystem::path const& path)
 
 	return load_image(*img_reader);
 }
+
+slideproj::image_file_loader::fixed_typed_image<
+	slideproj::image_file_loader::pixel_type<float, 4>
+>
+slideproj::image_file_loader::make_linear_rgba_image(
+	variant_image const& input,
+	uint32_t scaling_factor
+)
+{
+	input.visit([scaling_factor](auto pixels, uint32_t w, uint32_t h) {
+		auto downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
+	});
+
+
+	slideproj::image_file_loader::fixed_typed_image<pixel_type<float, 4>> ret{
+		input.width(),
+		input.height(),
+		make_uninitialized_pixel_buffer_tag{}
+	};
+
+	return ret;
+}
