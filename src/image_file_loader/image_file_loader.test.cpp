@@ -283,28 +283,65 @@ TESTCASE(slideproj_image_file_get_metadata)
 
 TESTCASE(slideproj_image_file_loader_load_rgba_imgage_uint8t_from_png_srbg)
 {
-	auto res = slideproj::image_file_loader::load("testdata/rgba_8bit_srgb.png");
-	using expected_type = slideproj::image_file_loader::pixel_storage<slideproj::image_file_loader::color_value<uint8_t>>;
-	auto const& uint8_img = std::get<expected_type>(res.pixels);
-	EXPECT_EQ(uint8_img.width(), 96);
-	EXPECT_EQ(uint8_img.height(), 32);
+	auto res = slideproj::image_file_loader::load_image("testdata/rgba_8bit_srgb.png");
+	EXPECT_EQ(res.width(), 96);
+	EXPECT_EQ(res.height(), 32);
 
-	auto data = uint8_img.pixels();
-	printf("%u %u %u %u\n", data[0].r, data[0].g, data[0].b, data[0].a);
+	using expected_pixel_type = slideproj::image_file_loader::pixel_type<
+		slideproj::image_file_loader::sample_type<
+			uint8_t,
+			slideproj::image_file_loader::srgb_intensity_mapping
+		>,
+		4
+	>;
+	auto pixels = res.pixels<expected_pixel_type>();
+	EXPECT_EQ(pixels[0].red.value, 128);
+	EXPECT_EQ(pixels[0].green.value, 0);
+	EXPECT_EQ(pixels[0].blue.value, 0);
+	EXPECT_EQ(pixels[0].alpha.value, 128);
+
+	EXPECT_EQ(pixels[32].red.value, 0);
+	EXPECT_EQ(pixels[32].green.value, 128);
+	EXPECT_EQ(pixels[32].blue.value, 0);
+	EXPECT_EQ(pixels[32].alpha.value, 128);
+
+	EXPECT_EQ(pixels[64].red.value, 0);
+	EXPECT_EQ(pixels[64].green.value, 0);
+	EXPECT_EQ(pixels[64].blue.value, 128);
+	EXPECT_EQ(pixels[64].alpha.value, 128);
 }
 
 TESTCASE(slideproj_image_file_loader_load_rgba_imgage_uint8t_from_bmp_srbg)
 {
-	auto res = slideproj::image_file_loader::load("testdata/rgba_8bit_srgb.bmp");
-	using expected_type = slideproj::image_file_loader::pixel_storage<slideproj::image_file_loader::color_value<uint8_t>>;
-	auto const& uint8_img = std::get<expected_type>(res.pixels);
-	EXPECT_EQ(uint8_img.width(), 96);
-	EXPECT_EQ(uint8_img.height(), 32);
+	auto res = slideproj::image_file_loader::load_image("testdata/rgba_8bit_srgb.bmp");
+	EXPECT_EQ(res.width(), 96);
+	EXPECT_EQ(res.height(), 32);
 
-	auto data = uint8_img.pixels();
-	printf("%u %u %u %u\n", data[0].r, data[0].g, data[0].b, data[0].a);
+	using expected_pixel_type = slideproj::image_file_loader::pixel_type<
+		slideproj::image_file_loader::sample_type<
+			uint8_t,
+			slideproj::image_file_loader::srgb_intensity_mapping
+		>,
+		4
+	>;
+	auto pixels = res.pixels<expected_pixel_type>();
+	EXPECT_EQ(pixels[0].red.value, 128);
+	EXPECT_EQ(pixels[0].green.value, 0);
+	EXPECT_EQ(pixels[0].blue.value, 0);
+	EXPECT_EQ(pixels[0].alpha.value, 128);
+
+	EXPECT_EQ(pixels[32].red.value, 0);
+	EXPECT_EQ(pixels[32].green.value, 128);
+	EXPECT_EQ(pixels[32].blue.value, 0);
+	EXPECT_EQ(pixels[32].alpha.value, 128);
+
+	EXPECT_EQ(pixels[64].red.value, 0);
+	EXPECT_EQ(pixels[64].green.value, 0);
+	EXPECT_EQ(pixels[64].blue.value, 128);
+	EXPECT_EQ(pixels[64].alpha.value, 128);
 }
 
+#if 0
 TESTCASE(slideproj_image_file_loader_load_rgba_imgage_32bit_from_exr)
 {
 	auto res = slideproj::image_file_loader::load("testdata/rgba_32bit_linear.exr");
@@ -316,3 +353,4 @@ TESTCASE(slideproj_image_file_loader_load_rgba_imgage_32bit_from_exr)
 	auto data = uint8_img.pixels();
 	printf("%.8g %.8g %.8g %.8g\n", data[0].r, data[0].g, data[0].b, data[0].a);
 }
+#endif

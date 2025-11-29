@@ -175,32 +175,58 @@ slideproj::image_file_loader::image_file_metadata_repository::get_metadata(
 	return m_cache.insert(std::pair{entry.id(), load_metadata(entry.path())}).first->second;
 }
 
-namespace
+slideproj::image_file_loader::image::image(
+	pixel_type_id pixel_type,
+	uint32_t w,
+	uint32_t h,
+	make_uninitialized_pixel_buffer_tag
+):
+	m_width{0},
+	m_height{0}
 {
-	template<size_t Index>
-	auto get_rgba_image_loader_impl(OIIO::TypeDesc format)
-	{
-		using slideproj::image_file_loader::dynamic_pixel_storage;
-		if constexpr(Index == std::variant_size_v<dynamic_pixel_storage>)
-		{ return slideproj::image_file_loader::load_unsupported_rgba_image; }
-		else
-		{
-			using slideproj::image_file_loader::oiio_type_desc;
-			using current_type = std::variant_alternative_t<Index, dynamic_pixel_storage>::value_type::value_type;
-			if(oiio_type_desc<current_type>::value == format)
-			{ return slideproj::image_file_loader::load_as_dynamic_pixel_storage<current_type>; }
-			else
-			{ return get_rgba_image_loader_impl<Index + 1>(format); }
+	if(!pixel_type.is_valid())
+	{ return; }
+
+	m_pixels = utils::make_variant<pixel_buffer>(
+		pixel_type.value(), [
+			array_len = static_cast<size_t>(w) * static_cast<size_t>(h)
+		]<class T>(utils::make_variant_type_tag<T>){
+			using elem_type = typename T::element_type;
+			return std::make_unique_for_overwrite<elem_type[]>(array_len);
 		}
-	}
+	);
+	m_width = w;
+	m_height = h;
 }
 
-slideproj::image_file_loader::rgba_image_loader
-slideproj::image_file_loader::get_rgba_image_loader(OIIO::TypeDesc format)
-{ return get_rgba_image_loader_impl<0>(format); }
+slideproj::image_file_loader::image
+slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
+{
+	auto const& spec = input.spec();
+	if(spec.width <= 0 || spec.height <= 0 || spec.nchannels <= 0)
+	{ return image{}; }
+
+	printf("Alpha mode: %d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
+	printf("Color space: %s\n", spec.get_string_attribute("oiio:ColorSpace", "").c_str());
+
+	image ret{
+		pixel_type_id{
+			to_intensity_transfer_function_id(spec.get_string_attribute("OIIO:ColorSpace")),
+			static_cast<size_t>(spec.nchannels),
+			to_value_type_id(spec.format)
+		},
+		static_cast<uint32_t>(spec.width),
+		static_cast<uint32_t>(spec.height),
+		make_uninitialized_pixel_buffer_tag{}
+	};
+	ret.visit([&input, &spec](auto pixel_buffer, auto&&...){
+		input.read_image(0, 0, 0, spec.nchannels, spec.format, pixel_buffer);
+	});
+	return ret;
+}
 
 slideproj::image_file_loader::image
-slideproj::image_file_loader::load(std::filesystem::path const& path)
+slideproj::image_file_loader::load_image(std::filesystem::path const& path)
 {
 	OIIO::ImageSpec spec_in;
 	spec_in.attribute("oiio:UnassociatedAlpha", 1);
@@ -208,28 +234,5 @@ slideproj::image_file_loader::load(std::filesystem::path const& path)
 	if(img_reader == nullptr)
 	{ return image{}; }
 
-	image ret;
-	auto& spec = img_reader->spec();
-	printf("Alpha mode: %d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
-	printf("Color space: %s\n", spec.get_string_attribute("oiio:ColorSpace", "").c_str());
-	switch(spec.nchannels)
-	{
-		case 4:
-			ret.pixels = (get_rgba_image_loader(spec.format))(*img_reader);
-			break;
-#if 0
-		case 2:
-			load_two_channel_image_as_grayalpha_image(*img_reader, pixels());
-			break;
-		case 3:
-			load_three_channel_image_as_rgb_image(*img_reader, pixels());
-			break;
-		case 4:
-			load_four_channel_image_as_rgba_image(*img_reader, pixels());
-			break;
-#endif
-		default:
-			return ret;
-	}
-	return ret;
+	return load_image(*img_reader);
 }

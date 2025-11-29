@@ -112,61 +112,11 @@ namespace slideproj::image_file_loader
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
 	};	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
 
-	struct make_uninitialized_pixel_storage_tag{};
-
-	template<class PixelType>
-	class pixel_storage
-	{
-	public:
-		using value_type = PixelType;
-
-		pixel_storage() = default;
-
-		explicit pixel_storage(uint32_t w, uint32_t h, make_uninitialized_pixel_storage_tag):
-			m_width{w},
-			m_height{h},
-			m_pixels{
-				std::make_unique_for_overwrite<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))
-			}
-		{}
-
-		explicit pixel_storage(uint32_t w, uint32_t h):
-			m_width{w},
-			m_height{h},
-			m_pixels{std::make_unique<PixelType[]>(static_cast<size_t>(w)*static_cast<size_t>(h))}
-		{}
-
-		auto width() const
-		{ return m_width; }
-
-		auto height() const
-		{ return m_height; }
-
-		auto pixel_count() const
-		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
-
-		auto pixels() const
-		{
-			return std::span{
-				m_pixels.get(),
-				pixel_count()
-			};
-		}
-
-		bool is_empty() const
-		{ return m_width == 0 || m_height == 0 || m_pixels == nullptr; }
-
-	private:
-		uint32_t m_width{0};
-		uint32_t m_height{0};
-		std::unique_ptr<PixelType[]> m_pixels;
-	};
-
 	// Image conversion pipeline
 	//
 	// 1.
 	//    template<class PixelValue>
-	//    pixel_storage<rgba_value<float>> downsample_to_linear(span_2d<PixelValue const> input)
+	//    image<rgba_value<float>> downsample_to_linear(span_2d<PixelValue const> input)
 	//
 	//    PixelValue: gray, gray + alpha, rgb, rgba
 	//    SampleValue: uint8_t, uint16_t, half, float
@@ -390,34 +340,19 @@ namespace slideproj::image_file_loader
 		size_t m_value = std::numeric_limits<size_t>::max();
 	};
 
-	class pixel_storage_2
+	struct make_uninitialized_pixel_buffer_tag{};
+
+	class image
 	{
 	public:
-		pixel_storage_2() = default;
+		image() = default;
 
-		explicit pixel_storage_2(
+		explicit image(
 			pixel_type_id pixel_type,
 			uint32_t w,
 			uint32_t h,
-			make_uninitialized_pixel_storage_tag
-		):
-			m_width{0},
-			m_height{0}
-		{
-			if(!pixel_type.is_valid())
-			{ return; }
-
-			m_pixels = utils::make_variant<pixel_buffer>(
-				pixel_type.value(), [
-					array_len = static_cast<size_t>(w) * static_cast<size_t>(h)
-				]<class T>(utils::make_variant_type_tag<T>){
-					using elem_type = typename T::element_type;
-					return std::make_unique_for_overwrite<elem_type[]>(array_len);
-				}
-			);
-			m_width = w;
-			m_height = h;
-		}
+			make_uninitialized_pixel_buffer_tag
+		);
 
 		auto width() const
 		{ return m_width; }
@@ -454,117 +389,25 @@ namespace slideproj::image_file_loader
 			);
 		}
 
+		template<class PixelType>
+		PixelType const* pixels()
+		{
+			auto item = std::get_if<std::unique_ptr<PixelType[]>>(&m_pixels);
+			if(item == nullptr)
+			{ return nullptr; }
+			return item->get();
+		}
+
+
 	private:
 		uint32_t m_width{0};
 		uint32_t m_height{0};
 		pixel_buffer m_pixels;
 	};
 
+	image load_image(OIIO::ImageInput& input);
 
-	template<class ValueType>
-	struct color_value
-	{
-		using value_type = ValueType;
-		ValueType r;
-		ValueType g;
-		ValueType b;
-		ValueType a;
-	};
-
-	// TODO: Add support for more color types
-	using dynamic_pixel_storage = std::variant<
-		pixel_storage<color_value<uint8_t>>,
-		pixel_storage<color_value<float>>
-	>;
-
-	template<class T>
-	struct oiio_type_desc
-	{};
-
-	template<>
-	struct oiio_type_desc<uint8_t>
-	{
-		static constexpr auto value = OIIO::TypeDesc::UINT8;
-	};
-
-	template<>
-	struct oiio_type_desc<float>
-	{
-		static constexpr auto value = OIIO::TypeDesc::FLOAT;
-	};
-
-	template<class T>
-	constexpr OIIO::TypeDesc oiio_type_desc_v = oiio_type_desc<T>::value;
-
-	template<class T>
-	struct rgba_value
-	{
-		T red;
-		T green;
-		T blue;
-		T alpha;
-	};
-
-	template<class T>
-	struct rgb_value
-	{
-		T red;
-		T green;
-		T blue;
-	};
-
-	template<class T>
-	struct gray_alpha_value
-	{
-		T gray;
-		T alpha;
-	};
-
-	template<class T>
-	struct gray_value
-	{
-		T gray;
-	};
-
-	struct image
-	{
-		intensity_transfer_function_id transfer_function{intensity_transfer_function_id::linear};
-		dynamic_pixel_storage pixels;
-	};
-
-	template<class ValueType>
-	pixel_storage<color_value<ValueType>> load_rgba_image(OIIO::ImageInput& input)
-	{
-		auto const& spec = input.spec();
-		static constexpr auto nchannels = 4;
-		static constexpr auto format = oiio_type_desc_v<ValueType>;
-		assert(spec.nchannels == nchannels);
-		assert(spec.format == format);
-
-		if(spec.width <= 0 || spec.height <= 0)
-		{ return pixel_storage<color_value<ValueType>>{}; }
-
-		pixel_storage<color_value<ValueType>> ret{
-			static_cast<uint32_t>(spec.width),
-			static_cast<uint32_t>(spec.height)
-		};
-		input.read_image(0, 0, 0, nchannels, format, ret.pixels().data());
-
-		return ret;
-	}
-
-	template<class ValueType>
-	dynamic_pixel_storage load_as_dynamic_pixel_storage(OIIO::ImageInput& input)
-	{ return dynamic_pixel_storage{load_rgba_image<ValueType>(input)}; }
-
-	inline dynamic_pixel_storage load_unsupported_rgba_image(OIIO::ImageInput&)
-	{ return dynamic_pixel_storage{}; }
-
-	using rgba_image_loader = dynamic_pixel_storage (*)(OIIO::ImageInput&);
-
-	rgba_image_loader get_rgba_image_loader(OIIO::TypeDesc format);
-
-	image load(std::filesystem::path const&);
+	image load_image(std::filesystem::path const&);
 };
 
 #endif
