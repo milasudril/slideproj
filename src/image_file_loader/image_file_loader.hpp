@@ -21,17 +21,6 @@
 
 namespace slideproj::image_file_loader
 {
-	enum class pixel_ordering{
-		top_to_bottom_left_to_right,
-		top_to_bottom_right_to_left,
-		bottom_to_top_right_to_left,
-		bottom_to_top_left_to_right,
-		left_to_right_top_to_bottom,
-		right_to_left_top_to_bottom,
-		right_to_left_bottom_to_top,
-		left_to_right_bottom_to_top
-	};
-
 	template<class Rep>
 	struct exif_date_time_value
 	{
@@ -74,9 +63,6 @@ namespace slideproj::image_file_loader
 		file_collector::file_clock::time_point const* timestamp() const
 		{ return (m_valid_fields&timestamp_valid)? &m_timestamp : nullptr; }
 
-		enum pixel_ordering pixel_ordering() const
-		{ return m_pixel_ordering; }
-
 	private:
 		static constexpr size_t description_valid = 0x1;
 		static constexpr size_t timestamp_valid = 0x2;
@@ -84,7 +70,6 @@ namespace slideproj::image_file_loader
 		size_t m_valid_fields = 0;
 		std::string m_description;
 		file_collector::file_clock::time_point m_timestamp{};
-		enum pixel_ordering m_pixel_ordering = pixel_ordering::top_to_bottom_left_to_right;
 	};
 
 	inline auto load_exif_query_result(std::filesystem::path const& path)
@@ -99,7 +84,6 @@ namespace slideproj::image_file_loader
 
 	struct image_file_info:file_collector::file_metadata
 	{
-		enum pixel_ordering pixel_ordering;
 	};
 
 	image_file_info load_metadata(std::filesystem::path const& path);
@@ -437,6 +421,27 @@ namespace slideproj::image_file_loader
 
 	enum class alpha_mode{straight, premultiplied};
 
+	enum class pixel_ordering{
+		top_to_bottom_left_to_right,
+		top_to_bottom_right_to_left,
+		bottom_to_top_right_to_left,
+		bottom_to_top_left_to_right,
+		left_to_right_top_to_bottom,
+		right_to_left_top_to_bottom,
+		right_to_left_bottom_to_top,
+		left_to_right_bottom_to_top,
+		invalid = -1
+	};
+
+	constexpr auto to_pixel_ordering_from_exif_orientation(int value)
+	{
+		if(value < 0 || value > 8)
+		{ return pixel_ordering::invalid; }
+		if(value == 0)
+		{ return pixel_ordering::top_to_bottom_left_to_right; }
+		return static_cast<pixel_ordering>(value - 1);
+	}
+
 	class variant_image
 	{
 	public:
@@ -447,6 +452,7 @@ namespace slideproj::image_file_loader
 			enum alpha_mode alpha_mode,
 			uint32_t w,
 			uint32_t h,
+			enum pixel_ordering pixel_ordering,
 			make_uninitialized_pixel_buffer_tag
 		);
 
@@ -455,6 +461,9 @@ namespace slideproj::image_file_loader
 
 		auto height() const
 		{ return m_height; }
+
+		auto pixel_ordering() const
+		{ return m_pixel_ordering; }
 
 		auto pixel_count() const
 		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
@@ -497,11 +506,11 @@ namespace slideproj::image_file_loader
 			return item->get();
 		}
 
-
 	private:
 		enum alpha_mode m_alpha_mode{alpha_mode::straight};
 		uint32_t m_width{0};
 		uint32_t m_height{0};
+		enum pixel_ordering m_pixel_ordering;
 		pixel_buffer m_pixels;
 	};
 

@@ -118,8 +118,7 @@ slideproj::image_file_loader::get_statx_timestamp(OIIO::ImageSpec const& spec, s
 }
 
 slideproj::image_file_loader::exif_query_result::exif_query_result(OIIO::ImageSpec const& spec):
-	m_valid_fields{0},
-	m_pixel_ordering{pixel_ordering::top_to_bottom_left_to_right}
+	m_valid_fields{0}
 {
 	auto timestamp = get_statx_timestamp(spec);
 	if(timestamp)
@@ -137,10 +136,6 @@ slideproj::image_file_loader::exif_query_result::exif_query_result(OIIO::ImageSp
 
 	// TODO: Want to fetch ImageTitle as well, but it appears like OpenImageIO does not support that
 	// field
-
-	auto const orientation = spec.get_int_attribute("Orientation", 1);
-	m_pixel_ordering = orientation>= 1 && orientation <=8?
-		static_cast<enum pixel_ordering>(orientation - 1):pixel_ordering::top_to_bottom_left_to_right;
 }
 
 slideproj::image_file_loader::image_file_info
@@ -156,8 +151,6 @@ slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 			path.stem().string();
 	// TODO: Look for a file in parent directory with a descriptive name
 	ret.in_group = path.parent_path();
-	ret.pixel_ordering = exif_info.pixel_ordering();
-
 	return ret;
 }
 
@@ -180,11 +173,13 @@ slideproj::image_file_loader::variant_image::variant_image(
 	enum alpha_mode alpha_mode,
 	uint32_t w,
 	uint32_t h,
+	enum pixel_ordering pixel_ordering,
 	make_uninitialized_pixel_buffer_tag
 ):
 	m_alpha_mode{alpha_mode},
 	m_width{0},
-	m_height{0}
+	m_height{0},
+	m_pixel_ordering(pixel_ordering)
 {
 	if(!pixel_type.is_valid())
 	{ return; }
@@ -208,9 +203,6 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 	if(spec.width <= 0 || spec.height <= 0 || spec.nchannels <= 0)
 	{ return variant_image{}; }
 
-	printf("Alpha mode: %d\n", spec.get_int_attribute("oiio:UnassociatedAlpha"));
-	printf("Color space: %s\n", spec.get_string_attribute("oiio:ColorSpace", "").c_str());
-	printf("Orientation: %d\n", spec.get_int_attribute("Orientation"));
 	auto const alpha_mode =
 		(spec.nchannels%2 == 0 && spec.get_int_attribute("oiio:UnassociatedAlpha")) == 0?
 		alpha_mode::premultiplied: alpha_mode::straight;
@@ -224,6 +216,7 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 		alpha_mode,
 		static_cast<uint32_t>(spec.width),
 		static_cast<uint32_t>(spec.height),
+		to_pixel_ordering_from_exif_orientation(spec.get_int_attribute("Orientation")),
 		make_uninitialized_pixel_buffer_tag{}
 	};
 	ret.visit([&input, &spec](auto pixel_buffer, auto&&...){
