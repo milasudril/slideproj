@@ -437,6 +437,29 @@ namespace slideproj::image_file_loader
 		bool is_empty() const
 		{ return m_width == 0 || m_height == 0; }
 
+		template<class Callable>
+		decltype(auto) visit(Callable&& cb)
+		{
+			return std::visit(
+				[cb = std::forward<Callable>(cb), w = m_width, h = m_height](auto const& item){
+					return cb(item.get(), w, h);
+				},
+				m_pixels
+			);
+		}
+
+		template<class Callable>
+		decltype(auto) visit(Callable&& cb) const
+		{
+			return std::visit(
+				[cb = std::forward<Callable>(cb), w = m_width, h = m_height]<class T>(T const& item){
+					using elem_type = T::elem_type;
+					return cb(static_cast<elem_type const*>(item.get()), w, h);
+				},
+				m_pixels
+			);
+		}
+
 	private:
 		uint32_t m_width{0};
 		uint32_t m_height{0};
