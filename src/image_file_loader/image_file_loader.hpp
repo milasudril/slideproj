@@ -580,10 +580,10 @@ namespace slideproj::image_file_loader
 				for(uint32_t eta = 0; eta != scaling_factor; ++eta)
 				{
 					for(uint32_t xi = 0; xi != scaling_factor; ++xi)
-					{ avg += pixels[(x + xi) + (y + eta)*w].to_linear_float(); }
+					{ avg += pixels[(x + xi) + (y + eta)*w_out].to_linear_float(); }
 				}
 				avg /= static_cast<float>(scaling_factor*scaling_factor);
-				pixels_out[x + y*w] = avg;
+				pixels_out[x + y*w_out] = avg;
 			}
 		}
 		return ret;
