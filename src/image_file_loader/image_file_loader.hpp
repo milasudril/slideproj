@@ -329,23 +329,60 @@ namespace slideproj::image_file_loader
 
 	static_assert(std::variant_size_v<pixel_buffer> == 48);
 
-	enum class intensity_transfer_function_id{linear, srgb, g22};
-	enum class sample_value_type_id{uint8, uint16, float16, float32};
+	enum class intensity_transfer_function_id{linear, srgb, g22, invalid = -1};
+	enum class sample_value_type_id{uint8, uint16, float16, float32, invalid = -1};
 
-	constexpr auto make_pixel_type_id(
-		intensity_transfer_function_id transfer_function_id,
-		size_t channel_count,
-		sample_value_type_id type_id
-	)
+	constexpr auto to_value_type_id(OIIO::TypeDesc const& type)
 	{
-		if(channel_count < 1 || channel_count > 4)
-		{ return std::numeric_limits<size_t>::max(); }
+		if(type == OIIO::TypeDesc::UINT8)
+		{ return sample_value_type_id::uint8; }
 
-		auto const tf = static_cast<size_t>(transfer_function_id);
-		auto const channel_index = channel_count - 1;
-		return static_cast<size_t>(type_id) + 4*channel_index + 16*tf;
+		if(type == OIIO::TypeDesc::UINT16)
+		{ return sample_value_type_id::uint16; }
+
+		if(type ==OIIO::TypeDesc::HALF)
+		{ return sample_value_type_id::float16; }
+
+		if(type == OIIO::TypeDesc::FLOAT)
+		{ return sample_value_type_id::float32; }
+
+		return sample_value_type_id::invalid;
 	}
 
+	class pixel_type_id
+	{
+	public:
+		pixel_type_id() = default;
+
+		constexpr explicit pixel_type_id(
+			intensity_transfer_function_id itf_id,
+			size_t channel_count,
+			sample_value_type_id type_id
+		): m_value{std::numeric_limits<size_t>::max()}
+		{
+			if(itf_id == intensity_transfer_function_id::invalid)
+			{ return; }
+
+			if(channel_count < 1 || channel_count > 4)
+			{ return; }
+
+			if(type_id == sample_value_type_id::invalid)
+			{ return; }
+
+			auto const tf = static_cast<size_t>(itf_id);
+			auto const channel_index = channel_count - 1;
+			m_value = static_cast<size_t>(type_id) + 4*channel_index + 16*tf;
+		}
+
+		constexpr bool is_valid() const
+		{ return m_value != std::numeric_limits<size_t>::max(); }
+
+		constexpr auto value() const
+		{ return m_value; }
+
+	private:
+		size_t m_value = std::numeric_limits<size_t>::max();
+	};
 
 	template<class ValueType>
 	struct color_value
