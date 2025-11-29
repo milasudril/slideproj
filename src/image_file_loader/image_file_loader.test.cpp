@@ -262,24 +262,21 @@ TESTCASE(slideproj_image_file_loader_exif_query_result_from_oiio_sepc_with_orien
 	);
 }
 
-#if 0
 TESTCASE(slideproj_image_file_get_metadata)
 {
-	// TODO: Go and take some pictures that can be used as test data
-
 	slideproj::image_file_loader::image_file_metadata_repository repo;
 	auto const& res = repo.get_metadata(
 		slideproj::file_collector::file_list_entry{
 			slideproj::file_collector::file_id{0},
-			std::filesystem::path{"/dev/shm/img_0001.jpg"}
+			std::filesystem::path{"testdata/IMG_1109.JPG"}
 		}
 	);
 
 	auto timestamp = std::format("{}", res.timestamp.time_since_epoch().count());
-	printf("%s %s %s\n", timestamp.c_str(), res.caption.c_str(), res.in_group.c_str());
-	//EXPECT_EQ(timestamp, "9223372036854775807999999999");
+	EXPECT_EQ(res.timestamp.time_since_epoch(), std::chrono::seconds{1577799388});
+	EXPECT_EQ(res.caption, "IMG_1109");
+	EXPECT_EQ(res.in_group, "testdata");
 }
-#endif
 
 TESTCASE(slideproj_image_file_loader_load_uint8_rgba_from_png_srbg)
 {
