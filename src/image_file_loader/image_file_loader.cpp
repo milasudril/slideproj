@@ -273,5 +273,8 @@ slideproj::image_file_loader::make_linear_rgba_image(
 			}
 		);
 	}
+
+	// TODO: Apply orientation
+
 	return ret;
 }
