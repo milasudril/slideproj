@@ -380,3 +380,27 @@ TESTCASE(slideproj_image_file_loader_load_rgba_image_from_png_srbg_scale_by_2)
 	EXPECT_EQ(pixels[32].blue, 0.108353525f);
 	EXPECT_EQ(pixels[32].alpha, 0.50196081f);
 }
+
+TESTCASE(slideproj_image_file_loader_load_rgba_image_from_png_srbg)
+{
+	auto res = slideproj::image_file_loader::load_rgba_image("testdata/rgba_8bit_srgb.png", 1);
+
+	EXPECT_EQ(res.width(), 96);
+	EXPECT_EQ(res.height(), 32);
+
+	auto const pixels = res.pixels();
+	EXPECT_EQ(pixels[0].red, 0.108353525f);
+	EXPECT_EQ(pixels[0].green, 0.0f);
+	EXPECT_EQ(pixels[0].blue, 0.0f);
+	EXPECT_EQ(pixels[0].alpha, 0.50196081f);
+
+	EXPECT_EQ(pixels[32].red, 0.0f);
+	EXPECT_EQ(pixels[32].green, 0.108353525f);
+	EXPECT_EQ(pixels[32].blue, 0.0f);
+	EXPECT_EQ(pixels[32].alpha, 0.50196081f);
+
+	EXPECT_EQ(pixels[64].red, 0.0f);
+	EXPECT_EQ(pixels[64].green, 0.0f);
+	EXPECT_EQ(pixels[64].blue, 0.108353525f);
+	EXPECT_EQ(pixels[64].alpha, 0.50196081f);
+}
