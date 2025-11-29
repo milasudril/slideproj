@@ -410,6 +410,46 @@ namespace slideproj::image_file_loader
 
 	variant_image load_image(std::filesystem::path const&);
 
+	template<class T>
+	class fixed_typed_image
+	{
+	public:
+		fixed_typed_image() = default;
+
+		explicit fixed_typed_image(
+			uint32_t w,
+			uint32_t h,
+			make_uninitialized_pixel_buffer_tag
+		):
+			m_width{w},
+			m_height{h},
+			m_pixels{std::make_unique_for_overwrite<T[]>(static_cast<size_t>(w)*static_cast<size_t>(h))}
+		{}
+
+		auto width() const
+		{ return m_width; }
+
+		auto height() const
+		{ return m_height; }
+
+		auto pixel_count() const
+		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
+
+		bool is_empty() const
+		{ return m_width == 0 || m_height == 0; }
+
+		auto pixels()
+		{ return m_pixels.get(); }
+
+		auto pixels() const
+		{ return static_cast<T const*>(m_pixels.get()); }
+
+	private:
+		uint32_t m_width{0};
+		uint32_t m_height{0};
+		std::unique_ptr<T[]> m_pixels;
+	};
+
 	template<class PixelType>
 	auto downsample_to_linear(PixelType const* pixels, uint32_t w, uint32_t h, uint32_t scaling_factor)
 	{
