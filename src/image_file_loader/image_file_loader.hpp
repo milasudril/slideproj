@@ -181,8 +181,11 @@ namespace slideproj::image_file_loader
 	struct sample_type
 	{
 		Type value;
-		constexpr float to_float() const
+		constexpr float to_linear_float() const
 		{ return IntensityTransferFunction::to_linear_float(value); }
+
+		constexpr float to_raw_float() const
+		{ return utils::to_normalized_float(value); }
 	};
 
 	template<class IntensityTransferFunction, class ... Types>

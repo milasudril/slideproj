@@ -176,5 +176,15 @@ namespace slideproj::utils
 			std::variant<uint8_t, uint16_t, uint32_t>
 		>
 	);
+
+	template<std::unsigned_integral T>
+	inline constexpr float to_normalized_float(T value)
+	{
+		return static_cast<float>(value)
+			/static_cast<float>(std::numeric_limits<T>::max());
+	}
+
+	inline constexpr float to_normalized_float(float value)
+	{ return value; }
 }
 #endif
