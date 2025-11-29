@@ -246,7 +246,8 @@ slideproj::image_file_loader::make_linear_rgba_image(
 )
 {
 	input.visit([scaling_factor](auto pixels, uint32_t w, uint32_t h) {
-		auto downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
+		auto const downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
+		auto const rgba = to_rgba(downsampled.pixels(), downsampled.width(), downsampled.height());
 	});
 
 

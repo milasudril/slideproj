@@ -167,6 +167,8 @@ namespace slideproj::image_file_loader
 	template<class SampleType>
 	struct pixel_type<SampleType, 1>
 	{
+		using sample_type = SampleType;
+
 		SampleType gray;
 		static constexpr auto channel_count = 1;
 
@@ -188,11 +190,24 @@ namespace slideproj::image_file_loader
 			gray /= factor;
 			return *this;
 		}
+
+		constexpr auto to_rgba() const
+		{
+			return pixel_type<SampleType, 4>{
+				.red = gray,
+				.green = gray,
+				.blue = gray,
+				// TODO: Deduce max value from SampleType
+				.alpha = 1.0f
+			};
+		}
 	};
 
 	template<class SampleType>
 	struct pixel_type<SampleType, 2>
 	{
+		using sample_type = SampleType;
+
 		SampleType gray;
 		SampleType alpha;
 		static constexpr auto channel_count = 2;
@@ -218,14 +233,27 @@ namespace slideproj::image_file_loader
 			alpha /= factor;
 			return *this;
 		}
+
+		constexpr auto to_rgba() const
+		{
+			return pixel_type<SampleType, 4>{
+				.red = gray,
+				.green = gray,
+				.blue = gray,
+				.alpha = alpha
+			};
+		}
 	};
 
 	template<class SampleType>
 	struct pixel_type<SampleType, 3>
 	{
+		using sample_type = SampleType;
+
 		SampleType red;
 		SampleType green;
 		SampleType blue;
+
 		static constexpr auto channel_count = 3;
 
 		constexpr auto to_linear_float() const
@@ -252,15 +280,29 @@ namespace slideproj::image_file_loader
 			blue /= factor;
 			return *this;
 		}
+
+		constexpr auto to_rgba() const
+		{
+			return pixel_type<SampleType, 4>{
+				.red = red,
+				.green = green,
+				.blue = blue,
+				// TODO: Deduce max value from SampleType
+				.alpha = 1.0f
+			};
+		}
 	};
 
 	template<class SampleType>
 	struct pixel_type<SampleType, 4>
 	{
+		using sample_type = SampleType;
+
 		SampleType red;
 		SampleType green;
 		SampleType blue;
 		SampleType alpha;
+
 		static constexpr auto channel_count = 4;
 
 		constexpr auto to_linear_float() const
@@ -289,6 +331,16 @@ namespace slideproj::image_file_loader
 			blue /= factor;
 			alpha /= factor;
 			return *this;
+		}
+
+		constexpr auto to_rgba() const
+		{
+			return pixel_type<SampleType, 4>{
+				.red = red,
+				.green = green,
+				.blue = blue,
+				.alpha = alpha
+			};
 		}
 	};
 
@@ -520,12 +572,13 @@ namespace slideproj::image_file_loader
 	template<class PixelType>
 	auto to_rgba(PixelType const* pixels, uint32_t w, uint32_t h)
 	{
-		using pixel_type_ret = pixel_type<typename PixelType::value_type, 4>;
+		using pixel_type_ret = pixel_type<typename PixelType::sample_type, 4>;
 		fixed_typed_image<pixel_type_ret> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+		auto const pixels_out = ret.pixels();
 		for(uint32_t y = 0; y != h; ++y)
 		{
 			for(uint32_t x = 0; x != w; ++x)
-			{ ret[x + y*w] = pixels[x + y*w].to_rgba(); }
+			{ pixels_out[x + y*w] = pixels[x + y*w].to_rgba(); }
 		}
 		return ret;
 	}
