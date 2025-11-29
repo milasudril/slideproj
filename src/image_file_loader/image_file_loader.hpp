@@ -219,12 +219,6 @@ namespace slideproj::image_file_loader
 		}
 	};
 
-	using sample_types = utils::concatenate_variants_t<
-		sample_types_with_itf<linear_intensity_mapping>,
-		sample_types_with_itf<srgb_intensity_mapping>,
-		sample_types_with_itf<g22_intensity_mapping>
-	>;
-
 	template<class SampleType, size_t ChannelCount>
 	struct pixel_type
 	{};
