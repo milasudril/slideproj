@@ -192,13 +192,31 @@ namespace slideproj::image_file_loader
 	using sample_types_with_itf = std::variant<sample_type<Types, IntensityTransferFunction>...>;
 
 	struct linear_intensity_mapping
-	{};
+	{
+		template<class T>
+		static constexpr float to_linear_float(T value)
+		{ return utils::to_normalized_float(value); }
+	};
 
 	struct srgb_intensity_mapping
-	{};
+	{
+		template<class T>
+		static constexpr float to_linear_float(T value)
+		{
+			auto const val = utils::to_normalized_float(value);
+			return (val <= 0.04045f)? val/12.92f : std::pow((val + 0.055f)/1.055f, 2.4f);
+		}
+	};
 
 	struct g22_intensity_mapping
-	{};
+	{
+		template<class T>
+		static constexpr float to_linear_float(T value)
+		{
+			auto const val = utils::to_normalized_float(value);
+			return std::pow(val, 2.2f);
+		}
+	};
 
 	using sample_types = utils::concatenate_variants_t<
 		sample_types_with_itf<linear_intensity_mapping>,
