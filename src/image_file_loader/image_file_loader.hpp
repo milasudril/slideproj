@@ -509,7 +509,20 @@ namespace slideproj::image_file_loader
 
 	variant_image load_image(OIIO::ImageInput& input);
 
-	variant_image load_image(std::filesystem::path const&);
+	inline auto open_image_file(std::filesystem::path const& path)
+	{
+		OIIO::ImageSpec spec_in;
+		spec_in.attribute("oiio:UnassociatedAlpha", 1);
+		return OIIO::ImageInput::open(path, &spec_in);
+	}
+
+	inline auto load_image(std::filesystem::path const& path)
+	{
+		auto img_reader = open_image_file(path);
+		if(img_reader == nullptr)
+		{ return variant_image{}; }
+		return load_image(*img_reader);
+	}
 
 	template<class T>
 	class fixed_typed_image
@@ -591,6 +604,17 @@ namespace slideproj::image_file_loader
 
 	fixed_typed_image<pixel_type<float, 4>>
 	make_linear_rgba_image(variant_image const& input, uint32_t scaling_factor);
+
+	inline auto load_rgba_image(OIIO::ImageInput& input, uint32_t scaling_factor)
+	{ return make_linear_rgba_image(load_image(input), scaling_factor); }
+
+	inline auto load_rgba_image(std::filesystem::path const& path, uint32_t scaling_factor)
+	{
+		auto img_reader = open_image_file(path);
+		if(img_reader == nullptr)
+		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
+		return load_rgba_image(*img_reader, scaling_factor);
+	}
 };
 
 #endif

@@ -231,18 +231,6 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 	return ret;
 }
 
-slideproj::image_file_loader::variant_image
-slideproj::image_file_loader::load_image(std::filesystem::path const& path)
-{
-	OIIO::ImageSpec spec_in;
-	spec_in.attribute("oiio:UnassociatedAlpha", 1);
-	auto img_reader = OIIO::ImageInput::open(path, &spec_in);
-	if(img_reader == nullptr)
-	{ return variant_image{}; }
-
-	return load_image(*img_reader);
-}
-
 slideproj::image_file_loader::fixed_typed_image<
 	slideproj::image_file_loader::pixel_type<float, 4>
 >
