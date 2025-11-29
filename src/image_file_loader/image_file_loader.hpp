@@ -1,7 +1,8 @@
 //@	{
 //@		"dependencies_extra":[
 //@			{"ref":"./image_file_loader.o", "rel":"implementation"},
-//@			{"ref":"OpenImageIO", "rel":"implementation", "origin":"pkg-config"}
+//@			{"ref":"OpenImageIO", "rel":"implementation", "origin":"pkg-config"},
+//@			{"ref":"Imath", "rel":"implementation", "origin":"pkg-config"}
 //@		]
 //@	}
 
@@ -125,7 +126,7 @@ namespace slideproj::image_file_loader
 		constexpr float to_linear_float() const
 		{ return IntensityTransferFunction::to_linear_float(value); }
 
-		constexpr float to_raw_float() const
+		constexpr float to_normalized_float() const
 		{ return utils::to_normalized_float(value); }
 	};
 
@@ -167,6 +168,26 @@ namespace slideproj::image_file_loader
 	struct pixel_type<SampleType, 1>
 	{
 		SampleType gray;
+		static constexpr auto channel_count = 1;
+
+		constexpr auto to_linear_float() const
+		{
+			return pixel_type<float, 1>{
+				.gray = gray.to_linear_float()
+			};
+		}
+
+		constexpr auto& operator+=(pixel_type<SampleType, 1> const& other)
+		{
+			gray += other.gray;
+			return *this;
+		}
+
+		constexpr auto& operator/=(float factor)
+		{
+			gray /= factor;
+			return *this;
+		}
 	};
 
 	template<class SampleType>
@@ -174,6 +195,29 @@ namespace slideproj::image_file_loader
 	{
 		SampleType gray;
 		SampleType alpha;
+		static constexpr auto channel_count = 2;
+
+		constexpr auto to_linear_float() const
+		{
+			return pixel_type<float, 2>{
+				.gray = gray.to_linear_float(),
+				.alpha = alpha.to_normalized_float()
+			};
+		}
+
+		constexpr auto& operator+=(pixel_type<SampleType, 2> const& other)
+		{
+			gray += other.gray;
+			alpha += other.alpha;
+			return *this;
+		}
+
+		constexpr auto& operator/=(float factor)
+		{
+			gray /= factor;
+			alpha /= factor;
+			return *this;
+		}
 	};
 
 	template<class SampleType>
@@ -182,6 +226,32 @@ namespace slideproj::image_file_loader
 		SampleType red;
 		SampleType green;
 		SampleType blue;
+		static constexpr auto channel_count = 3;
+
+		constexpr auto to_linear_float() const
+		{
+			return pixel_type<float, 3>{
+				.red = red.to_linear_float(),
+				.green = green.to_linear_float(),
+				.blue = blue.to_linear_float()
+			};
+		}
+
+		constexpr auto& operator+=(pixel_type<SampleType, 3> const& other)
+		{
+			red += other.red;
+			green += other.green;
+			blue += other.blue;
+			return *this;
+		}
+
+		constexpr auto& operator/=(float factor)
+		{
+			red /= factor;
+			green /= factor;
+			blue /= factor;
+			return *this;
+		}
 	};
 
 	template<class SampleType>
@@ -191,6 +261,35 @@ namespace slideproj::image_file_loader
 		SampleType green;
 		SampleType blue;
 		SampleType alpha;
+		static constexpr auto channel_count = 4;
+
+		constexpr auto to_linear_float() const
+		{
+			return pixel_type<float, 4>{
+				.red = red.to_linear_float(),
+				.green = green.to_linear_float(),
+				.blue = blue.to_linear_float(),
+				.alpha = alpha.to_normalized_float()
+			};
+		}
+
+		constexpr auto& operator+=(pixel_type<SampleType, 4> const& other)
+		{
+			red += other.red;
+			green += other.green;
+			blue += other.blue;
+			alpha += other.alpha;
+			return *this;
+		}
+
+		constexpr auto& operator/=(float factor)
+		{
+			red /= factor;
+			green /= factor;
+			blue /= factor;
+			alpha /= factor;
+			return *this;
+		}
 	};
 
 	template<class SampleType, size_t ChannelCount>
@@ -210,7 +309,7 @@ namespace slideproj::image_file_loader
 		if constexpr(ChannelCount == 2)
 		{
 			auto const conv_gray = value.gray.to_linear_float();
-			auto const conv_alpha = value.alpha.to_raw_float();
+			auto const conv_alpha = value.alpha.to_normalized_float();
 			return pixel_type<float, 4>{
 				.red = conv_gray,
 				.green = conv_gray,
@@ -234,7 +333,7 @@ namespace slideproj::image_file_loader
 				.red = value.red.to_linear_float(),
 				.green = value.green.to_linear_float(),
 				.blue = value.blue.to_linear_float(),
-				.alpha = value.alpha.to_raw_float()
+				.alpha = value.alpha.to_normalized_float()
 			};
 		}
 	}
@@ -446,6 +545,7 @@ namespace slideproj::image_file_loader
 		auto const h_out = h/scaling_factor;
 		using pixel_type_ret = pixel_type<float, PixelType::channel_count>;
 		fixed_typed_image<pixel_type_ret> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+		auto const pixels_out = ret.pixels();
 		for(uint32_t y = 0; y != h_out; ++y)
 		{
 			for(uint32_t x = 0; x != w_out; ++x)
@@ -457,7 +557,7 @@ namespace slideproj::image_file_loader
 					{ avg += pixels[(x + xi) + (y + eta)*w].to_linear_float(); }
 				}
 				avg /= static_cast<float>(scaling_factor*scaling_factor);
-				ret[x + y*w] = avg;
+				pixels_out[x + y*w] = avg;
 			}
 		}
 		return ret;
