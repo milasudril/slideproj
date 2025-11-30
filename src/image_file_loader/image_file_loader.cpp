@@ -295,7 +295,7 @@ uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle in
 	{ return 1; }
 
 	auto const input_aspect_ratio = static_cast<double>(input.width)/static_cast<double>(input.height);
-	auto const output_aspect_ratio = static_cast<double>(fit.width)/static_cast<double>(input.height);
+	auto const output_aspect_ratio = static_cast<double>(fit.width)/static_cast<double>(fit.height);
 
 	return (input_aspect_ratio >= output_aspect_ratio)? input.width/fit.width : input.height/fit.height;
 }
