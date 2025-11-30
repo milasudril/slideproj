@@ -568,6 +568,12 @@ namespace slideproj::image_file_loader
 		auto pixels() const
 		{ return static_cast<T const*>(m_pixels.get()); }
 
+		auto operator()(uint32_t x, uint32_t y) const
+		{ return m_pixels.get()[x + y*m_width]; }
+
+		auto& operator()(uint32_t x, uint32_t y)
+		{ return m_pixels.get()[x + y*m_width]; }
+
 	private:
 		uint32_t m_width{0};
 		uint32_t m_height{0};
@@ -614,6 +620,166 @@ namespace slideproj::image_file_loader
 		return ret;
 	}
 
+	template<pixel_ordering PixelOrdering>
+	struct apply_pixel_ordering_impl
+	{};
+
+	template<>
+	struct apply_pixel_ordering_impl<pixel_ordering::top_to_bottom_right_to_left>
+	{
+		template<class PixelType>
+		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		{
+			auto const w = src.width();
+			auto const h = src.height();
+			fixed_typed_image<PixelType> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+			for(uint32_t y = 0; y != h; ++y)
+			{
+				for(uint32_t x = 0; x != w; ++x)
+				{ ret(x, y) = src((w - 1) - x, y) ;}
+			}
+			return ret;
+		}
+	};
+
+	template<>
+	struct apply_pixel_ordering_impl<pixel_ordering::bottom_to_top_right_to_left>
+	{
+		template<class PixelType>
+		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		{
+			auto const w = src.width();
+			auto const h = src.height();
+			fixed_typed_image<PixelType> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+			for(uint32_t y = 0; y != h; ++y)
+			{
+				for(uint32_t x = 0; x != w; ++x)
+				{ ret(x, y) = src((w - 1) - x, (h - 1) - y) ;}
+			}
+			return ret;
+		}
+	};
+
+	template<>
+	struct apply_pixel_ordering_impl<pixel_ordering::bottom_to_top_left_to_right>
+	{
+		template<class PixelType>
+		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		{
+			auto const w = src.width();
+			auto const h = src.height();
+			fixed_typed_image<PixelType> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+			for(uint32_t y = 0; y != h; ++y)
+			{
+				for(uint32_t x = 0; x != w; ++x)
+				{ ret(x, y) = src(x, (h - 1) - y) ;}
+			}
+			return ret;
+		}
+	};
+
+	template<>
+	struct apply_pixel_ordering_impl<pixel_ordering::left_to_right_top_to_bottom>
+	{
+		template<class PixelType>
+		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		{
+			auto const w_in = src.width();
+			auto const h_in = src.height();
+			auto const w_out = h_in;
+			auto const h_out = w_in;
+			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
+			{
+				auto const x_in = y_out;
+				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
+				{
+					auto const y_in = x_out;
+					ret(x_out, y_out) = src(x_in, y_in);
+				}
+			}
+			return ret;
+		}
+	};
+
+	template<>
+	struct apply_pixel_ordering_impl<pixel_ordering::right_to_left_top_to_bottom>
+	{
+		template<class PixelType>
+		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		{
+			auto const w_in = src.width();
+			auto const h_in = src.height();
+			auto const w_out = h_in;
+			auto const h_out = w_in;
+			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
+			{
+				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
+				{
+					auto const x_in = (h_out - 1) - y_out;
+					auto const y_in = x_out;
+					ret(x_out, y_out) = src(x_in, y_in);
+				}
+			}
+			return ret;
+		}
+	};
+
+	template<>
+	struct apply_pixel_ordering_impl<pixel_ordering::right_to_left_bottom_to_top>
+	{
+		template<class PixelType>
+		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		{
+			auto const w_in = src.width();
+			auto const h_in = src.height();
+			auto const w_out = h_in;
+			auto const h_out = w_in;
+			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
+			{
+				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
+				{
+					auto const x_in = (h_out - 1) - y_out;
+					auto const y_in = (w_out - 1) - x_out;
+					ret(x_out, y_out) = src(x_in, y_in);
+				}
+			}
+			return ret;
+		}
+	};
+
+	template<>
+	struct apply_pixel_ordering_impl<pixel_ordering::left_to_right_bottom_to_top>
+	{
+		template<class PixelType>
+		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		{
+			auto const w_in = src.width();
+			auto const h_in = src.height();
+			auto const w_out = h_in;
+			auto const h_out = w_in;
+			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
+			{
+				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
+				{
+					auto const x_in = y_out;
+					auto const y_in = (w_out - 1) - x_out;
+					ret(x_out, y_out) = src(x_in, y_in);
+				}
+			}
+			return ret;
+		}
+	};
+
+	template<pixel_ordering PixelOrdering, class PixelType>
+	fixed_typed_image<PixelType> apply_pixel_ordering(fixed_typed_image<PixelType> const& src)
+	{
+		return apply_pixel_ordering_impl<PixelOrdering>::apply_to(src);
+	}
+
 	fixed_typed_image<pixel_type<float, 4>>
 	make_linear_rgba_image(variant_image const& input, uint32_t scaling_factor);
 
@@ -627,6 +793,7 @@ namespace slideproj::image_file_loader
 		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
 		return load_rgba_image(*img_reader, scaling_factor);
 	}
+
 };
 
 #endif

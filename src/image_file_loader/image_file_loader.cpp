@@ -238,7 +238,33 @@ slideproj::image_file_loader::make_linear_rgba_image(
 		scaling_factor,
 		pixel_ordering = input.pixel_ordering()
 	](auto pixels, uint32_t w, uint32_t h) {
-		auto const downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
+		auto downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
+		switch(pixel_ordering)
+		{
+			case pixel_ordering::top_to_bottom_right_to_left:
+				downsampled = apply_pixel_ordering<pixel_ordering::top_to_bottom_right_to_left>(downsampled);
+				break;
+			case pixel_ordering::bottom_to_top_right_to_left:
+				downsampled = apply_pixel_ordering<pixel_ordering::bottom_to_top_right_to_left>(downsampled);
+				break;
+			case pixel_ordering::bottom_to_top_left_to_right:
+				downsampled = apply_pixel_ordering<pixel_ordering::bottom_to_top_left_to_right>(downsampled);
+				break;
+			case pixel_ordering::left_to_right_top_to_bottom:
+				downsampled = apply_pixel_ordering<pixel_ordering::left_to_right_top_to_bottom>(downsampled);
+				break;
+			case pixel_ordering::right_to_left_top_to_bottom:
+				downsampled = apply_pixel_ordering<pixel_ordering::right_to_left_top_to_bottom>(downsampled);
+				break;
+			case pixel_ordering::right_to_left_bottom_to_top:
+				downsampled = apply_pixel_ordering<pixel_ordering::right_to_left_bottom_to_top>(downsampled);
+				break;
+			case pixel_ordering::left_to_right_bottom_to_top:
+				downsampled = apply_pixel_ordering<pixel_ordering::left_to_right_bottom_to_top>(downsampled);
+				break;
+			default:
+				break;
+		}
 		return to_rgba(downsampled.pixels(), downsampled.width(), downsampled.height());
 	});
 

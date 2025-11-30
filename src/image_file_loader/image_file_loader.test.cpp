@@ -266,6 +266,13 @@ TESTCASE(slideproj_image_file_loader_load_rotated_jpeg)
 	EXPECT_EQ(res.pixel_ordering(), slideproj::image_file_loader::pixel_ordering::left_to_right_bottom_to_top);
 }
 
+TESTCASE(slideproj_image_file_loader_load_rotated_jpeg_to_rgba_image)
+{
+	auto res = slideproj::image_file_loader::load_rgba_image("testdata/IMG_1109.JPG", 2);
+	EXPECT_EQ(res.width(), 2000);
+	EXPECT_EQ(res.height(), 3000);
+}
+
 TESTCASE(slideproj_image_file_loader_load_uint8_rgba_from_png_srbg)
 {
 	auto res = slideproj::image_file_loader::load_image("testdata/rgba_8bit_srgb.png");
