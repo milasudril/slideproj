@@ -783,6 +783,17 @@ namespace slideproj::image_file_loader
 	fixed_typed_image<pixel_type<float, 4>>
 	make_linear_rgba_image(variant_image const& input, uint32_t scaling_factor);
 
+	struct image_rectangle
+	{
+		uint32_t width;
+		uint32_t height;
+	};
+
+	uint32_t compute_scaling_factor(image_rectangle input, image_rectangle fit);
+
+	fixed_typed_image<pixel_type<float, 4>>
+	make_linear_rgba_image(variant_image const& input, image_rectangle fit);
+
 	inline auto load_rgba_image(OIIO::ImageInput& input, uint32_t scaling_factor)
 	{ return make_linear_rgba_image(load_image(input), scaling_factor); }
 
@@ -793,7 +804,6 @@ namespace slideproj::image_file_loader
 		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
 		return load_rgba_image(*img_reader, scaling_factor);
 	}
-
 };
 
 #endif

@@ -286,7 +286,38 @@ slideproj::image_file_loader::make_linear_rgba_image(
 		);
 	}
 
-	// TODO: Apply orientation
-
 	return ret;
+}
+
+uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle input, image_rectangle fit)
+{
+	if(input.width <= fit.width && input.height <= fit.height)
+	{ return 1; }
+
+	auto const input_aspect_ratio = static_cast<double>(input.width)/static_cast<double>(input.height);
+	auto const output_aspect_ratio = static_cast<double>(fit.width)/static_cast<double>(input.height);
+
+	return (input_aspect_ratio >= output_aspect_ratio)? input.width/fit.width : input.height/fit.height;
+}
+
+slideproj::image_file_loader::fixed_typed_image<slideproj::image_file_loader::pixel_type<float, 4>>
+slideproj::image_file_loader::make_linear_rgba_image(
+	variant_image const& input,
+	image_rectangle fit
+)
+{
+	auto w_in = input.width();
+	auto h_in = input.height();
+	if(is_transposed(input.pixel_ordering()))
+	{ std::swap(w_in, h_in); }
+
+	return make_linear_rgba_image(
+		input, compute_scaling_factor(
+			image_rectangle{
+				.width = w_in,
+				.height = h_in
+			},
+			fit
+		)
+	);
 }
