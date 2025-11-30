@@ -1,5 +1,7 @@
 //@	{"target":{"name":"slideproj.o"}}
 
+#include "./input_filter.hpp"
+
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
@@ -10,6 +12,7 @@ int main()
 	auto files = slideproj::file_collector::make_file_list(
 		// TODO: Use command line arguments
 		"/home/torbjorr/Bilder",
+		slideproj::app::input_filter{},
 		std::array{
 			slideproj::file_collector::file_metadata_field::in_group,
 			slideproj::file_collector::file_metadata_field::timestamp

@@ -88,7 +88,37 @@ namespace slideproj::file_collector
 		std::vector<file_list_entry> m_entries;
 	};
 
-	file_list make_file_list(std::filesystem::path const& input_directory);
+	template<class T>
+	concept input_filter = requires(T const& obj, std::filesystem::directory_entry const& item){
+		{obj.accepts(item)} -> std::same_as<bool>;
+	};
+
+	struct type_erased_input_filter{
+		void const* object;
+		bool (*accepts)(void const*, std::filesystem::directory_entry const&);
+	};
+
+	file_list make_file_list(
+		std::filesystem::path const& input_directory,
+		type_erased_input_filter input_filter
+	);
+
+	template<input_filter InputFilter>
+	file_list make_file_list(
+		std::filesystem::path const& input_directory,
+		InputFilter&& input_filter
+	)
+	{
+		return make_file_list(
+			input_directory,
+			type_erased_input_filter{
+				.object = &input_filter,
+				.accepts = [](void const* obj, std::filesystem::directory_entry const& entry){
+					return static_cast<InputFilter const*>(obj)->accepts(entry);
+				}
+			}
+		);
+	}
 
 	enum class file_metadata_field{
 		in_group,
@@ -196,17 +226,19 @@ namespace slideproj::file_collector
 	}
 
 	template<
+		input_filter InputFilter,
 		file_metadata_provider FileMetadataProvider,
 		string_comparator StringComparator
 	>
 	inline file_list make_file_list(
 		std::filesystem::path const& input_directory,
+		InputFilter&& input_filter,
 		std::span<file_metadata_field const> sort_by,
 		FileMetadataProvider const& metadata_provider,
 		StringComparator const& string_comparator
 	)
 	{
-		auto ret = make_file_list(input_directory);
+		auto ret = make_file_list(input_directory, std::forward<InputFilter>(input_filter));
 		sort(ret, sort_by, metadata_provider, string_comparator);
 		return ret;
 	}

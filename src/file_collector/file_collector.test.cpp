@@ -6,6 +6,7 @@
 #include "testfwk/validation.hpp"
 
 #include <array>
+#include <filesystem>
 #include <unordered_map>
 
 TESTCASE(slideproj_file_collector_file_list_load_and_sort)
@@ -170,9 +171,18 @@ TESTCASE(slideproj_file_collector_file_list_sort_with_metadata_provider)
 	}
 }
 
+namespace
+{
+	struct input_filter
+	{
+		bool accepts(std::filesystem::directory_entry const&) const
+		{ return true; }
+	};
+}
+
 TESTCASE(slideproj_file_collector_make_real_file_list)
 {
-	auto files = slideproj::file_collector::make_file_list("/usr/share/wallpapers");
+	auto files = slideproj::file_collector::make_file_list("testdata", input_filter{});
 	for(auto const& item: files)
-	{ EXPECT_EQ(item.path().is_absolute(), true); }
+	{ EXPECT_EQ(item.path().is_absolute(), false); }
 }
