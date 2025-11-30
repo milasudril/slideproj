@@ -205,7 +205,8 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 
 	auto const alpha_mode =
 		(spec.nchannels%2 == 0 && spec.get_int_attribute("oiio:UnassociatedAlpha")) == 0?
-		alpha_mode::premultiplied: alpha_mode::straight;
+		alpha_mode::premultiplied:
+		alpha_mode::straight;
 
 	variant_image ret{
 		pixel_type_id{
@@ -233,7 +234,10 @@ slideproj::image_file_loader::make_linear_rgba_image(
 	uint32_t scaling_factor
 )
 {
-	auto ret = input.visit([scaling_factor](auto pixels, uint32_t w, uint32_t h) {
+	auto ret = input.visit([
+		scaling_factor,
+		pixel_ordering = input.pixel_ordering()
+	](auto pixels, uint32_t w, uint32_t h) {
 		auto const downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
 		return to_rgba(downsampled.pixels(), downsampled.width(), downsampled.height());
 	});
