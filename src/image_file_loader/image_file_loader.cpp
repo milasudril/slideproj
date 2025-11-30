@@ -179,9 +179,9 @@ slideproj::image_file_loader::variant_image::variant_image(
 	m_alpha_mode{alpha_mode},
 	m_width{0},
 	m_height{0},
-	m_pixel_ordering(pixel_ordering)
+	m_pixel_ordering{pixel_ordering}
 {
-	if(!pixel_type.is_valid())
+	if(!pixel_type.is_valid() || m_pixel_ordering == pixel_ordering::invalid)
 	{ return; }
 
 	m_pixels = utils::make_variant<pixel_buffer>(
