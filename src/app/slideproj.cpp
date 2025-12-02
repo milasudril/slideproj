@@ -12,7 +12,15 @@ int main()
 	auto files = slideproj::file_collector::make_file_list(
 		// TODO: Use command line arguments
 		"/home/torbjorr/Bilder",
-		slideproj::app::input_filter{},
+		slideproj::app::input_filter{
+			.include = std::vector{
+				slideproj::app::input_filter_pattern{"*.jpg"},
+				slideproj::app::input_filter_pattern{"*.jpeg"},
+				slideproj::app::input_filter_pattern{"*.bmp"},
+				slideproj::app::input_filter_pattern{"*.gif"},
+				slideproj::app::input_filter_pattern{"*.png"}
+			}
+		},
 		std::array{
 			slideproj::file_collector::file_metadata_field::in_group,
 			slideproj::file_collector::file_metadata_field::timestamp

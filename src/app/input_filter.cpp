@@ -2,6 +2,7 @@
 
 #include "./input_filter.hpp"
 #include <unicode/unistr.h>
+#include <unicode/stringoptions.h>
 #include <utility>
 
 slideproj::app::input_filter_pattern::input_filter_pattern(std::string_view pattern_string)
