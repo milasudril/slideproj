@@ -1,5 +1,6 @@
 //@	{
 //@		"dependencies_extra":[
+//@			{"ref":"./input_filter.o", "rel":"implementation"},
 //@			{"ref":"icu-uc", "rel":"implementation", "origin":"pkg-config"}
 //@		]
 //@	}
@@ -10,12 +11,28 @@
 #include <filesystem>
 #include <unicode/unistr.h>
 #include <unicode/stringoptions.h>
+#include <vector>
+#include <span>
 
 namespace slideproj::app
 {
+	class input_filter_pattern
+	{
+	public:
+		explicit input_filter_pattern(std::string_view pattern_string);
+
+		bool matches(std::string_view string_to_match) const;
+
+	private:
+		std::string m_pattern;
+	};
+
 	class input_filter
 	{
 	public:
+		input_filter() = default;
+		explicit input_filter(std::span<std::string const>){}
+
 		bool accepts(std::filesystem::directory_entry const& entry) const
 		{
 			auto const name_extension = icu::UnicodeString::fromUTF8(entry.path().extension().string());
@@ -29,6 +46,7 @@ namespace slideproj::app
 		}
 
 	private:
+		std::vector<input_filter_pattern> m_patterns;
 	};
 }
 
