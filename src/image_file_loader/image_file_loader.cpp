@@ -145,6 +145,8 @@ slideproj::image_file_loader::load_metadata(std::filesystem::path const& path)
 	image_file_info ret{};
 	ret.timestamp = exif_info.timestamp() != nullptr?
 			*exif_info.timestamp()
+			// TODO: It is maybe better to let file_collector set the timestamp itself, is we cannot
+			//       get a value from exif
 			: file_collector::get_timestamp(path).value_or(file_collector::file_clock::time_point{});
 	ret.caption = exif_info.description() != nullptr?
 			*exif_info.description():

@@ -1,0 +1,80 @@
+@startuml
+package file_collector {
+	interface input_filter {
+		+accepts(fs::path): bool {query}
+  }
+
+	interface file_metadata_provider{
+		+get_metadata(file_list_entry): file_metadata {query}
+	}
+
+	interface string_comparator {
+		operator()(string a, string b) : std::strong_ordering  {query}
+	}
+
+	class file_list_entry {
+		id: file_id {read-only}
+		path: fs::path {read-only}
+	}
+
+	class file_metadata {
+		+timestamp : file_clock::time_point
+		+in_group : string
+		+caption : caption
+	}
+
+	class file_list {
+		+append(fs::path): file_list
+    +begin(): iter {query}
+		+end(): iter {query}
+		-m_entries : file_list_entry[0..N]
+	}
+
+	object make_file_list <<function>> {
+		+input_directory: fs::path
+		+input_filter: input_filter
+	}
+
+	object sort <<function>> {
+		+files: file_list
+		+sort_by: std::span<file_metadata_field const>
+		+metadata_provider: file_metadata_provider
+		+string_comparator: string_comparator
+	}
+}
+
+file_metadata_provider --> file_list_entry: <<use>>
+file_metadata_provider --> file_metadata: <<use>>
+file_list "1" *- "N" file_list_entry
+make_file_list --> file_list: <<return>>
+make_file_list --> input_filter: <<use>>
+sort --> file_list: <<use>>
+sort --> file_metadata_provider: <<use>>
+sort --> string_comparator: <<use>>
+
+package image_file_loader {
+	class image_file_metadata_repository {
+		+get_metadata(file_list_entry): file_metadata {query}
+	}
+}
+
+package app {
+	class input_filter_pattern {
+		+matches(string): bool {query}
+	}
+
+	class "input_filter" as app.input_filter {
+		+include:input_filter_pattern
+	}
+
+	object main <<function>> {
+	}
+}
+
+app.input_filter ..|> input_filter
+app.input_filter "1" *- "N" input_filter_pattern
+image_file_metadata_repository ..|> file_metadata_provider
+main --> image_file_metadata_repository: <<use>>
+
+
+@enduml

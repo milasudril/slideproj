@@ -82,6 +82,7 @@ namespace slideproj::image_file_loader
 		return exif_query_result{img_reader->spec()};
 	}
 
+	// TODO: Move image_file_metadata_repository to app
 	struct image_file_info:file_collector::file_metadata
 	{
 	};
