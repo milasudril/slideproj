@@ -587,6 +587,9 @@ namespace slideproj::image_file_loader
 		auto const w_out = w/scaling_factor;
 		auto const h_out = h/scaling_factor;
 		using pixel_type_ret = pixel_type<float, PixelType::channel_count>;
+		if(w_out == 0 || h_out == 0)
+		{ return fixed_typed_image<pixel_type_ret>{}; }
+
 		fixed_typed_image<pixel_type_ret> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
 		auto const pixels_out = ret.pixels();
 		for(uint32_t y = 0; y != h_out; ++y)

@@ -241,6 +241,9 @@ slideproj::image_file_loader::make_linear_rgba_image(
 		pixel_ordering = input.pixel_ordering()
 	](auto pixels, uint32_t w, uint32_t h) {
 		auto downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
+		if(downsampled.is_empty())
+		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
+
 		switch(pixel_ordering)
 		{
 			case pixel_ordering::top_to_bottom_right_to_left:
