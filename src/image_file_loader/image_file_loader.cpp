@@ -108,7 +108,7 @@ std::optional<statx_timestamp> slideproj::image_file_loader::make_statx_timestam
 }
 
 std::optional<statx_timestamp>
-slideproj::image_file_loader::get_statx_timestamp(OIIO::ImageSpec const& spec, std::string_view field_name)
+slideproj::image_file_loader::get_timestamp_from_exif_data(OIIO::ImageSpec const& spec, std::string_view field_name)
 {
 	OIIO::ustring attr_val;
 	if(!spec.getattribute(field_name, OIIO::TypeString, &attr_val))
@@ -120,7 +120,7 @@ slideproj::image_file_loader::get_statx_timestamp(OIIO::ImageSpec const& spec, s
 slideproj::image_file_loader::exif_query_result::exif_query_result(OIIO::ImageSpec const& spec):
 	m_valid_fields{0}
 {
-	auto timestamp = get_statx_timestamp(spec);
+	auto timestamp = get_timestamp_from_exif_data(spec);
 	if(timestamp)
 	{
 		m_valid_fields |= timestamp_valid;
