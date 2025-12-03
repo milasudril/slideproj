@@ -82,7 +82,6 @@ namespace slideproj::image_file_loader
 		return exif_query_result{img_reader->spec()};
 	}
 
-	// TODO: Move image_file_metadata_repository to app
 	struct image_file_info:file_collector::file_metadata
 	{
 	};
@@ -97,9 +96,6 @@ namespace slideproj::image_file_loader
 	private:
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
 	};	static_assert(file_collector::file_metadata_provider<image_file_metadata_repository>);
-
-	// Image conversion pipeline
-	// 3. Fix orientation (if necessary)
 
 	template<class Type, class IntensityTransferFunction>
 	requires(std::is_empty_v<IntensityTransferFunction>)
