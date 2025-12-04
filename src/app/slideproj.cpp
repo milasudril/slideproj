@@ -8,6 +8,9 @@
 
 int main()
 {
+	slideproj::image_presenter::glfw_context gui_ctxt;
+	slideproj::image_presenter::application_window main_window{gui_ctxt};
+
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
 	auto files = slideproj::file_collector::make_file_list(
 		// TODO: Use command line arguments
@@ -34,7 +37,12 @@ int main()
 		}
 	);
 
-	slideproj::image_presenter::glfw_context gui_ctxt;
+	while(true)
+	{
+		gui_ctxt.poll_events();
+		main_window.swap_buffers();
+	}
+
 #if 0
 	for(auto const& item : files)
 	{

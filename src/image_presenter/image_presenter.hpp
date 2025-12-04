@@ -10,14 +10,56 @@
 #include <GL/gl.h>
 
 #include <memory>
+#include <format>
 
 namespace slideproj::image_presenter
 {
+	class glfw_exception:public std::runtime_error
+	{
+	public:
+		static char const* get_error_message()
+		{
+			char const* errmsg = nullptr;
+			glfwGetError(&errmsg);
+			return errmsg != nullptr? errmsg : "No error";
+		}
+
+		template<class... Args>
+		explicit glfw_exception(std::format_string<char const*> message):
+			std::runtime_error{std::format(message, get_error_message())}
+		{}
+	};
+
 	class glfw_context
 	{
 	public:
 		glfw_context():m_impl{std::make_shared<impl>()}
 		{}
+
+		static GLFWvidmode const& get_primary_monitor_video_mode()
+		{
+			auto const monitor = glfwGetPrimaryMonitor();
+			if(monitor == nullptr)
+			{ throw glfw_exception{"Failed to retrieve primary monitor: {}"}; }
+
+			auto const vidmode = glfwGetVideoMode(monitor);
+			if(vidmode == nullptr)
+			{ throw glfw_exception{"Failed to retrieve video mode of primary monitor: {}"}; }
+
+			return *vidmode;
+		}
+
+		static void set_hits_for_current_video_mode()
+		{
+			auto const& vidmode = get_primary_monitor_video_mode();
+			glfwWindowHint(GLFW_RED_BITS, vidmode.redBits);
+			glfwWindowHint(GLFW_GREEN_BITS, vidmode.greenBits);
+			glfwWindowHint(GLFW_BLUE_BITS, vidmode.blueBits);
+			glfwWindowHint(GLFW_REFRESH_RATE, vidmode.refreshRate);
+		}
+
+		static void poll_events()
+		{ glfwPollEvents(); }
 
 	private:
 		struct impl
@@ -28,7 +70,7 @@ namespace slideproj::image_presenter
 				{
 					char const* errmsg = nullptr;
 					glfwGetError(&errmsg);
-					throw std::runtime_error{std::format("Failed to initialize GLFW: {}", errmsg)};
+					throw glfw_exception{"Failed to initialize GLFW: {}"};
 				}
 			}
 
@@ -37,6 +79,30 @@ namespace slideproj::image_presenter
 		};
 
 		std::shared_ptr<impl> m_impl;
+	};
+
+	class application_window
+	{
+	public:
+		explicit application_window(glfw_context ctxt)
+		{
+			ctxt.set_hits_for_current_video_mode();
+			m_handle = handle{glfwCreateWindow(800, 500, "slideproj", nullptr, nullptr)};
+			if(m_handle == nullptr)
+			{ throw glfw_exception{"Failed to create a window: {}"}; }
+		}
+
+		void swap_buffers()
+		{ glfwSwapBuffers(m_handle.get()); }
+
+	private:
+		struct deleter
+		{
+			void operator()(GLFWwindow* window) const
+			{ glfwDestroyWindow(window); }
+		};
+		using handle = std::unique_ptr<GLFWwindow, deleter>;
+		handle m_handle;
 	};
 }
 
