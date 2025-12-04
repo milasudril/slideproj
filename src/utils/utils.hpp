@@ -10,6 +10,7 @@
 #include <array>
 #include <cstddef>
 #include <variant>
+#include <cstdint>
 
 namespace slideproj::utils
 {
@@ -186,5 +187,13 @@ namespace slideproj::utils
 
 	inline constexpr float to_normalized_float(float value)
 	{ return value; }
+
+	template<class T>
+	inline constexpr T& unwrap(std::reference_wrapper<T> obj)
+	{ return obj.get(); }
+
+	template<class T>
+	inline constexpr T&& unwrap(T&& obj)
+	{ return std::forward<T>(obj); }
 }
 #endif

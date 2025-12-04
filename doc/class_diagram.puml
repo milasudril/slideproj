@@ -55,16 +55,29 @@ sort --> string_comparator: <<use>>
 package image_file_loader {
 	class image_file_metadata_repository {
 		+get_metadata(file_list_entry): file_metadata {query}
+    +get_dimensions(fs::path): image_rectangle {static}
+	}
+
+	class image_rectangle {
+		+width : uint32_t
+		+height :uint32_t
 	}
 }
+
+image_file_metadata_repository --> image_rectangle: <<use>>
+image_file_metadata_repository --> file_metadata: <<use>>
+image_file_metadata_repository --> file_list_entry: <<use>>
+
 
 package app {
 	class input_filter_pattern {
 		+matches(string): bool {query}
 	}
 
-	class "input_filter" as app.input_filter {
+	class "input_filter" as app.input_filter <? ImageDimensionProvider> {
 		+include:input_filter_pattern
+		+max_pixel_count: size_t
+		+image_dimension_provider: ImageDimensionProvider
 	}
 
 	object main <<function>> {
@@ -75,6 +88,8 @@ app.input_filter ..|> input_filter
 app.input_filter "1" *- "N" input_filter_pattern
 image_file_metadata_repository ..|> file_metadata_provider
 main --> image_file_metadata_repository: <<use>>
-
+main --> app.input_filter: <<use>>
+main --> make_file_list: <<use>>
+main --> sort: <<use>>
 
 @enduml

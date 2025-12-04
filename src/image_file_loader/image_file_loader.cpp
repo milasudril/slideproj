@@ -170,6 +170,26 @@ slideproj::image_file_loader::image_file_metadata_repository::get_metadata(
 	return m_cache.insert(std::pair{entry.id(), load_metadata(entry.path())}).first->second;
 }
 
+slideproj::image_file_loader::image_rectangle
+slideproj::image_file_loader::image_file_metadata_repository::get_dimensions(
+	std::filesystem::path const& path
+)
+{
+	auto input = OIIO::ImageInput::open(path);
+	if(input == nullptr)
+	{ return image_rectangle{}; }
+
+	auto const& spec = input->spec();
+
+	if(spec.width <= 0 || spec.height <= 0)
+	{ return image_rectangle{}; }
+
+	return image_rectangle{
+		.width = static_cast<uint32_t>(spec.width),
+		.height = static_cast<uint32_t>(spec.height)
+	};
+}
+
 slideproj::image_file_loader::variant_image::variant_image(
 	pixel_type_id pixel_type,
 	enum alpha_mode alpha_mode,

@@ -88,10 +88,18 @@ namespace slideproj::image_file_loader
 
 	image_file_info load_metadata(std::filesystem::path const& path);
 
+	struct image_rectangle
+	{
+		uint32_t width;
+		uint32_t height;
+	};
+
 	class image_file_metadata_repository
 	{
 	public:
 		image_file_info const& get_metadata(file_collector::file_list_entry const& entry) const;
+
+		static image_rectangle get_dimensions(std::filesystem::path const& path);
 
 	private:
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
@@ -793,12 +801,6 @@ namespace slideproj::image_file_loader
 		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
 		return load_rgba_image(*img_reader, scaling_factor);
 	}
-
-	struct image_rectangle
-	{
-		uint32_t width;
-		uint32_t height;
-	};
 
 	uint32_t compute_scaling_factor(image_rectangle input, image_rectangle fit);
 
