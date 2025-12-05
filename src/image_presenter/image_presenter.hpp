@@ -146,6 +146,32 @@ namespace slideproj::image_presenter
 		bool m_use_vsync{false};
 	};
 
+	constexpr auto to_typing_keyboard_scancode(int value)
+	{
+		constexpr auto X11_scancode_offest = 8;
+		return event_types::typing_keyboard_scancode{value - X11_scancode_offest};
+	}
+
+	constexpr auto to_button_action(int value)
+	{
+		switch(value)
+		{
+			case GLFW_PRESS:
+				return event_types::button_action::press;
+			case GLFW_REPEAT:
+				return event_types::button_action::repeat;
+			case GLFW_RELEASE:
+				return event_types::button_action::release;
+			default:
+				return event_types::button_action::release;
+		}
+	}
+
+	constexpr auto to_typing_keyboard_modifier_mask(int value)
+	{
+		return static_cast<event_types::typing_keyboard_modifier_mask>(value);
+	}
+
 	class application_window
 	{
 	public:
@@ -192,21 +218,20 @@ namespace slideproj::image_presenter
 					eh->handle_event(event_types::window_is_closing_event{});
 				}
 			);
-#if 0
+
 			glfwSetKeyCallback(
 				m_handle.get(),
-				[](GLFWwindow* window, int, int scancode, int action, int mods) {
+				[](GLFWwindow* window, int, int scancode, int action, int modifiers) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
 					eh->handle_event(
 						event_types::typing_keyboard_event{
-							.scancode = to_pc_keybaord_scancode(scancode),
-							.action = to_key_action(key_action),
-							.modifiers = to_modifier_mask(modifiers)
+							.scancode = to_typing_keyboard_scancode(scancode),
+							.action = to_button_action(action),
+							.modifiers = to_typing_keyboard_modifier_mask(modifiers)
 						}
 					);
 				}
 			);
-#endif
 
 			// Synthesize a frame_buffer_size_changed event to make sure the size is up-to-date
 			{

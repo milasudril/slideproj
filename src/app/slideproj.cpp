@@ -25,6 +25,11 @@ namespace
 			application_should_exit = true;
 		}
 
+		void handle_event(slideproj::event_types::typing_keyboard_event const& event)
+		{
+			fprintf(stderr, "(i) User pressed %d\n", event.scancode.value());
+		}
+
 		bool application_should_exit{false};
 	};
 }
