@@ -16,7 +16,7 @@ int main()
 		}
 	);
 	slideproj::image_presenter::application_window main_window{gui_ctxt};
-	main_window.activate_render_context();
+	auto& gl_ctxt = main_window.activate_render_context();
 	fprintf(
 		stderr,
 		"(i) Initialized OpenGL. Vendor = %s, Renderer = %s, Version = %s\n",
@@ -27,6 +27,7 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+	gl_ctxt.enable_vsync();
 
 #if 0
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;

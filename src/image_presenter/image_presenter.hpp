@@ -114,6 +114,36 @@ namespace slideproj::image_presenter
 		std::shared_ptr<impl> m_impl;
 	};
 
+	class gl_context
+	{
+	public:
+		void enable_vsync()
+		{
+			glfwSwapInterval(1);
+			m_use_vsync = true;
+		}
+
+		void disable_vsync()
+		{
+			glfwSwapInterval(0);
+			m_use_vsync = false;
+		}
+
+	private:
+		friend class application_window;
+
+		gl_context()
+		{
+			auto const res = glewInit();
+			if(res != GLEW_OK)
+			{ throw glew_exception{"Failed to load OpenGL functions: {}", res}; }
+
+			disable_vsync();
+		}
+
+		bool m_use_vsync{false};
+	};
+
 	class application_window
 	{
 	public:
@@ -128,15 +158,12 @@ namespace slideproj::image_presenter
 		void swap_buffers()
 		{ glfwSwapBuffers(m_handle.get()); }
 
-		void activate_render_context()
+		gl_context& activate_render_context()
 		{
 			glfwMakeContextCurrent(m_handle.get());
-			if(!m_glew_initialized)
-			{
-				auto const res = glewInit();
-				if(res != GLEW_OK)
-				{ throw glew_exception{"Failed to load OpenGL functions: {}", res}; }
-			}
+			if(!m_gl_ctxt.has_value())
+			{ m_gl_ctxt = gl_context{}; }
+			return *m_gl_ctxt;
 		}
 
 	private:
@@ -147,7 +174,7 @@ namespace slideproj::image_presenter
 		};
 		using handle = std::unique_ptr<GLFWwindow, deleter>;
 		handle m_handle;
-		bool m_glew_initialized{false};
+		std::optional<gl_context> m_gl_ctxt;
 	};
 }
 
