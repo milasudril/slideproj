@@ -1,7 +1,6 @@
 //@	{"target":{"name":"slideproj.o"}}
 
 #include "./input_filter.hpp"
-
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
@@ -16,6 +15,14 @@ namespace
 			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
 			glViewport(0, 0, w, h);
 		}
+
+		void window_is_closing()
+		{
+			fprintf(stderr, "(i) Window is closing\n");
+			application_should_exit = true;
+		}
+
+		bool application_should_exit{false};
 	};
 }
 
@@ -71,7 +78,7 @@ int main()
 	);
 #endif
 
-	while(true)
+	while(!eh.application_should_exit)
 	{
 		gui_ctxt.poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);

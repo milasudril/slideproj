@@ -169,12 +169,20 @@ namespace slideproj::image_presenter
 		template<class EventHandler>
 		void set_event_handler(std::reference_wrapper<EventHandler> eh)
 		{
-			glfwSetWindowUserPointer(m_handle.get(), &eh);
+			glfwSetWindowUserPointer(m_handle.get(), &eh.get());
 			glfwSetFramebufferSizeCallback(
 				m_handle.get(),
 				[](GLFWwindow* window, int width, int height) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
 					eh->frame_buffer_size_changed(width, height);
+				}
+			);
+
+			glfwSetWindowCloseCallback(
+				m_handle.get(),
+				[](GLFWwindow* window) {
+					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					eh->window_is_closing();
 				}
 			);
 
