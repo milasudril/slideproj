@@ -26,7 +26,6 @@ int main()
 	);
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
 	gl_ctxt.enable_vsync();
 
 #if 0
@@ -60,6 +59,7 @@ int main()
 	while(true)
 	{
 		gui_ctxt.poll_events();
+		glClear(GL_COLOR_BUFFER_BIT);
 		main_window.swap_buffers();
 	}
 
