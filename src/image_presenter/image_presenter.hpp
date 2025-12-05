@@ -233,6 +233,20 @@ namespace slideproj::image_presenter
 				}
 			);
 
+			glfwSetMouseButtonCallback(
+				m_handle.get(),
+				[](GLFWwindow* window, int button, int action, int modifiers) {
+					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					eh->handle_event(
+						event_types::mouse_button_event{
+							.button = event_types::mouse_button_index{button},
+							.action = to_button_action(action),
+							.modifiers = to_typing_keyboard_modifier_mask(modifiers)
+						}
+					);
+				}
+			);
+
 			// Synthesize a frame_buffer_size_changed event to make sure the size is up-to-date
 			{
 				event_types::frame_buffer_size_changed_event event;

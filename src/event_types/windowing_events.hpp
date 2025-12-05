@@ -17,7 +17,7 @@ namespace slideproj::event_types
 	class typing_keyboard_scancode
 	{
 	public:
-		constexpr typing_keyboard_scancode(int value): m_value{value}
+		constexpr explicit typing_keyboard_scancode(int value): m_value{value}
 		{}
 
 		constexpr int value() const
@@ -53,6 +53,29 @@ namespace slideproj::event_types
 	struct typing_keyboard_event
 	{
 		typing_keyboard_scancode scancode;
+		button_action action;
+		typing_keyboard_modifier_mask modifiers;
+	};
+
+	class mouse_button_index
+	{
+	public:
+		constexpr explicit mouse_button_index(int value): m_value{value}
+		{}
+
+		constexpr int value() const
+		{ return m_value; }
+
+		constexpr bool operator==(mouse_button_index const&) const = default;
+		constexpr bool operator!=(mouse_button_index const&) const = default;
+
+	private:
+		int m_value;
+	};
+
+	struct mouse_button_event
+	{
+		mouse_button_index button;
 		button_action action;
 		typing_keyboard_modifier_mask modifiers;
 	};

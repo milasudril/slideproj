@@ -30,6 +30,11 @@ namespace
 			fprintf(stderr, "(i) User pressed %d\n", event.scancode.value());
 		}
 
+		void handle_event(slideproj::event_types::mouse_button_event const& event)
+		{
+			fprintf(stderr, "(i) User pressed %d\n", event.button.value());
+		}
+
 		bool application_should_exit{false};
 	};
 }
