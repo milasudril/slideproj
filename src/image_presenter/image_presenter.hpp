@@ -8,6 +8,8 @@
 #ifndef SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
 #define SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
 
+#include "src/event_types/windowing_events.hpp"
+
 #define GLFW_INCLUDE_NONE
 
 #include <GLFW/glfw3.h>
@@ -174,7 +176,12 @@ namespace slideproj::image_presenter
 				m_handle.get(),
 				[](GLFWwindow* window, int width, int height) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
-					eh->frame_buffer_size_changed(width, height);
+					eh->handle_event(
+						event_types::frame_buffer_size_changed_event{
+							.width = width,
+							.height = height
+						}
+					);
 				}
 			);
 
@@ -182,16 +189,30 @@ namespace slideproj::image_presenter
 				m_handle.get(),
 				[](GLFWwindow* window) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
-					eh->window_is_closing();
+					eh->handle_event(event_types::window_is_closing_event{});
 				}
 			);
+#if 0
+			glfwSetKeyCallback(
+				m_handle.get(),
+				[](GLFWwindow* window, int, int scancode, int action, int mods) {
+					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					eh->handle_event(
+						event_types::typing_keyboard_event{
+							.scancode = to_pc_keybaord_scancode(scancode),
+							.action = to_key_action(key_action),
+							.modifiers = to_modifier_mask(modifiers)
+						}
+					);
+				}
+			);
+#endif
 
 			// Synthesize a frame_buffer_size_changed event to make sure the size is up-to-date
 			{
-				int width;
-				int height;
-				glfwGetFramebufferSize(m_handle.get(), &width, &height);
-				eh.get().frame_buffer_size_changed(width, height);
+				event_types::frame_buffer_size_changed_event event;
+				glfwGetFramebufferSize(m_handle.get(), &event.width, &event.height);
+				eh.get().handle_event(event);
 			}
 		}
 
