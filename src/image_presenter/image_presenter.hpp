@@ -166,6 +166,27 @@ namespace slideproj::image_presenter
 			return *m_gl_ctxt;
 		}
 
+		template<class EventHandler>
+		void set_event_handler(std::reference_wrapper<EventHandler> eh)
+		{
+			glfwSetWindowUserPointer(m_handle.get(), &eh);
+			glfwSetFramebufferSizeCallback(
+				m_handle.get(),
+				[](GLFWwindow* window, int width, int height) {
+					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					eh->frame_buffer_size_changed(width, height);
+				}
+			);
+
+			// Synthesize a frame_buffer_size_changed event to make sure the size is up-to-date
+			{
+				int width;
+				int height;
+				glfwGetFramebufferSize(m_handle.get(), &width, &height);
+				eh.get().frame_buffer_size_changed(width, height);
+			}
+		}
+
 	private:
 		struct deleter
 		{

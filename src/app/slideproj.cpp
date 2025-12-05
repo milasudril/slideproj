@@ -6,6 +6,19 @@
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
 
+namespace
+{
+	class event_handler
+	{
+	public:
+		void frame_buffer_size_changed(int w, int h)
+		{
+			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
+			glViewport(0, 0, w, h);
+		}
+	};
+}
+
 int main()
 {
 	slideproj::image_presenter::glfw_context gui_ctxt;
@@ -27,6 +40,8 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	gl_ctxt.enable_vsync();
+	event_handler eh;
+	main_window.set_event_handler(std::ref(eh));
 
 #if 0
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
