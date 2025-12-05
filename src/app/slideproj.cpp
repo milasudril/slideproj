@@ -9,7 +9,23 @@
 int main()
 {
 	slideproj::image_presenter::glfw_context gui_ctxt;
+	gui_ctxt.select_opengl_version(
+		slideproj::image_presenter::renderer_version{
+			.major = 4,
+			.minor = 6
+		}
+	);
 	slideproj::image_presenter::application_window main_window{gui_ctxt};
+	main_window.activate_render_context();
+	fprintf(
+		stderr,
+		"(i) Initialized OpenGL. Vendor = %s, Renderer = %s, Version = %s\n",
+		glGetString(GL_VENDOR),
+		glGetString(GL_RENDERER),
+		glGetString(GL_VERSION)
+	);
+
+	main_window.swap_buffers();
 
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
 	auto files = slideproj::file_collector::make_file_list(

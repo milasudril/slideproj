@@ -1,4 +1,9 @@
-//@	{"dependencies_extra":[{"ref":"glfw3", "rel":"implementation", "origin":"pkg-config"}]}
+//@	{
+//@		"dependencies_extra":[
+//@			{"ref":"glfw3", "rel":"implementation", "origin":"pkg-config"},
+//@			{"ref":"glew", "rel":"implementation", "origin":"pkg-config"}
+//@		]
+//@	}
 
 #ifndef SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
 #define SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
@@ -30,6 +35,26 @@ namespace slideproj::image_presenter
 		{}
 	};
 
+	class glew_exception:public std::runtime_error
+	{
+	public:
+		template<class... Args>
+		explicit glew_exception(std::format_string<char const*> message, GLenum glew_errno):
+			std::runtime_error{
+				std::format(
+					message,
+					reinterpret_cast<char const*>(glewGetErrorString(glew_errno))
+				)
+			}
+		{}
+	};
+
+	struct renderer_version
+	{
+		uint32_t major;
+		uint32_t minor;
+	};
+
 	class glfw_context
 	{
 	public:
@@ -49,7 +74,7 @@ namespace slideproj::image_presenter
 			return *vidmode;
 		}
 
-		static void set_hits_for_current_video_mode()
+		void set_hits_for_current_video_mode()
 		{
 			auto const& vidmode = get_primary_monitor_video_mode();
 			glfwWindowHint(GLFW_RED_BITS, vidmode.redBits);
@@ -58,8 +83,16 @@ namespace slideproj::image_presenter
 			glfwWindowHint(GLFW_REFRESH_RATE, vidmode.refreshRate);
 		}
 
-		static void poll_events()
+		void poll_events()
 		{ glfwPollEvents(); }
+
+		void select_opengl_version(renderer_version ver)
+		{
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, ver.major);
+			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, ver.minor);
+			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+			glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+		}
 
 	private:
 		struct impl
@@ -95,6 +128,17 @@ namespace slideproj::image_presenter
 		void swap_buffers()
 		{ glfwSwapBuffers(m_handle.get()); }
 
+		void activate_render_context()
+		{
+			glfwMakeContextCurrent(m_handle.get());
+			if(!m_glew_initialized)
+			{
+				auto const res = glewInit();
+				if(res != GLEW_OK)
+				{ throw glew_exception{"Failed to load OpenGL functions: {}", res}; }
+			}
+		}
+
 	private:
 		struct deleter
 		{
@@ -103,6 +147,7 @@ namespace slideproj::image_presenter
 		};
 		using handle = std::unique_ptr<GLFWwindow, deleter>;
 		handle m_handle;
+		bool m_glew_initialized{false};
 	};
 }
 
