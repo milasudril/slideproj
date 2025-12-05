@@ -25,8 +25,7 @@ int main()
 		glGetString(GL_VERSION)
 	);
 
-	main_window.swap_buffers();
-
+#if 0
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
 	auto files = slideproj::file_collector::make_file_list(
 		// TODO: Use command line arguments
@@ -52,6 +51,7 @@ int main()
 			return a <=> b;
 		}
 	);
+#endif
 
 	while(true)
 	{
