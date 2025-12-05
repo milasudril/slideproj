@@ -24,6 +24,9 @@ int main()
 		glGetString(GL_RENDERER),
 		glGetString(GL_VERSION)
 	);
+	glEnable(GL_FRAMEBUFFER_SRGB);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 #if 0
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
