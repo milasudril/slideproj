@@ -9,8 +9,9 @@
 #ifndef SLIDEPROJ_IMAGE_FILE_LOADER_IMAGE_FILE_LOADER_HPP
 #define SLIDEPROJ_IMAGE_FILE_LOADER_IMAGE_FILE_LOADER_HPP
 
+#include "src/utils/variant.hpp"
+#include "src/utils/numconv.hpp"
 #include "src/file_collector/file_collector.hpp"
-#include "src/utils/utils.hpp"
 
 #include <algorithm>
 #include <limits>

@@ -6,13 +6,10 @@
 #include "./image_file_loader.hpp"
 
 #include "src/file_collector/file_collector.hpp"
-#include "src/utils/charconv_wrapper.hpp"
 
 #include <OpenImageIO/typedesc.h>
 #include <OpenImageIO/ustring.h>
 #include <algorithm>
-#include <any>
-#include <cstdio>
 #include <cstring>
 #include <linux/stat.h>
 #include <memory>
@@ -20,7 +17,6 @@
 #include <stdexcept>
 #include <OpenImageIO/imageio.h>
 #include <ctime>
-#include <variant>
 
 std::optional<std::array<int, 6>>
 slideproj::image_file_loader::make_ymdhms(exif_date_time_value<std::string_view> edtv)

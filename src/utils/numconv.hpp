@@ -1,8 +1,8 @@
-#ifndef SLIDEPROJ_UTILS_CHARCONV_WRAPPER_HPP
-#define SLIDEPROJ_UTILS_CHARCONV_WRAPPER_HPP
+#ifndef SLIDEPROJ_UTILS_NUMCONV_HPP
+#define SLIDEPROJ_UTILS_NUMCONV_HPP
 
 #include <string_view>
-#include <ranges>
+#include <algorithm>
 #include <charconv>
 #include <optional>
 #include <concepts>
@@ -22,6 +22,16 @@ namespace slideproj::utils
 
 		return value;
 	}
+
+	template<std::unsigned_integral T>
+	inline constexpr float to_normalized_float(T value)
+	{
+		return static_cast<float>(value)
+			/static_cast<float>(std::numeric_limits<T>::max());
+	}
+
+	inline constexpr float to_normalized_float(float value)
+	{ return value; }
 }
 
 #endif
