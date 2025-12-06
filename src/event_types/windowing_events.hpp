@@ -1,7 +1,7 @@
 #ifndef SLIDEPROJ_EVENT_TYPES_WINDOWING_EVENTS_HPP
 #define SLIDEPROJ_EVENT_TYPES_WINDOWING_EVENTS_HPP
 
-#include "src/utils/utils.hpp"
+#include "src/utils/bitmask_enum.hpp"
 
 namespace slideproj::event_types
 {
