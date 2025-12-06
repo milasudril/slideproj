@@ -1,43 +1,10 @@
 //@	{"target":{"name":"slideproj.o"}}
 
 #include "./input_filter.hpp"
-#include "src/event_types/windowing_events.hpp"
+#include "./slideshow_window_event_handler.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
-
-namespace
-{
-	class event_handler
-	{
-	public:
-		void handle_event(slideproj::event_types::frame_buffer_size_changed_event event)
-		{
-			auto const w = event.width;
-			auto const h = event.height;
-			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
-			glViewport(0, 0, w, h);
-		}
-
-		void handle_event(slideproj::event_types::window_is_closing_event)
-		{
-			fprintf(stderr, "(i) Window is closing\n");
-			application_should_exit = true;
-		}
-
-		void handle_event(slideproj::event_types::typing_keyboard_event const& event)
-		{
-			fprintf(stderr, "(i) User pressed %d\n", event.scancode.value());
-		}
-
-		void handle_event(slideproj::event_types::mouse_button_event const& event)
-		{
-			fprintf(stderr, "(i) User pressed %d\n", event.button.value());
-		}
-
-		bool application_should_exit{false};
-	};
-}
 
 int main()
 {
@@ -60,7 +27,7 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	gl_ctxt.enable_vsync();
-	event_handler eh;
+	slideproj::app::slideshow_window_event_handler eh;
 	main_window.set_event_handler(std::ref(eh));
 
 #if 0
