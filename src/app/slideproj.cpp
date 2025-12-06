@@ -30,7 +30,11 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	gl_ctxt.enable_vsync();
-	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window)};
+	slideproj::app::slideshow slideshow;
+	slideproj::app::slideshow_window_event_handler eh{
+		std::ref(main_window),
+		std::ref(slideshow)
+	};
 	slideproj::utils::task_queue pending_tasks;
 	main_window.set_event_handler(std::ref(eh));
 
@@ -68,10 +72,14 @@ int main()
 
 	while(!eh.application_should_exit)
 	{
-		auto current_file_list = file_list.take_value();
-		if(!current_file_list.empty())
+		if(slideshow.empty())
 		{
-			fprintf(stderr, "(i) All files have been collected\n");
+			auto current_file_list = file_list.take_value();
+			if(!current_file_list.empty())
+			{
+				slideshow = slideproj::app::slideshow{std::move(current_file_list)};
+				fprintf(stderr, "(i) All files have been collected\n");
+			}
 		}
 		gui_ctxt.poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);

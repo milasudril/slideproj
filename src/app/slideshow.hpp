@@ -8,6 +8,8 @@ namespace slideproj::app
 	class slideshow
 	{
 	public:
+		slideshow() = default;
+
 		explicit slideshow(file_collector::file_list&& files, ssize_t start_at = 0):
 			m_files{std::move(files)}
 		{ set_current_index(start_at); }
@@ -39,6 +41,9 @@ namespace slideproj::app
 
 		size_t get_current_index() const
 		{ return m_current_index; }
+
+		bool empty() const
+		{ return m_files.empty(); }
 
 	private:
 		file_collector::file_list m_files;

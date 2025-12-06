@@ -1,6 +1,8 @@
 #ifndef SLIDEPROJ_APP_SLIDESHOW_WINDOW_EVENT_HANDLER_HPP
 #define SLIDEPROJ_APP_SLIDESHOW_WINDOW_EVENT_HANDLER_HPP
 
+#include "./slideshow.hpp"
+
 #include "src/event_types/windowing_events.hpp"
 #include "src/utils/unwrap.hpp"
 
@@ -40,10 +42,25 @@ namespace slideproj::app
 
 		void handle_event(event_types::mouse_button_event const& event)
 		{
-			fprintf(stderr, "(i) User pressed %d\n", event.button.value());
+			if(event.action != event_types::button_action::release)
+			{ return; }
+
+			auto const image_to_show = [&](auto const& event){
+				if(event.button == event_types::mouse_button_index::left)
+				{ return current_slideshow.get().get_previous_entry(); }
+				else
+				if(event.button == event_types::mouse_button_index::right)
+				{ return current_slideshow.get().get_next_entry(); }
+				return static_cast<file_collector::file_list_entry const*>(nullptr);
+			}(event);
+
+			if(image_to_show != nullptr)
+			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
 		}
 
 		AppWindow window;
+		std::reference_wrapper<slideshow> current_slideshow;
+
 		bool application_should_exit{false};
 	};
 }
