@@ -6,7 +6,7 @@
 #include "./image_file_loader.hpp"
 
 #include "src/file_collector/file_collector.hpp"
-#include "src/utils/utils.hpp"
+#include "src/utils/charconv_wrapper.hpp"
 
 #include <OpenImageIO/typedesc.h>
 #include <OpenImageIO/ustring.h>
