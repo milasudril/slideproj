@@ -184,7 +184,7 @@ slideproj::image_file_loader::image_file_metadata_repository::get_dimensions(
 	};
 }
 
-slideproj::image_file_loader::variant_image::variant_image(
+slideproj::image_file_loader::loaded_image::loaded_image(
 	pixel_type_id pixel_type,
 	enum alpha_mode alpha_mode,
 	uint32_t w,
@@ -212,19 +212,19 @@ slideproj::image_file_loader::variant_image::variant_image(
 	m_height = h;
 }
 
-slideproj::image_file_loader::variant_image
+slideproj::image_file_loader::loaded_image
 slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 {
 	auto const& spec = input.spec();
 	if(spec.width <= 0 || spec.height <= 0 || spec.nchannels <= 0)
-	{ return variant_image{}; }
+	{ return loaded_image{}; }
 
 	auto const alpha_mode =
 		(spec.nchannels%2 == 0 && spec.get_int_attribute("oiio:UnassociatedAlpha")) == 0?
 		alpha_mode::premultiplied:
 		alpha_mode::straight;
 
-	variant_image ret{
+	loaded_image ret{
 		pixel_type_id{
 			to_intensity_transfer_function_id(spec.get_string_attribute("OIIO:ColorSpace")),
 			static_cast<size_t>(spec.nchannels),
@@ -246,7 +246,7 @@ slideproj::image_file_loader::fixed_typed_image<
 	slideproj::image_file_loader::pixel_type<float, 4>
 >
 slideproj::image_file_loader::make_linear_rgba_image(
-	variant_image const& input,
+	loaded_image const& input,
 	uint32_t scaling_factor
 )
 {
@@ -321,7 +321,7 @@ uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle in
 
 slideproj::image_file_loader::fixed_typed_image<slideproj::image_file_loader::pixel_type<float, 4>>
 slideproj::image_file_loader::make_linear_rgba_image(
-	variant_image const& input,
+	loaded_image const& input,
 	image_rectangle fit
 )
 {

@@ -451,12 +451,12 @@ namespace slideproj::image_file_loader
 		return static_cast<pixel_ordering>(value - 1);
 	}
 
-	class variant_image
+	class loaded_image
 	{
 	public:
-		variant_image() = default;
+		loaded_image() = default;
 
-		explicit variant_image(
+		explicit loaded_image(
 			pixel_type_id pixel_type,
 			enum alpha_mode alpha_mode,
 			uint32_t w,
@@ -523,7 +523,7 @@ namespace slideproj::image_file_loader
 		pixel_buffer m_pixels;
 	};
 
-	variant_image load_image(OIIO::ImageInput& input);
+	loaded_image load_image(OIIO::ImageInput& input);
 
 	inline auto open_image_file(std::filesystem::path const& path)
 	{
@@ -536,7 +536,7 @@ namespace slideproj::image_file_loader
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
-		{ return variant_image{}; }
+		{ return loaded_image{}; }
 		return load_image(*img_reader);
 	}
 
@@ -790,7 +790,7 @@ namespace slideproj::image_file_loader
 	}
 
 	fixed_typed_image<pixel_type<float, 4>>
-	make_linear_rgba_image(variant_image const& input, uint32_t scaling_factor);
+	make_linear_rgba_image(loaded_image const& input, uint32_t scaling_factor);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, uint32_t scaling_factor)
 	{ return make_linear_rgba_image(load_image(input), scaling_factor); }
@@ -806,7 +806,7 @@ namespace slideproj::image_file_loader
 	uint32_t compute_scaling_factor(image_rectangle input, image_rectangle fit);
 
 	fixed_typed_image<pixel_type<float, 4>>
-	make_linear_rgba_image(variant_image const& input, image_rectangle fit);
+	make_linear_rgba_image(loaded_image const& input, image_rectangle fit);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, image_rectangle fit)
 	{ return make_linear_rgba_image(load_image(input), fit); }
