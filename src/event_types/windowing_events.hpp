@@ -26,9 +26,21 @@ namespace slideproj::event_types
 		constexpr bool operator==(typing_keyboard_scancode const&) const = default;
 		constexpr bool operator!=(typing_keyboard_scancode const&) const = default;
 
+		static const typing_keyboard_scancode arrow_up;
+		static const typing_keyboard_scancode arrow_down;
+		static const typing_keyboard_scancode arrow_left;
+		static const typing_keyboard_scancode arrow_right;
+		static const typing_keyboard_scancode f_11;
+
 	private:
 		int m_value;
 	};
+
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::arrow_up{103};
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::arrow_down{108};
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::arrow_left{105};
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::arrow_right{106};
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::f_11{87};
 
 	enum class button_action
 	{
@@ -69,9 +81,15 @@ namespace slideproj::event_types
 		constexpr bool operator==(mouse_button_index const&) const = default;
 		constexpr bool operator!=(mouse_button_index const&) const = default;
 
+		static const mouse_button_index left;
+		static const mouse_button_index right;
+
 	private:
 		int m_value;
 	};
+
+	inline constexpr mouse_button_index mouse_button_index::left{0};
+	inline constexpr mouse_button_index mouse_button_index::right{1};
 
 	struct mouse_button_event
 	{
