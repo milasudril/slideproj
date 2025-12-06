@@ -27,7 +27,7 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	gl_ctxt.enable_vsync();
-	slideproj::app::slideshow_window_event_handler eh;
+	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window)};
 	main_window.set_event_handler(std::ref(eh));
 
 #if 0

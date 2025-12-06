@@ -63,7 +63,7 @@ namespace slideproj::image_presenter
 		glfw_context():m_impl{std::make_shared<impl>()}
 		{}
 
-		static GLFWvidmode const& get_primary_monitor_video_mode()
+		GLFWvidmode const& get_primary_monitor_video_mode()
 		{
 			auto const monitor = glfwGetPrimaryMonitor();
 			if(monitor == nullptr)
@@ -131,6 +131,14 @@ namespace slideproj::image_presenter
 			m_use_vsync = false;
 		}
 
+		void restore_vsync() const
+		{
+			if(m_use_vsync)
+			{ glfwSwapInterval(1); }
+			else
+			{ glfwSwapInterval(0); }
+		}
+
 	private:
 		friend class application_window;
 
@@ -172,10 +180,18 @@ namespace slideproj::image_presenter
 		return static_cast<event_types::typing_keyboard_modifier_mask>(value);
 	}
 
+	struct window_rectangle
+	{
+		int x;
+		int y;
+		int width;
+		int height;
+	};
+
 	class application_window
 	{
 	public:
-		explicit application_window(glfw_context ctxt)
+		explicit application_window(glfw_context ctxt):m_ctxt{ctxt}
 		{
 			ctxt.set_hits_for_current_video_mode();
 			m_handle = handle{glfwCreateWindow(800, 500, "slideproj", nullptr, nullptr)};
@@ -192,6 +208,39 @@ namespace slideproj::image_presenter
 			if(!m_gl_ctxt.has_value())
 			{ m_gl_ctxt = gl_context{}; }
 			return *m_gl_ctxt;
+		}
+
+		void toggle_fullscreen()
+		{
+			if(glfwGetWindowMonitor(m_handle.get()) == nullptr)
+			{
+				m_saved_window_rect = get_window_rect();
+				auto const& vidmode = m_ctxt.get_primary_monitor_video_mode();
+				glfwSetWindowMonitor(
+					m_handle.get(),
+					glfwGetPrimaryMonitor(),
+					0,
+					0,
+					vidmode.width,
+					vidmode.height,
+					vidmode.refreshRate
+				);
+			}
+			else
+			{
+				glfwSetWindowMonitor(
+					m_handle.get(),
+					nullptr,
+					m_saved_window_rect.x,
+					m_saved_window_rect.y,
+					m_saved_window_rect.width,
+					m_saved_window_rect.height,
+					GLFW_DONT_CARE
+				);
+			}
+
+			if(m_gl_ctxt.has_value())
+			{ m_gl_ctxt->restore_vsync(); }
 		}
 
 		template<class EventHandler>
@@ -255,6 +304,20 @@ namespace slideproj::image_presenter
 			}
 		}
 
+		window_rectangle get_window_rect() const
+		{
+			window_rectangle ret{};
+			glfwGetWindowPos(m_handle.get(), &ret.x, &ret.y);
+			glfwGetWindowSize(m_handle.get(), &ret.width, &ret.height);
+			return ret;
+		}
+
+		void set_window_rect(window_rectangle const& val)
+		{
+			glfwSetWindowSize(m_handle.get(), val.width, val.height);
+			glfwSetWindowPos(m_handle.get(), val.x, val.y);
+		}
+
 	private:
 		struct deleter
 		{
@@ -264,6 +327,8 @@ namespace slideproj::image_presenter
 		using handle = std::unique_ptr<GLFWwindow, deleter>;
 		handle m_handle;
 		std::optional<gl_context> m_gl_ctxt;
+		glfw_context m_ctxt;
+		window_rectangle m_saved_window_rect{0, 0, 800, 500};
 	};
 }
 
