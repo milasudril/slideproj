@@ -118,9 +118,6 @@ namespace slideproj::image_file_loader
 		{ return utils::to_normalized_float(value); }
 	};
 
-	template<class IntensityTransferFunction, class ... Types>
-	using sample_types_with_itf = std::variant<sample_type<Types, IntensityTransferFunction>...>;
-
 	struct linear_intensity_mapping
 	{
 		template<class T>
