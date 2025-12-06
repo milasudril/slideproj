@@ -293,10 +293,10 @@ TESTCASE(slideproj_image_file_loader_load_uint8_rgba_from_png_srbg)
 	EXPECT_EQ(res.height(), 32);
 	EXPECT_EQ(res.alpha_mode(), slideproj::image_file_loader::alpha_mode::straight);
 
-	using expected_pixel_type = slideproj::image_file_loader::pixel_type<
+	using expected_pixel_type = slideproj::pixel_store::pixel_type<
 		slideproj::image_file_loader::sample_type<
 			uint8_t,
-			slideproj::image_file_loader::srgb_intensity_mapping
+			slideproj::pixel_store::srgb_intensity_mapping
 		>,
 		4
 	>;
@@ -323,10 +323,10 @@ TESTCASE(slideproj_image_file_loader_load_uint8_rgba_from_bmp_srbg)
 	EXPECT_EQ(res.width(), 96);
 	EXPECT_EQ(res.height(), 32);
 
-	using expected_pixel_type = slideproj::image_file_loader::pixel_type<
+	using expected_pixel_type = slideproj::pixel_store::pixel_type<
 		slideproj::image_file_loader::sample_type<
 			uint8_t,
-			slideproj::image_file_loader::srgb_intensity_mapping
+			slideproj::pixel_store::srgb_intensity_mapping
 		>,
 		4
 	>;

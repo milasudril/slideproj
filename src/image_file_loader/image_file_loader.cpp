@@ -243,7 +243,7 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 }
 
 slideproj::image_file_loader::fixed_typed_image<
-	slideproj::image_file_loader::pixel_type<float, 4>
+	slideproj::pixel_store::pixel_type<float, 4>
 >
 slideproj::image_file_loader::make_linear_rgba_image(
 	loaded_image const& input,
@@ -256,7 +256,7 @@ slideproj::image_file_loader::make_linear_rgba_image(
 	](auto pixels, uint32_t w, uint32_t h) {
 		auto downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
 		if(downsampled.is_empty())
-		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
+		{ return fixed_typed_image<pixel_store::pixel_type<float, 4>>{}; }
 
 		switch(pixel_ordering)
 		{
@@ -295,7 +295,7 @@ slideproj::image_file_loader::make_linear_rgba_image(
 			pixels,
 			[](auto item){
 				auto const alpha = item.alpha;
-				return slideproj::image_file_loader::pixel_type<float, 4>{
+				return slideproj::pixel_store::pixel_type<float, 4>{
 					.red = alpha*item.red,
 					.green = alpha*item.green,
 					.blue = alpha*item.blue,
@@ -319,7 +319,7 @@ uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle in
 	return (input_aspect_ratio >= output_aspect_ratio)? input.width/fit.width : input.height/fit.height;
 }
 
-slideproj::image_file_loader::fixed_typed_image<slideproj::image_file_loader::pixel_type<float, 4>>
+slideproj::image_file_loader::fixed_typed_image<slideproj::pixel_store::pixel_type<float, 4>>
 slideproj::image_file_loader::make_linear_rgba_image(
 	loaded_image const& input,
 	image_rectangle fit

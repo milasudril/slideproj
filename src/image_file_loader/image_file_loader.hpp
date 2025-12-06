@@ -12,6 +12,7 @@
 #include "src/utils/variant.hpp"
 #include "src/utils/numconv.hpp"
 #include "src/file_collector/file_collector.hpp"
+#include "src/pixel_store/pixel_types.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -118,223 +119,12 @@ namespace slideproj::image_file_loader
 		{ return utils::to_normalized_float(value); }
 	};
 
-	struct linear_intensity_mapping
-	{
-		template<class T>
-		static constexpr float to_linear_float(T value)
-		{ return utils::to_normalized_float(value); }
-	};
-
-	struct srgb_intensity_mapping
-	{
-		template<class T>
-		static constexpr float to_linear_float(T value)
-		{
-			auto const val = utils::to_normalized_float(value);
-			return (val <= 0.04045f)? val/12.92f : std::pow((val + 0.055f)/1.055f, 2.4f);
-		}
-	};
-
-	struct g22_intensity_mapping
-	{
-		template<class T>
-		static constexpr float to_linear_float(T value)
-		{
-			auto const val = utils::to_normalized_float(value);
-			return std::pow(val, 2.2f);
-		}
-	};
-
-	template<class SampleType, size_t ChannelCount>
-	struct pixel_type
-	{};
-
-	template<class SampleType>
-	struct pixel_type<SampleType, 1>
-	{
-		using sample_type = SampleType;
-
-		SampleType gray;
-		static constexpr auto channel_count = 1;
-
-		constexpr auto to_linear_float() const
-		{
-			return pixel_type<float, 1>{
-				.gray = gray.to_linear_float()
-			};
-		}
-
-		constexpr auto& operator+=(pixel_type<SampleType, 1> const& other)
-		{
-			gray += other.gray;
-			return *this;
-		}
-
-		constexpr auto& operator/=(float factor)
-		{
-			gray /= factor;
-			return *this;
-		}
-
-		constexpr auto to_rgba() const
-		{
-			return pixel_type<SampleType, 4>{
-				.red = gray,
-				.green = gray,
-				.blue = gray,
-				// TODO: Deduce max value from SampleType
-				.alpha = 1.0f
-			};
-		}
-	};
-
-	template<class SampleType>
-	struct pixel_type<SampleType, 2>
-	{
-		using sample_type = SampleType;
-
-		SampleType gray;
-		SampleType alpha;
-		static constexpr auto channel_count = 2;
-
-		constexpr auto to_linear_float() const
-		{
-			return pixel_type<float, 2>{
-				.gray = gray.to_linear_float(),
-				.alpha = alpha.to_normalized_float()
-			};
-		}
-
-		constexpr auto& operator+=(pixel_type<SampleType, 2> const& other)
-		{
-			gray += other.gray;
-			alpha += other.alpha;
-			return *this;
-		}
-
-		constexpr auto& operator/=(float factor)
-		{
-			gray /= factor;
-			alpha /= factor;
-			return *this;
-		}
-
-		constexpr auto to_rgba() const
-		{
-			return pixel_type<SampleType, 4>{
-				.red = gray,
-				.green = gray,
-				.blue = gray,
-				.alpha = alpha
-			};
-		}
-	};
-
-	template<class SampleType>
-	struct pixel_type<SampleType, 3>
-	{
-		using sample_type = SampleType;
-
-		SampleType red;
-		SampleType green;
-		SampleType blue;
-
-		static constexpr auto channel_count = 3;
-
-		constexpr auto to_linear_float() const
-		{
-			return pixel_type<float, 3>{
-				.red = red.to_linear_float(),
-				.green = green.to_linear_float(),
-				.blue = blue.to_linear_float()
-			};
-		}
-
-		constexpr auto& operator+=(pixel_type<SampleType, 3> const& other)
-		{
-			red += other.red;
-			green += other.green;
-			blue += other.blue;
-			return *this;
-		}
-
-		constexpr auto& operator/=(float factor)
-		{
-			red /= factor;
-			green /= factor;
-			blue /= factor;
-			return *this;
-		}
-
-		constexpr auto to_rgba() const
-		{
-			return pixel_type<SampleType, 4>{
-				.red = red,
-				.green = green,
-				.blue = blue,
-				// TODO: Deduce max value from SampleType
-				.alpha = 1.0f
-			};
-		}
-	};
-
-	template<class SampleType>
-	struct pixel_type<SampleType, 4>
-	{
-		using sample_type = SampleType;
-
-		SampleType red;
-		SampleType green;
-		SampleType blue;
-		SampleType alpha;
-
-		static constexpr auto channel_count = 4;
-
-		constexpr auto to_linear_float() const
-		{
-			return pixel_type<float, 4>{
-				.red = red.to_linear_float(),
-				.green = green.to_linear_float(),
-				.blue = blue.to_linear_float(),
-				.alpha = alpha.to_normalized_float()
-			};
-		}
-
-		constexpr auto& operator+=(pixel_type<SampleType, 4> const& other)
-		{
-			red += other.red;
-			green += other.green;
-			blue += other.blue;
-			alpha += other.alpha;
-			return *this;
-		}
-
-		constexpr auto& operator/=(float factor)
-		{
-			red /= factor;
-			green /= factor;
-			blue /= factor;
-			alpha /= factor;
-			return *this;
-		}
-
-		constexpr auto to_rgba() const
-		{
-			return pixel_type<SampleType, 4>{
-				.red = red,
-				.green = green,
-				.blue = blue,
-				.alpha = alpha
-			};
-		}
-	};
-
 	template<size_t ChannelCount, class IntensityTransferFunction>
 	using pixel_buffer_varying_sample_size = std::variant<
-		std::unique_ptr<pixel_type<sample_type<uint8_t, IntensityTransferFunction>, ChannelCount>[]>,
-		std::unique_ptr<pixel_type<sample_type<uint16_t, IntensityTransferFunction>, ChannelCount>[]>,
-		std::unique_ptr<pixel_type<sample_type<Imath::half, IntensityTransferFunction>, ChannelCount>[]>,
-		std::unique_ptr<pixel_type<sample_type<float, IntensityTransferFunction>, ChannelCount>[]>
+		std::unique_ptr<pixel_store::pixel_type<sample_type<uint8_t, IntensityTransferFunction>, ChannelCount>[]>,
+		std::unique_ptr<pixel_store::pixel_type<sample_type<uint16_t, IntensityTransferFunction>, ChannelCount>[]>,
+		std::unique_ptr<pixel_store::pixel_type<sample_type<Imath::half, IntensityTransferFunction>, ChannelCount>[]>,
+		std::unique_ptr<pixel_store::pixel_type<sample_type<float, IntensityTransferFunction>, ChannelCount>[]>
 	>;
 
 	template<class IntensityTransferFunction>
@@ -346,9 +136,9 @@ namespace slideproj::image_file_loader
 	>;
 
 	using pixel_buffer = utils::concatenate_variants_t<
-		pixel_buffer_varying_channel_count<linear_intensity_mapping>,
-		pixel_buffer_varying_channel_count<srgb_intensity_mapping>,
-		pixel_buffer_varying_channel_count<g22_intensity_mapping>
+		pixel_buffer_varying_channel_count<pixel_store::linear_intensity_mapping>,
+		pixel_buffer_varying_channel_count<pixel_store::srgb_intensity_mapping>,
+		pixel_buffer_varying_channel_count<pixel_store::g22_intensity_mapping>
 	>;
 
 	static_assert(std::variant_size_v<pixel_buffer> == 48);
@@ -588,7 +378,7 @@ namespace slideproj::image_file_loader
 	{
 		auto const w_out = w/scaling_factor;
 		auto const h_out = h/scaling_factor;
-		using pixel_type_ret = pixel_type<float, PixelType::channel_count>;
+		using pixel_type_ret = pixel_store::pixel_type<float, PixelType::channel_count>;
 		if(w_out == 0 || h_out == 0)
 		{ return fixed_typed_image<pixel_type_ret>{}; }
 
@@ -616,7 +406,7 @@ namespace slideproj::image_file_loader
 	template<class PixelType>
 	auto to_rgba(PixelType const* pixels, uint32_t w, uint32_t h)
 	{
-		using pixel_type_ret = pixel_type<typename PixelType::sample_type, 4>;
+		using pixel_type_ret = pixel_store::pixel_type<typename PixelType::sample_type, 4>;
 		fixed_typed_image<pixel_type_ret> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
 		auto const pixels_out = ret.pixels();
 		std::transform(
@@ -786,7 +576,7 @@ namespace slideproj::image_file_loader
 		return apply_pixel_ordering_impl<PixelOrdering>::apply_to(src);
 	}
 
-	fixed_typed_image<pixel_type<float, 4>>
+	fixed_typed_image<pixel_store::pixel_type<float, 4>>
 	make_linear_rgba_image(loaded_image const& input, uint32_t scaling_factor);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, uint32_t scaling_factor)
@@ -796,13 +586,13 @@ namespace slideproj::image_file_loader
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
-		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
+		{ return fixed_typed_image<pixel_store::pixel_type<float, 4>>{}; }
 		return load_rgba_image(*img_reader, scaling_factor);
 	}
 
 	uint32_t compute_scaling_factor(image_rectangle input, image_rectangle fit);
 
-	fixed_typed_image<pixel_type<float, 4>>
+	fixed_typed_image<pixel_store::pixel_type<float, 4>>
 	make_linear_rgba_image(loaded_image const& input, image_rectangle fit);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, image_rectangle fit)
@@ -812,7 +602,7 @@ namespace slideproj::image_file_loader
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
-		{ return fixed_typed_image<pixel_type<float, 4>>{}; }
+		{ return fixed_typed_image<pixel_store::pixel_type<float, 4>>{}; }
 		return load_rgba_image(*img_reader, fit);
 	}
 };
