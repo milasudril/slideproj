@@ -2,6 +2,8 @@
 
 #include "./input_filter.hpp"
 #include "./slideshow_window_event_handler.hpp"
+#include "./slideshow.hpp"
+#include "src/utils/synchronized.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
@@ -28,6 +30,7 @@ int main()
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	gl_ctxt.enable_vsync();
 	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window)};
+	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;
 	main_window.set_event_handler(std::ref(eh));
 
 #if 0
