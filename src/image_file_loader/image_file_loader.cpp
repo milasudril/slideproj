@@ -190,7 +190,7 @@ slideproj::image_file_loader::loaded_image::loaded_image(
 	uint32_t w,
 	uint32_t h,
 	enum pixel_ordering pixel_ordering,
-	make_uninitialized_pixel_buffer_tag
+	pixel_store::make_uninitialized_pixel_buffer_tag
 ):
 	m_alpha_mode{alpha_mode},
 	m_width{0},
@@ -234,7 +234,7 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 		static_cast<uint32_t>(spec.width),
 		static_cast<uint32_t>(spec.height),
 		to_pixel_ordering_from_exif_orientation(spec.get_int_attribute("Orientation")),
-		make_uninitialized_pixel_buffer_tag{}
+		pixel_store::make_uninitialized_pixel_buffer_tag{}
 	};
 	ret.visit([&input, &spec](auto pixel_buffer, auto&&...){
 		input.read_image(0, 0, 0, spec.nchannels, spec.format, pixel_buffer);
@@ -242,7 +242,7 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 	return ret;
 }
 
-slideproj::image_file_loader::fixed_typed_image<
+slideproj::pixel_store::basic_image<
 	slideproj::pixel_store::pixel_type<float, 4>
 >
 slideproj::image_file_loader::make_linear_rgba_image(
@@ -256,7 +256,7 @@ slideproj::image_file_loader::make_linear_rgba_image(
 	](auto pixels, uint32_t w, uint32_t h) {
 		auto downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
 		if(downsampled.is_empty())
-		{ return fixed_typed_image<pixel_store::pixel_type<float, 4>>{}; }
+		{ return pixel_store::basic_image<pixel_store::pixel_type<float, 4>>{}; }
 
 		switch(pixel_ordering)
 		{
@@ -319,7 +319,7 @@ uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle in
 	return (input_aspect_ratio >= output_aspect_ratio)? input.width/fit.width : input.height/fit.height;
 }
 
-slideproj::image_file_loader::fixed_typed_image<slideproj::pixel_store::pixel_type<float, 4>>
+slideproj::pixel_store::basic_image<slideproj::pixel_store::pixel_type<float, 4>>
 slideproj::image_file_loader::make_linear_rgba_image(
 	loaded_image const& input,
 	image_rectangle fit

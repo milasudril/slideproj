@@ -13,6 +13,7 @@
 #include "src/utils/numconv.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/pixel_store/pixel_types.hpp"
+#include "src/pixel_store/basic_image.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -210,8 +211,6 @@ namespace slideproj::image_file_loader
 		size_t m_value = std::numeric_limits<size_t>::max();
 	};
 
-	struct make_uninitialized_pixel_buffer_tag{};
-
 	enum class alpha_mode{straight, premultiplied};
 
 	enum class pixel_ordering{
@@ -249,7 +248,7 @@ namespace slideproj::image_file_loader
 			uint32_t w,
 			uint32_t h,
 			enum pixel_ordering pixel_ordering,
-			make_uninitialized_pixel_buffer_tag
+			pixel_store::make_uninitialized_pixel_buffer_tag
 		);
 
 		auto width() const
@@ -327,52 +326,6 @@ namespace slideproj::image_file_loader
 		return load_image(*img_reader);
 	}
 
-	template<class T>
-	class fixed_typed_image
-	{
-	public:
-		fixed_typed_image() = default;
-
-		explicit fixed_typed_image(
-			uint32_t w,
-			uint32_t h,
-			make_uninitialized_pixel_buffer_tag
-		):
-			m_width{w},
-			m_height{h},
-			m_pixels{std::make_unique_for_overwrite<T[]>(static_cast<size_t>(w)*static_cast<size_t>(h))}
-		{}
-
-		auto width() const
-		{ return m_width; }
-
-		auto height() const
-		{ return m_height; }
-
-		auto pixel_count() const
-		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
-
-		bool is_empty() const
-		{ return m_width == 0 || m_height == 0; }
-
-		auto pixels()
-		{ return m_pixels.get(); }
-
-		auto pixels() const
-		{ return static_cast<T const*>(m_pixels.get()); }
-
-		auto operator()(uint32_t x, uint32_t y) const
-		{ return m_pixels.get()[x + y*m_width]; }
-
-		auto& operator()(uint32_t x, uint32_t y)
-		{ return m_pixels.get()[x + y*m_width]; }
-
-	private:
-		uint32_t m_width{0};
-		uint32_t m_height{0};
-		std::unique_ptr<T[]> m_pixels;
-	};
-
 	template<class PixelType>
 	auto downsample_to_linear(PixelType const* pixels, uint32_t w, uint32_t h, uint32_t scaling_factor)
 	{
@@ -380,9 +333,9 @@ namespace slideproj::image_file_loader
 		auto const h_out = h/scaling_factor;
 		using pixel_type_ret = pixel_store::pixel_type<float, PixelType::channel_count>;
 		if(w_out == 0 || h_out == 0)
-		{ return fixed_typed_image<pixel_type_ret>{}; }
+		{ return pixel_store::basic_image<pixel_type_ret>{}; }
 
-		fixed_typed_image<pixel_type_ret> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+		pixel_store::basic_image<pixel_type_ret> ret{w_out, h_out, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 		auto const pixels_out = ret.pixels();
 		for(uint32_t y = 0; y != h_out; ++y)
 		{
@@ -407,7 +360,7 @@ namespace slideproj::image_file_loader
 	auto to_rgba(PixelType const* pixels, uint32_t w, uint32_t h)
 	{
 		using pixel_type_ret = pixel_store::pixel_type<typename PixelType::sample_type, 4>;
-		fixed_typed_image<pixel_type_ret> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+		pixel_store::basic_image<pixel_type_ret> ret{w, h, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 		auto const pixels_out = ret.pixels();
 		std::transform(
 			pixels, pixels + ret.pixel_count(), pixels_out, [](auto item){
@@ -424,11 +377,11 @@ namespace slideproj::image_file_loader
 	struct apply_pixel_ordering_impl<pixel_ordering::top_to_bottom_right_to_left>
 	{
 		template<class PixelType>
-		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		static auto apply_to(pixel_store::basic_image<PixelType> const& src)
 		{
 			auto const w = src.width();
 			auto const h = src.height();
-			fixed_typed_image<PixelType> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+			pixel_store::basic_image<PixelType> ret{w, h, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 			for(uint32_t y = 0; y != h; ++y)
 			{
 				for(uint32_t x = 0; x != w; ++x)
@@ -442,11 +395,11 @@ namespace slideproj::image_file_loader
 	struct apply_pixel_ordering_impl<pixel_ordering::bottom_to_top_right_to_left>
 	{
 		template<class PixelType>
-		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		static auto apply_to(pixel_store::basic_image<PixelType> const& src)
 		{
 			auto const w = src.width();
 			auto const h = src.height();
-			fixed_typed_image<PixelType> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+			pixel_store::basic_image<PixelType> ret{w, h, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 			for(uint32_t y = 0; y != h; ++y)
 			{
 				for(uint32_t x = 0; x != w; ++x)
@@ -460,11 +413,11 @@ namespace slideproj::image_file_loader
 	struct apply_pixel_ordering_impl<pixel_ordering::bottom_to_top_left_to_right>
 	{
 		template<class PixelType>
-		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		static auto apply_to(pixel_store::basic_image<PixelType> const& src)
 		{
 			auto const w = src.width();
 			auto const h = src.height();
-			fixed_typed_image<PixelType> ret{w, h, make_uninitialized_pixel_buffer_tag{}};
+			pixel_store::basic_image<PixelType> ret{w, h, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 			for(uint32_t y = 0; y != h; ++y)
 			{
 				for(uint32_t x = 0; x != w; ++x)
@@ -478,13 +431,13 @@ namespace slideproj::image_file_loader
 	struct apply_pixel_ordering_impl<pixel_ordering::left_to_right_top_to_bottom>
 	{
 		template<class PixelType>
-		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		static auto apply_to(pixel_store::basic_image<PixelType> const& src)
 		{
 			auto const w_in = src.width();
 			auto const h_in = src.height();
 			auto const w_out = h_in;
 			auto const h_out = w_in;
-			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			pixel_store::basic_image<PixelType> ret{w_out, h_out, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
 			{
 				auto const x_in = y_out;
@@ -502,13 +455,13 @@ namespace slideproj::image_file_loader
 	struct apply_pixel_ordering_impl<pixel_ordering::right_to_left_top_to_bottom>
 	{
 		template<class PixelType>
-		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		static auto apply_to(pixel_store::basic_image<PixelType> const& src)
 		{
 			auto const w_in = src.width();
 			auto const h_in = src.height();
 			auto const w_out = h_in;
 			auto const h_out = w_in;
-			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			pixel_store::basic_image<PixelType> ret{w_out, h_out, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
 			{
 				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
@@ -526,13 +479,13 @@ namespace slideproj::image_file_loader
 	struct apply_pixel_ordering_impl<pixel_ordering::right_to_left_bottom_to_top>
 	{
 		template<class PixelType>
-		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		static auto apply_to(pixel_store::basic_image<PixelType> const& src)
 		{
 			auto const w_in = src.width();
 			auto const h_in = src.height();
 			auto const w_out = h_in;
 			auto const h_out = w_in;
-			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			pixel_store::basic_image<PixelType> ret{w_out, h_out, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
 			{
 				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
@@ -550,13 +503,13 @@ namespace slideproj::image_file_loader
 	struct apply_pixel_ordering_impl<pixel_ordering::left_to_right_bottom_to_top>
 	{
 		template<class PixelType>
-		static auto apply_to(fixed_typed_image<PixelType> const& src)
+		static auto apply_to(pixel_store::basic_image<PixelType> const& src)
 		{
 			auto const w_in = src.width();
 			auto const h_in = src.height();
 			auto const w_out = h_in;
 			auto const h_out = w_in;
-			fixed_typed_image<PixelType> ret{w_out, h_out, make_uninitialized_pixel_buffer_tag{}};
+			pixel_store::basic_image<PixelType> ret{w_out, h_out, pixel_store::make_uninitialized_pixel_buffer_tag{}};
 			for(uint32_t y_out = 0; y_out != h_out; ++y_out)
 			{
 				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
@@ -571,12 +524,12 @@ namespace slideproj::image_file_loader
 	};
 
 	template<pixel_ordering PixelOrdering, class PixelType>
-	fixed_typed_image<PixelType> apply_pixel_ordering(fixed_typed_image<PixelType> const& src)
+	pixel_store::basic_image<PixelType> apply_pixel_ordering(pixel_store::basic_image<PixelType> const& src)
 	{
 		return apply_pixel_ordering_impl<PixelOrdering>::apply_to(src);
 	}
 
-	fixed_typed_image<pixel_store::pixel_type<float, 4>>
+	pixel_store::basic_image<pixel_store::pixel_type<float, 4>>
 	make_linear_rgba_image(loaded_image const& input, uint32_t scaling_factor);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, uint32_t scaling_factor)
@@ -586,13 +539,13 @@ namespace slideproj::image_file_loader
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
-		{ return fixed_typed_image<pixel_store::pixel_type<float, 4>>{}; }
+		{ return pixel_store::basic_image<pixel_store::pixel_type<float, 4>>{}; }
 		return load_rgba_image(*img_reader, scaling_factor);
 	}
 
 	uint32_t compute_scaling_factor(image_rectangle input, image_rectangle fit);
 
-	fixed_typed_image<pixel_store::pixel_type<float, 4>>
+	pixel_store::basic_image<pixel_store::pixel_type<float, 4>>
 	make_linear_rgba_image(loaded_image const& input, image_rectangle fit);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, image_rectangle fit)
@@ -602,7 +555,7 @@ namespace slideproj::image_file_loader
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
-		{ return fixed_typed_image<pixel_store::pixel_type<float, 4>>{}; }
+		{ return pixel_store::basic_image<pixel_store::pixel_type<float, 4>>{}; }
 		return load_rgba_image(*img_reader, fit);
 	}
 };
