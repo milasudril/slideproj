@@ -6,6 +6,7 @@
 #include "./image_file_loader.hpp"
 
 #include "src/file_collector/file_collector.hpp"
+#include "src/pixel_store/rgba_image.hpp"
 
 #include <OpenImageIO/typedesc.h>
 #include <OpenImageIO/ustring.h>
@@ -242,9 +243,7 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 	return ret;
 }
 
-slideproj::pixel_store::basic_image<
-	slideproj::pixel_store::pixel_type<float, 4>
->
+slideproj::pixel_store::rgba_image
 slideproj::image_file_loader::make_linear_rgba_image(
 	loaded_image const& input,
 	uint32_t scaling_factor
@@ -256,7 +255,7 @@ slideproj::image_file_loader::make_linear_rgba_image(
 	](auto pixels, uint32_t w, uint32_t h) {
 		auto downsampled = downsample_to_linear(pixels, w, h, scaling_factor);
 		if(downsampled.is_empty())
-		{ return pixel_store::basic_image<pixel_store::pixel_type<float, 4>>{}; }
+		{ return pixel_store::rgba_image{}; }
 
 		switch(pixel_ordering)
 		{
@@ -295,7 +294,7 @@ slideproj::image_file_loader::make_linear_rgba_image(
 			pixels,
 			[](auto item){
 				auto const alpha = item.alpha;
-				return slideproj::pixel_store::pixel_type<float, 4>{
+				return slideproj::pixel_store::rgba_pixel{
 					.red = alpha*item.red,
 					.green = alpha*item.green,
 					.blue = alpha*item.blue,
@@ -319,7 +318,7 @@ uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle in
 	return (input_aspect_ratio >= output_aspect_ratio)? input.width/fit.width : input.height/fit.height;
 }
 
-slideproj::pixel_store::basic_image<slideproj::pixel_store::pixel_type<float, 4>>
+slideproj::pixel_store::rgba_image
 slideproj::image_file_loader::make_linear_rgba_image(
 	loaded_image const& input,
 	image_rectangle fit

@@ -12,8 +12,7 @@
 #include "src/utils/variant.hpp"
 #include "src/utils/numconv.hpp"
 #include "src/file_collector/file_collector.hpp"
-#include "src/pixel_store/pixel_types.hpp"
-#include "src/pixel_store/basic_image.hpp"
+#include "src/pixel_store/rgba_image.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -529,7 +528,7 @@ namespace slideproj::image_file_loader
 		return apply_pixel_ordering_impl<PixelOrdering>::apply_to(src);
 	}
 
-	pixel_store::basic_image<pixel_store::pixel_type<float, 4>>
+	pixel_store::rgba_image
 	make_linear_rgba_image(loaded_image const& input, uint32_t scaling_factor);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, uint32_t scaling_factor)
@@ -539,13 +538,13 @@ namespace slideproj::image_file_loader
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
-		{ return pixel_store::basic_image<pixel_store::pixel_type<float, 4>>{}; }
+		{ return pixel_store::rgba_image{}; }
 		return load_rgba_image(*img_reader, scaling_factor);
 	}
 
 	uint32_t compute_scaling_factor(image_rectangle input, image_rectangle fit);
 
-	pixel_store::basic_image<pixel_store::pixel_type<float, 4>>
+	pixel_store::rgba_image
 	make_linear_rgba_image(loaded_image const& input, image_rectangle fit);
 
 	inline auto load_rgba_image(OIIO::ImageInput& input, image_rectangle fit)
@@ -555,7 +554,7 @@ namespace slideproj::image_file_loader
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
-		{ return pixel_store::basic_image<pixel_store::pixel_type<float, 4>>{}; }
+		{ return pixel_store::rgba_image{}; }
 		return load_rgba_image(*img_reader, fit);
 	}
 };
