@@ -77,6 +77,9 @@ namespace slideproj::file_collector
 			return *this;
 		}
 
+		bool empty() const
+		{ return m_entries.empty(); }
+
 		auto& operator[](size_t index) const
 		{
 			// NOTE: This is expected to be safe since index will be validated

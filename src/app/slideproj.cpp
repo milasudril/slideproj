@@ -7,6 +7,7 @@
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
+#include "src/utils/task_queue.hpp"
 
 int main()
 {
@@ -30,52 +31,52 @@ int main()
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	gl_ctxt.enable_vsync();
 	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window)};
-	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;
+	slideproj::utils::task_queue pending_tasks;
 	main_window.set_event_handler(std::ref(eh));
 
-#if 0
-	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
-	auto files = slideproj::file_collector::make_file_list(
-		// TODO: Use command line arguments
-		"/home/torbjorr/Bilder",
-		slideproj::app::input_filter{
-			.include = std::vector{
-				slideproj::app::input_filter_pattern{"*.jpg"},
-				slideproj::app::input_filter_pattern{"*.jpeg"},
-				slideproj::app::input_filter_pattern{"*.bmp"},
-				slideproj::app::input_filter_pattern{"*.gif"},
-				slideproj::app::input_filter_pattern{"*.png"}
+	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;
+	pending_tasks.submit([&file_list](){
+		fprintf(stderr, "(i) Collecting files\n");
+		slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
+		auto files = slideproj::file_collector::make_file_list(
+			// TODO: Use command line arguments
+			"/home/torbjorr/Bilder",
+			slideproj::app::input_filter{
+				.include = std::vector{
+					slideproj::app::input_filter_pattern{"*.jpg"},
+					slideproj::app::input_filter_pattern{"*.jpeg"},
+					slideproj::app::input_filter_pattern{"*.bmp"},
+					slideproj::app::input_filter_pattern{"*.gif"},
+					slideproj::app::input_filter_pattern{"*.png"}
+				},
+				.max_pixel_count = 1024*1024,
+				.image_dimension_provider = std::cref(metadata_repo)
 			},
-			.max_pixel_count = 1024*1024,
-			.image_dimension_provider = std::cref(metadata_repo)
-		},
-		std::array{
-			slideproj::file_collector::file_metadata_field::in_group,
-			slideproj::file_collector::file_metadata_field::timestamp
-		},
-		metadata_repo,
-		[](auto a, auto b) {
-			// TODO: Should use a local-correct comparison (or compare code.points rather than code-units)
-			return a <=> b;
-		}
-	);
-#endif
+			std::array{
+				slideproj::file_collector::file_metadata_field::in_group,
+				slideproj::file_collector::file_metadata_field::timestamp
+			},
+			metadata_repo,
+			[](auto a, auto b) {
+				// TODO: Should use a local-correct comparison (or compare code.points rather than code-units)
+				return a <=> b;
+			}
+		);
+
+		file_list = std::move(files);
+	});
 
 	while(!eh.application_should_exit)
 	{
+		auto current_file_list = file_list.take_value();
+		if(!current_file_list.empty())
+		{
+			fprintf(stderr, "(i) All files have been collected\n");
+		}
 		gui_ctxt.poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
 		main_window.swap_buffers();
 	}
 
-#if 0
-	for(auto const& item : files)
-	{
-		auto const& metadata = metadata_repo.get_metadata(item);
-		printf("%s %s\n", metadata.in_group.c_str(), item.path().c_str());
-	}
-#endif
-
 	return 0;
-
 }

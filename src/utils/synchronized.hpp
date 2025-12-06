@@ -1,7 +1,6 @@
 #ifndef SLIDEPROJ_UTILS_SYNCHRONIZED_HPP
 #define SLIDEPROJ_UTILS_SYNCHRONIZED_HPP
 
-#include <shared_mutex>
 #include <mutex>
 
 namespace slideproj::utils
@@ -10,22 +9,21 @@ namespace slideproj::utils
 	class synchronized
 	{
 	public:
-		template<class Callable>
-		auto read(Callable&& func) const
+		synchronized& operator=(T&& value)
 		{
-			std::shared_lock lock{m_mutex};
-			return std::forward<Callable>(func)(m_value);
+			std::lock_guard lock{m_mutex};
+			m_value = std::move(value);
+			return *this;
 		}
 
-		template<class Callable>
-		auto write(Callable&& func)
+		T take_value()
 		{
-			std::unique_lock lock{m_mutex};
-			return std::forward<Callable>(func)(m_value);
+			std::lock_guard lock{m_mutex};
+			return std::move(m_value);
 		}
 
 	private:
-		mutable std::shared_mutex m_mutex;
+		mutable std::mutex m_mutex;
 		T m_value;
 	};
 }
