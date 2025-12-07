@@ -4,7 +4,10 @@
 #include "./slideshow.hpp"
 
 #include "src/event_types/windowing_events.hpp"
+#include "src/image_file_loader/image_file_loader.hpp"
+#include "src/pixel_store/rgba_image.hpp"
 #include "src/utils/unwrap.hpp"
+#include "src/utils/synchronized.hpp"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -16,12 +19,19 @@ namespace slideproj::app
 		std::reference_wrapper<slideshow> current_slideshow;
 	};
 
-	template<class AppWindow>
+	struct update_window
+	{
+		size_t frame_number;
+		std::chrono::steady_clock::duration time_since_last_frame;
+	};
+
+	template<class AppWindow, class TaskQueue>
 	class slideshow_window_event_handler
 	{
 	public:
-		explicit slideshow_window_event_handler(AppWindow window):
-			m_window{window}
+		explicit slideshow_window_event_handler(AppWindow window, TaskQueue task_queue):
+			m_window{window},
+			m_task_queue{task_queue}
 		{}
 
 		void handle_event(event_types::frame_buffer_size_changed_event event)
@@ -71,6 +81,29 @@ namespace slideproj::app
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
 			m_current_slideshow = &event.current_slideshow.get();
+			auto image_to_load = m_current_slideshow->get_current_entry();
+			if(image_to_load == nullptr)
+			{ return; }
+
+			fprintf(stderr, "(i) Loading image %s\n", image_to_load->path().c_str());
+			unwrap(m_task_queue).submit(
+				[
+					image_to_load = image_to_load->path(),
+					rect = m_target_rectangle,
+					current_image = std::ref(m_current_image)
+				](){
+					utils::unwrap(current_image) = image_file_loader::load_rgba_image(image_to_load, rect);
+				}
+			);
+		}
+
+		void handle_event(update_window const&)
+		{
+			auto image_to_show = m_current_image.take_value();
+			if(!image_to_show.is_empty())
+			{
+				fprintf(stderr, "(i) Image loaded\n");
+			}
 		}
 
 		bool application_should_exit() const
@@ -78,7 +111,11 @@ namespace slideproj::app
 
 	private:
 		AppWindow m_window;
+		TaskQueue m_task_queue;
+
 		slideshow* m_current_slideshow{nullptr};
+		image_file_loader::image_rectangle m_target_rectangle;
+		utils::synchronized<pixel_store::rgba_image> m_current_image;
 		bool m_application_should_exit{false};
 	};
 }

@@ -33,8 +33,8 @@ int main()
 	gl_ctxt.enable_vsync();
 
 	slideproj::app::slideshow slideshow;
-	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window)};
 	slideproj::utils::task_queue pending_tasks;
+	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window), std::ref(pending_tasks)};
 	main_window.set_event_handler(std::ref(eh));
 
 	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;
@@ -66,11 +66,12 @@ int main()
 		);
 	});
 
-	slideproj::pixel_store::rgba_image next_image_to_show;
 	size_t k = 0;
 	constexpr char const* progress_char = "-/|\\-/|\\";
+	auto t_start = std::chrono::steady_clock::now();
 	while(!eh.application_should_exit())
 	{
+		auto now = std::chrono::steady_clock::now();
 		if(slideshow.empty())
 		{
 			auto current_file_list = file_list.take_value();
@@ -87,9 +88,17 @@ int main()
 			else
 			{ fprintf(stderr,"\r(i) Collecting files %c", progress_char[k%8]); }
 		}
+		eh.handle_event(
+			slideproj::app::update_window{
+				.frame_number = k,
+				.time_since_last_frame = now - t_start
+			}
+		);
+
 		gui_ctxt.poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
 		main_window.swap_buffers();
+		t_start = now;
 		++k;
 	}
 

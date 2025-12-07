@@ -35,7 +35,7 @@ namespace slideproj::pixel_store
 		{ return static_cast<size_t>(width())*static_cast<size_t>(height()); }
 
 		bool is_empty() const
-		{ return m_width == 0 || m_height == 0; }
+		{ return m_width == 0 || m_height == 0 || m_pixels == nullptr; }
 
 		auto pixels()
 		{ return m_pixels.get(); }
