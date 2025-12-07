@@ -18,9 +18,20 @@ namespace slideproj::app
 		file_collector::file_list_entry const* get_entry(ssize_t offset)
 		{
 			auto const read_from = m_current_index + offset;
-
 			if(read_from < 0 || read_from >= std::ssize(m_files))
 			{ return nullptr; }
+
+			return &m_files[read_from];
+		}
+
+		// TODO: C++26 optional reference
+		file_collector::file_list_entry const* step_and_get_entry(ssize_t offset)
+		{
+			auto const read_from = m_current_index + offset;
+			if(read_from < 0 || read_from >= std::ssize(m_files))
+			{ return nullptr; }
+
+			m_current_index = read_from;
 			return &m_files[read_from];
 		}
 

@@ -66,19 +66,18 @@ namespace slideproj::app
 		{
 			if(event.action != event_types::button_action::release || m_current_slideshow == nullptr)
 			{ return; }
-#if 0
+
 			auto const image_to_show = [&](auto const& event){
 				if(event.button == event_types::mouse_button_index::left)
-				{ return m_current_slideshow->get_previous_entry(); }
+				{ return m_current_slideshow->step_and_get_entry(-1); }
 				else
 				if(event.button == event_types::mouse_button_index::right)
-				{ return m_current_slideshow->get_next_entry(); }
+				{ return m_current_slideshow->step_and_get_entry(1); }
 				return static_cast<file_collector::file_list_entry const*>(nullptr);
 			}(event);
 
 			if(image_to_show != nullptr)
 			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
-#endif
 		}
 
 		void handle_event(slideshow_loaded event)
