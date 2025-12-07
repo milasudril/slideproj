@@ -3,6 +3,7 @@
 #include "./input_filter.hpp"
 #include "./slideshow_window_event_handler.hpp"
 #include "./slideshow.hpp"
+#include "src/pixel_store/rgba_image.hpp"
 #include "src/utils/synchronized.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
@@ -30,19 +31,16 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	gl_ctxt.enable_vsync();
+
 	slideproj::app::slideshow slideshow;
-	slideproj::app::slideshow_window_event_handler eh{
-		std::ref(main_window),
-		std::ref(slideshow)
-	};
+	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window)};
 	slideproj::utils::task_queue pending_tasks;
 	main_window.set_event_handler(std::ref(eh));
 
 	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;
 	pending_tasks.submit([&file_list](){
-		fprintf(stderr, "(i) Collecting files\n");
 		slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
-		auto files = slideproj::file_collector::make_file_list(
+		file_list = slideproj::file_collector::make_file_list(
 			// TODO: Use command line arguments
 			"/home/torbjorr/Bilder",
 			slideproj::app::input_filter{
@@ -66,24 +64,33 @@ int main()
 				return a <=> b;
 			}
 		);
-
-		file_list = std::move(files);
 	});
 
-	while(!eh.application_should_exit)
+	slideproj::pixel_store::rgba_image next_image_to_show;
+	size_t k = 0;
+	constexpr char const* progress_char = "-/|\\-/|\\";
+	while(!eh.application_should_exit())
 	{
 		if(slideshow.empty())
 		{
 			auto current_file_list = file_list.take_value();
 			if(!current_file_list.empty())
 			{
+				fprintf(stderr, "\n");
 				slideshow = slideproj::app::slideshow{std::move(current_file_list)};
-				fprintf(stderr, "(i) All files have been collected\n");
+				eh.handle_event(
+					slideproj::app::slideshow_loaded{
+						.current_slideshow = std::ref(slideshow)
+					}
+				);
 			}
+			else
+			{ fprintf(stderr,"\r(i) Collecting files %c", progress_char[k%8]); }
 		}
 		gui_ctxt.poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
 		main_window.swap_buffers();
+		++k;
 	}
 
 	return 0;
