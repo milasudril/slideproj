@@ -13,7 +13,7 @@
 							"-g"
 						],
 						"std_revision": {
-							"min":"c++20"
+							"min":"c++23"
 						}
 					},
 					"recipe": "cxx_linker.py",
@@ -40,7 +40,7 @@
 							"."
 						],
 						"std_revision": {
-							"min":"c++20"
+							"min":"c++23"
 						}
 					},
 					"recipe": "cxx_compiler.py",
@@ -76,7 +76,7 @@
 							"."
 						],
 						"std_revision": {
-							"min":"c++20"
+							"min":"c++23"
 						}
 					},
 					"recipe": "cxx_compiler.py",

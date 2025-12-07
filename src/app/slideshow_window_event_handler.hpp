@@ -6,6 +6,7 @@
 #include "src/event_types/windowing_events.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/pixel_store/rgba_image.hpp"
+#include "src/utils/bidirectional_sliding_window.hpp"
 #include "src/utils/unwrap.hpp"
 #include "src/utils/synchronized.hpp"
 
@@ -39,6 +40,8 @@ namespace slideproj::app
 			auto const w = event.width;
 			auto const h = event.height;
 			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
+			m_target_rectangle.width = static_cast<uint32_t>(w);
+			m_target_rectangle.height = static_cast<uint32_t>(h);
 			glViewport(0, 0, w, h);
 		}
 
@@ -63,7 +66,7 @@ namespace slideproj::app
 		{
 			if(event.action != event_types::button_action::release || m_current_slideshow == nullptr)
 			{ return; }
-
+#if 0
 			auto const image_to_show = [&](auto const& event){
 				if(event.button == event_types::mouse_button_index::left)
 				{ return m_current_slideshow->get_previous_entry(); }
@@ -75,35 +78,53 @@ namespace slideproj::app
 
 			if(image_to_show != nullptr)
 			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
+#endif
 		}
 
 		void handle_event(slideshow_loaded event)
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
 			m_current_slideshow = &event.current_slideshow.get();
-			auto image_to_load = m_current_slideshow->get_current_entry();
-			if(image_to_load == nullptr)
-			{ return; }
-
-			fprintf(stderr, "(i) Loading image %s\n", image_to_load->path().c_str());
 			unwrap(m_task_queue).submit(
 				[
-					image_to_load = image_to_load->path(),
+					images_to_load = std::array{
+						m_current_slideshow->get_entry(-1),
+						m_current_slideshow->get_entry(0),
+						m_current_slideshow->get_entry(1)
+					},
 					rect = m_target_rectangle,
-					current_image = std::ref(m_current_image)
+					worker_result = std::ref(m_worker_result),
+					loaded_images  = std::ref(m_loaded_images)
 				](){
-					utils::unwrap(current_image) = image_file_loader::load_rgba_image(image_to_load, rect);
+					std::array<pixel_store::rgba_image, std::tuple_size_v<decltype(images_to_load)>> img_array;
+					for(size_t k = 0; k != std::size(images_to_load); ++k)
+					{
+						if(images_to_load[k] != nullptr)
+						{
+							auto const& path_to_load = images_to_load[k]->path();
+							fprintf(stderr, "(i) Loading %s\n", path_to_load.c_str());
+							img_array[k]  = image_file_loader::load_rgba_image(path_to_load, rect);
+						}
+					}
+					utils::unwrap(worker_result) = [
+						img_array = std::move(img_array),
+						loaded_images
+					]() mutable {
+						fprintf(stderr, "(i) First images loaded\n");
+						auto& pending_images = utils::unwrap(loaded_images);
+						pending_images = typename decltype(loaded_images)::type{
+							std::move(img_array)
+						};
+					};
 				}
 			);
 		}
 
 		void handle_event(update_window const&)
 		{
-			auto image_to_show = m_current_image.take_value();
-			if(!image_to_show.is_empty())
-			{
-				fprintf(stderr, "(i) Image loaded\n");
-			}
+			auto action = m_worker_result.take_value();
+			if(action)
+			{ action(); }
 		}
 
 		bool application_should_exit() const
@@ -115,7 +136,9 @@ namespace slideproj::app
 
 		slideshow* m_current_slideshow{nullptr};
 		image_file_loader::image_rectangle m_target_rectangle;
-		utils::synchronized<pixel_store::rgba_image> m_current_image;
+		// TODO: This needs to be a threadsafe queue
+		utils::synchronized<std::move_only_function<void()>> m_worker_result;
+		utils::bidirectional_sliding_window<pixel_store::rgba_image, 1> m_loaded_images;
 		bool m_application_should_exit{false};
 	};
 }

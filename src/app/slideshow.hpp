@@ -15,25 +15,13 @@ namespace slideproj::app
 		{ set_current_index(start_at); }
 
 		// TODO: C++26 optional reference
-		file_collector::file_list_entry const* get_current_entry()
+		file_collector::file_list_entry const* get_entry(ssize_t offset)
 		{
-			if(m_current_index < 0 || m_current_index >= std::ssize(m_files))
+			auto const read_from = m_current_index + offset;
+
+			if(read_from < 0 || read_from >= std::ssize(m_files))
 			{ return nullptr; }
-			return &m_files[m_current_index];
-		}
-
-		// TODO: C++26 optional reference
-		auto get_next_entry()
-		{
-			set_current_index(m_current_index + 1);
-			return get_current_entry();
-		}
-
-		// TODO: C++26 optional reference
-		auto get_previous_entry()
-		{
-			set_current_index(m_current_index - 1);
-			return get_current_entry();
+			return &m_files[read_from];
 		}
 
 		void set_current_index(ssize_t index)

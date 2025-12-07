@@ -14,6 +14,8 @@ namespace slideproj::utils
 	public:
 		static constexpr auto elem_count = 2*Radius + 1;
 
+		bidirectional_sliding_window() = default;
+
 		explicit bidirectional_sliding_window(std::array<T, elem_count>&& vals):
 			m_values{std::move(vals)}
 		{}
