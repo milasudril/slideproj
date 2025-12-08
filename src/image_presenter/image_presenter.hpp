@@ -9,6 +9,7 @@
 #define SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
 
 #include "src/windowing_api/event_types.hpp"
+#include "src/windowing_api/application_window.hpp"
 
 #define GLFW_INCLUDE_NONE
 
@@ -188,7 +189,7 @@ namespace slideproj::image_presenter
 		int height;
 	};
 
-	class glfw_window
+	class glfw_window:public windowing_api::application_window
 	{
 	public:
 		explicit glfw_window(glfw_context ctxt):m_ctxt{ctxt}
@@ -210,7 +211,7 @@ namespace slideproj::image_presenter
 			return *m_gl_ctxt;
 		}
 
-		void toggle_fullscreen()
+		void toggle_fullscreen() override
 		{
 			if(glfwGetWindowMonitor(m_handle.get()) == nullptr)
 			{
