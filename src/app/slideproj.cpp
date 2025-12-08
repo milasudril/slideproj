@@ -19,7 +19,7 @@ int main()
 			.minor = 6
 		}
 	);
-	slideproj::image_presenter::application_window main_window{gui_ctxt};
+	slideproj::image_presenter::glfw_window main_window{gui_ctxt};
 	auto& gl_ctxt = main_window.activate_render_context();
 	fprintf(
 		stderr,

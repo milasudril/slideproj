@@ -140,7 +140,7 @@ namespace slideproj::image_presenter
 		}
 
 	private:
-		friend class application_window;
+		friend class glfw_window;
 
 		gl_context()
 		{
@@ -188,10 +188,10 @@ namespace slideproj::image_presenter
 		int height;
 	};
 
-	class application_window
+	class glfw_window
 	{
 	public:
-		explicit application_window(glfw_context ctxt):m_ctxt{ctxt}
+		explicit glfw_window(glfw_context ctxt):m_ctxt{ctxt}
 		{
 			ctxt.set_hits_for_current_video_mode();
 			m_handle = handle{glfwCreateWindow(800, 500, "slideproj", nullptr, nullptr)};
