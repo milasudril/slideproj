@@ -8,7 +8,7 @@
 #ifndef SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
 #define SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
 
-#include "src/event_types/windowing_events.hpp"
+#include "src/windowing_api/event_types.hpp"
 
 #define GLFW_INCLUDE_NONE
 
@@ -157,7 +157,7 @@ namespace slideproj::image_presenter
 	constexpr auto to_typing_keyboard_scancode(int value)
 	{
 		constexpr auto X11_scancode_offest = 8;
-		return event_types::typing_keyboard_scancode{value - X11_scancode_offest};
+		return windowing_api::typing_keyboard_scancode{value - X11_scancode_offest};
 	}
 
 	constexpr auto to_button_action(int value)
@@ -165,19 +165,19 @@ namespace slideproj::image_presenter
 		switch(value)
 		{
 			case GLFW_PRESS:
-				return event_types::button_action::press;
+				return windowing_api::button_action::press;
 			case GLFW_REPEAT:
-				return event_types::button_action::repeat;
+				return windowing_api::button_action::repeat;
 			case GLFW_RELEASE:
-				return event_types::button_action::release;
+				return windowing_api::button_action::release;
 			default:
-				return event_types::button_action::release;
+				return windowing_api::button_action::release;
 		}
 	}
 
 	constexpr auto to_typing_keyboard_modifier_mask(int value)
 	{
-		return static_cast<event_types::typing_keyboard_modifier_mask>(value);
+		return static_cast<windowing_api::typing_keyboard_modifier_mask>(value);
 	}
 
 	struct window_rectangle
@@ -252,7 +252,7 @@ namespace slideproj::image_presenter
 				[](GLFWwindow* window, int width, int height) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
 					eh->handle_event(
-						event_types::frame_buffer_size_changed_event{
+						windowing_api::frame_buffer_size_changed_event{
 							.width = width,
 							.height = height
 						}
@@ -264,7 +264,7 @@ namespace slideproj::image_presenter
 				m_handle.get(),
 				[](GLFWwindow* window) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
-					eh->handle_event(event_types::window_is_closing_event{});
+					eh->handle_event(windowing_api::window_is_closing_event{});
 				}
 			);
 
@@ -273,7 +273,7 @@ namespace slideproj::image_presenter
 				[](GLFWwindow* window, int, int scancode, int action, int modifiers) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
 					eh->handle_event(
-						event_types::typing_keyboard_event{
+						windowing_api::typing_keyboard_event{
 							.scancode = to_typing_keyboard_scancode(scancode),
 							.action = to_button_action(action),
 							.modifiers = to_typing_keyboard_modifier_mask(modifiers)
@@ -287,8 +287,8 @@ namespace slideproj::image_presenter
 				[](GLFWwindow* window, int button, int action, int modifiers) {
 					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
 					eh->handle_event(
-						event_types::mouse_button_event{
-							.button = event_types::mouse_button_index{button},
+						windowing_api::mouse_button_event{
+							.button = windowing_api::mouse_button_index{button},
 							.action = to_button_action(action),
 							.modifiers = to_typing_keyboard_modifier_mask(modifiers)
 						}
@@ -298,7 +298,7 @@ namespace slideproj::image_presenter
 
 			// Synthesize a frame_buffer_size_changed event to make sure the size is up-to-date
 			{
-				event_types::frame_buffer_size_changed_event event;
+				windowing_api::frame_buffer_size_changed_event event;
 				glfwGetFramebufferSize(m_handle.get(), &event.width, &event.height);
 				eh.get().handle_event(event);
 			}

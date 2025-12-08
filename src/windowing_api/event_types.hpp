@@ -1,9 +1,9 @@
-#ifndef SLIDEPROJ_EVENT_TYPES_WINDOWING_EVENTS_HPP
-#define SLIDEPROJ_EVENT_TYPES_WINDOWING_EVENTS_HPP
+#ifndef SLIDEPROJ_WINDOWING_API_EVENT_TYPES_HPP
+#define SLIDEPROJ_WINDOWING_API_EVENT_TYPES_HPP
 
 #include "src/utils/bitmask_enum.hpp"
 
-namespace slideproj::event_types
+namespace slideproj::windowing_api
 {
 	struct frame_buffer_size_changed_event
 	{
