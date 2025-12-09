@@ -25,7 +25,7 @@ int main()
 
 	slideproj::app::slideshow slideshow;
 	slideproj::utils::task_queue pending_tasks;
-	slideproj::app::slideshow_window_event_handler eh{std::ref(*main_window), std::ref(pending_tasks)};
+	slideproj::app::slideshow_window_event_handler eh{std::ref(pending_tasks)};
 	main_window->set_event_handler(std::ref(eh));
 
 	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;

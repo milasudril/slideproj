@@ -27,12 +27,11 @@ namespace slideproj::app
 		std::chrono::steady_clock::duration time_since_last_frame;
 	};
 
-	template<class AppWindow, class TaskQueue>
+	template<class TaskQueue>
 	class slideshow_window_event_handler
 	{
 	public:
-		explicit slideshow_window_event_handler(AppWindow window, TaskQueue task_queue):
-			m_window{window},
+		explicit slideshow_window_event_handler(TaskQueue task_queue):
 			m_task_queue{task_queue}
 		{}
 
@@ -143,7 +142,6 @@ namespace slideproj::app
 		{ return m_application_should_exit; }
 
 	private:
-		AppWindow m_window;
 		TaskQueue m_task_queue;
 
 		slideshow* m_current_slideshow{nullptr};
