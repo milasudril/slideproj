@@ -1,5 +1,6 @@
 //@	{
 //@		"dependencies_extra":[
+//@			{"ref":"./image_presenter.o", "rel":"implementation"},
 //@			{"ref":"glfw3", "rel":"implementation", "origin":"pkg-config"},
 //@			{"ref":"glew", "rel":"implementation", "origin":"pkg-config"}
 //@		]
@@ -325,12 +326,20 @@ namespace slideproj::image_presenter
 			{ throw glfw_exception{"Failed to create a window: {}"}; }
 		}
 
+		explicit glfw_window();
+
 		struct deleter
 		{
 			void operator()(GLFWwindow* window) const
 			{ glfwDestroyWindow(window); }
 		};
 		using handle = std::unique_ptr<GLFWwindow, deleter>;
+
+		struct instance_counter
+		{
+
+		};
+
 		handle m_handle;
 		std::optional<gl_context> m_gl_ctxt;
 		glfw_context m_ctxt;
