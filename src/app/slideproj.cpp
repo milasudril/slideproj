@@ -19,8 +19,8 @@ int main()
 			.minor = 6
 		}
 	);
-	slideproj::image_presenter::glfw_window main_window{gui_ctxt};
-	auto& gl_ctxt = main_window.activate_render_context();
+	auto main_window = slideproj::image_presenter::glfw_window::create(gui_ctxt);
+	auto& gl_ctxt = main_window->activate_render_context();
 	fprintf(
 		stderr,
 		"(i) Initialized OpenGL. Vendor = %s, Renderer = %s, Version = %s\n",
@@ -34,8 +34,8 @@ int main()
 
 	slideproj::app::slideshow slideshow;
 	slideproj::utils::task_queue pending_tasks;
-	slideproj::app::slideshow_window_event_handler eh{std::ref(main_window), std::ref(pending_tasks)};
-	main_window.set_event_handler(std::ref(eh));
+	slideproj::app::slideshow_window_event_handler eh{std::ref(*main_window), std::ref(pending_tasks)};
+	main_window->set_event_handler(std::ref(eh));
 
 	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;
 	pending_tasks.submit([&file_list](){
@@ -97,7 +97,7 @@ int main()
 
 		gui_ctxt.poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
-		main_window.swap_buffers();
+		main_window->swap_buffers();
 		t_start = now;
 		++k;
 	}

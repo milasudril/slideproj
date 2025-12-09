@@ -192,6 +192,11 @@ namespace slideproj::image_presenter
 	class glfw_window:public windowing_api::application_window
 	{
 	public:
+		static std::unique_ptr<glfw_window> create(glfw_context ctxt)
+		{
+			return std::make_unique<glfw_window>(ctxt);
+		}
+
 		explicit glfw_window(glfw_context ctxt):m_ctxt{ctxt}
 		{
 			ctxt.set_hits_for_current_video_mode();
