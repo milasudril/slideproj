@@ -15,6 +15,9 @@ namespace slideproj::utils
 		~instance_counter()
 		{ --m_value; }
 
+		size_t value() const
+		{ return m_value; }
+
 	private:
 		inline static size_t m_value = 0;
 	};

@@ -1,8 +1,7 @@
 //@	{
 //@		"dependencies_extra":[
 //@			{"ref":"./image_presenter.o", "rel":"implementation"},
-//@			{"ref":"glfw3", "rel":"implementation", "origin":"pkg-config"},
-//@			{"ref":"glew", "rel":"implementation", "origin":"pkg-config"}
+//@			{"ref":"glfw3", "rel":"implementation", "origin":"pkg-config"}
 //@		]
 //@	}
 
@@ -16,147 +15,12 @@
 #define GLFW_INCLUDE_NONE
 
 #include <GLFW/glfw3.h>
-#include <GL/glew.h>
-#include <GL/gl.h>
 
 #include <memory>
 #include <format>
 
 namespace slideproj::image_presenter
 {
-	class glfw_exception:public std::runtime_error
-	{
-	public:
-		static char const* get_error_message()
-		{
-			char const* errmsg = nullptr;
-			glfwGetError(&errmsg);
-			return errmsg != nullptr? errmsg : "No error";
-		}
-
-		template<class... Args>
-		explicit glfw_exception(std::format_string<char const*> message):
-			std::runtime_error{std::format(message, get_error_message())}
-		{}
-	};
-
-	class glew_exception:public std::runtime_error
-	{
-	public:
-		template<class... Args>
-		explicit glew_exception(std::format_string<char const*> message, GLenum glew_errno):
-			std::runtime_error{
-				std::format(
-					message,
-					reinterpret_cast<char const*>(glewGetErrorString(glew_errno))
-				)
-			}
-		{}
-	};
-
-	struct renderer_version
-	{
-		uint32_t major;
-		uint32_t minor;
-	};
-
-	class glfw_context
-	{
-	public:
-		glfw_context():m_impl{std::make_shared<impl>()}
-		{}
-
-		GLFWvidmode const& get_primary_monitor_video_mode()
-		{
-			auto const monitor = glfwGetPrimaryMonitor();
-			if(monitor == nullptr)
-			{ throw glfw_exception{"Failed to retrieve primary monitor: {}"}; }
-
-			auto const vidmode = glfwGetVideoMode(monitor);
-			if(vidmode == nullptr)
-			{ throw glfw_exception{"Failed to retrieve video mode of primary monitor: {}"}; }
-
-			return *vidmode;
-		}
-
-		void set_hits_for_current_video_mode()
-		{
-			auto const& vidmode = get_primary_monitor_video_mode();
-			glfwWindowHint(GLFW_RED_BITS, vidmode.redBits);
-			glfwWindowHint(GLFW_GREEN_BITS, vidmode.greenBits);
-			glfwWindowHint(GLFW_BLUE_BITS, vidmode.blueBits);
-			glfwWindowHint(GLFW_REFRESH_RATE, vidmode.refreshRate);
-		}
-
-		void poll_events()
-		{ glfwPollEvents(); }
-
-		void select_opengl_version(renderer_version ver)
-		{
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, ver.major);
-			glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, ver.minor);
-			glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-			glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-		}
-
-	private:
-		struct impl
-		{
-			impl()
-			{
-				if(glfwInit() == GLFW_FALSE)
-				{
-					char const* errmsg = nullptr;
-					glfwGetError(&errmsg);
-					throw glfw_exception{"Failed to initialize GLFW: {}"};
-				}
-			}
-
-			~impl()
-			{ glfwTerminate(); }
-		};
-
-		std::shared_ptr<impl> m_impl;
-	};
-
-	class gl_context
-	{
-	public:
-		void enable_vsync()
-		{
-			glfwSwapInterval(1);
-			m_use_vsync = true;
-		}
-
-		void disable_vsync()
-		{
-			glfwSwapInterval(0);
-			m_use_vsync = false;
-		}
-
-		void restore_vsync() const
-		{
-			if(m_use_vsync)
-			{ glfwSwapInterval(1); }
-			else
-			{ glfwSwapInterval(0); }
-		}
-
-	private:
-		friend class glfw_window;
-
-		gl_context()
-		{
-			auto const res = glewInit();
-			if(res != GLEW_OK)
-			{ throw glew_exception{"Failed to load OpenGL functions: {}", res}; }
-
-			disable_vsync();
-		}
-
-		bool m_use_vsync{false};
-	};
-
 	constexpr auto to_typing_keyboard_scancode(int value)
 	{
 		constexpr auto X11_scancode_offest = 8;
@@ -194,54 +58,38 @@ namespace slideproj::image_presenter
 	class glfw_window:public windowing_api::application_window
 	{
 	public:
-		static std::unique_ptr<glfw_window> create(glfw_context ctxt)
+		static std::unique_ptr<glfw_window> create(char const* title)
 		{
-			return std::unique_ptr<glfw_window>{new glfw_window(ctxt)};
+			return std::unique_ptr<glfw_window>{new glfw_window(title)};
 		}
+
+		~glfw_window() override
+		{
+			if(m_instance_counter.value() == 1)
+			{ glfwTerminate(); }
+		}
+
+		GLFWvidmode const& get_primary_monitor_video_mode();
+
+		void poll_events()
+		{ glfwPollEvents(); }
 
 		void swap_buffers()
 		{ glfwSwapBuffers(m_handle.get()); }
 
-		gl_context& activate_render_context()
+		void enable_vsync()
 		{
-			glfwMakeContextCurrent(m_handle.get());
-			if(!m_gl_ctxt.has_value())
-			{ m_gl_ctxt = gl_context{}; }
-			return *m_gl_ctxt;
+			glfwSwapInterval(1);
+			m_vsync_enabled = true;
 		}
 
-		void toggle_fullscreen() override
+		void disable_vsync()
 		{
-			if(glfwGetWindowMonitor(m_handle.get()) == nullptr)
-			{
-				m_saved_window_rect = get_window_rect();
-				auto const& vidmode = m_ctxt.get_primary_monitor_video_mode();
-				glfwSetWindowMonitor(
-					m_handle.get(),
-					glfwGetPrimaryMonitor(),
-					0,
-					0,
-					vidmode.width,
-					vidmode.height,
-					vidmode.refreshRate
-				);
-			}
-			else
-			{
-				glfwSetWindowMonitor(
-					m_handle.get(),
-					nullptr,
-					m_saved_window_rect.x,
-					m_saved_window_rect.y,
-					m_saved_window_rect.width,
-					m_saved_window_rect.height,
-					GLFW_DONT_CARE
-				);
-			}
-
-			if(m_gl_ctxt.has_value())
-			{ m_gl_ctxt->restore_vsync(); }
+			glfwSwapInterval(0);
+			m_vsync_enabled = false;
 		}
+
+		void toggle_fullscreen() override;
 
 		template<class EventHandler>
 		void set_event_handler(std::reference_wrapper<EventHandler> eh)
@@ -319,15 +167,7 @@ namespace slideproj::image_presenter
 		}
 
 	private:
-		explicit glfw_window(glfw_context ctxt):m_ctxt{ctxt}
-		{
-			ctxt.set_hits_for_current_video_mode();
-			m_handle = handle{glfwCreateWindow(800, 500, "slideproj", nullptr, nullptr)};
-			if(m_handle == nullptr)
-			{ throw glfw_exception{"Failed to create a window: {}"}; }
-		}
-
-		explicit glfw_window();
+		explicit glfw_window(char const* title);
 
 		struct deleter
 		{
@@ -338,9 +178,8 @@ namespace slideproj::image_presenter
 
 		[[no_unique_address]] utils::instance_counter<glfw_window> m_instance_counter;
 		handle m_handle;
-		std::optional<gl_context> m_gl_ctxt;
-		glfw_context m_ctxt;
 		window_rectangle m_saved_window_rect{0, 0, 800, 500};
+		bool m_vsync_enabled{false};
 	};
 }
 

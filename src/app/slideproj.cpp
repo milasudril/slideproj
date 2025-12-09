@@ -12,15 +12,7 @@
 
 int main()
 {
-	slideproj::image_presenter::glfw_context gui_ctxt;
-	gui_ctxt.select_opengl_version(
-		slideproj::image_presenter::renderer_version{
-			.major = 4,
-			.minor = 6
-		}
-	);
-	auto main_window = slideproj::image_presenter::glfw_window::create(gui_ctxt);
-	auto& gl_ctxt = main_window->activate_render_context();
+	auto main_window = slideproj::image_presenter::glfw_window::create("slideproj");
 	fprintf(
 		stderr,
 		"(i) Initialized OpenGL. Vendor = %s, Renderer = %s, Version = %s\n",
@@ -30,7 +22,6 @@ int main()
 	);
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-	gl_ctxt.enable_vsync();
 
 	slideproj::app::slideshow slideshow;
 	slideproj::utils::task_queue pending_tasks;
@@ -95,7 +86,7 @@ int main()
 			}
 		);
 
-		gui_ctxt.poll_events();
+		main_window->poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
 		main_window->swap_buffers();
 		t_start = now;
