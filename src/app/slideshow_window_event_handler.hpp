@@ -10,6 +10,7 @@
 #include "src/utils/bidirectional_sliding_window.hpp"
 #include "src/utils/unwrap.hpp"
 #include "src/utils/synchronized.hpp"
+#include "src/utils/task_queue.hpp"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -27,11 +28,10 @@ namespace slideproj::app
 		std::chrono::steady_clock::duration time_since_last_frame;
 	};
 
-	template<class TaskQueue>
 	class slideshow_window_event_handler
 	{
 	public:
-		explicit slideshow_window_event_handler(TaskQueue task_queue):
+		explicit slideshow_window_event_handler(utils::task_queue& task_queue):
 			m_task_queue{task_queue}
 		{}
 
@@ -142,7 +142,7 @@ namespace slideproj::app
 		{ return m_application_should_exit; }
 
 	private:
-		TaskQueue m_task_queue;
+		std::reference_wrapper<utils::task_queue> m_task_queue;
 
 		slideshow* m_current_slideshow{nullptr};
 		image_file_loader::image_rectangle m_target_rectangle;
