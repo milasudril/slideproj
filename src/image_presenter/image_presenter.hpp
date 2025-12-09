@@ -11,6 +11,7 @@
 
 #include "src/windowing_api/event_types.hpp"
 #include "src/windowing_api/application_window.hpp"
+#include "src/utils/instance_counter.hpp"
 
 #define GLFW_INCLUDE_NONE
 
@@ -335,11 +336,7 @@ namespace slideproj::image_presenter
 		};
 		using handle = std::unique_ptr<GLFWwindow, deleter>;
 
-		struct instance_counter
-		{
-
-		};
-
+		[[no_unique_address]] utils::instance_counter<glfw_window> m_instance_counter;
 		handle m_handle;
 		std::optional<gl_context> m_gl_ctxt;
 		glfw_context m_ctxt;
