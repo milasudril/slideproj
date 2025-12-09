@@ -178,7 +178,7 @@ namespace slideproj::image_presenter
 
 		[[no_unique_address]] utils::instance_counter<glfw_window> m_instance_counter;
 		handle m_handle;
-		window_rectangle m_saved_window_rect{0, 0, 800, 500};
+		window_rectangle m_saved_window_rect{};
 		bool m_vsync_enabled{false};
 	};
 }
