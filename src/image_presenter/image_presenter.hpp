@@ -97,14 +97,15 @@ namespace slideproj::image_presenter
 			m_event_handler = &eh.get();
 			static constexpr auto get_event_handler = [](GLFWwindow* window) {
 				auto self = static_cast<glfw_window*>(glfwGetWindowUserPointer(window));
-				return static_cast<EventHandler*>(self->m_event_handler);
+				return std::pair{self, static_cast<EventHandler*>(self->m_event_handler)};
 			};
 
 			glfwSetFramebufferSizeCallback(
 				m_handle.get(),
 				[](GLFWwindow* window, int width, int height) {
-					auto eh = get_event_handler(window);
+					auto [self, eh] = get_event_handler(window);
 					eh->handle_event(
+						*self,
 						windowing_api::frame_buffer_size_changed_event{
 							.width = width,
 							.height = height
@@ -116,16 +117,17 @@ namespace slideproj::image_presenter
 			glfwSetWindowCloseCallback(
 				m_handle.get(),
 				[](GLFWwindow* window) {
-					auto eh = get_event_handler(window);
-					eh->handle_event(windowing_api::window_is_closing_event{});
+					auto [self, eh] = get_event_handler(window);
+					eh->handle_event(*self, windowing_api::window_is_closing_event{});
 				}
 			);
 
 			glfwSetKeyCallback(
 				m_handle.get(),
 				[](GLFWwindow* window, int, int scancode, int action, int modifiers) {
-					auto eh = get_event_handler(window);
+					auto [self, eh] = get_event_handler(window);
 					eh->handle_event(
+						*self,
 						windowing_api::typing_keyboard_event{
 							.scancode = to_typing_keyboard_scancode(scancode),
 							.action = to_button_action(action),
@@ -138,8 +140,9 @@ namespace slideproj::image_presenter
 			glfwSetMouseButtonCallback(
 				m_handle.get(),
 				[](GLFWwindow* window, int button, int action, int modifiers) {
-					auto eh = get_event_handler(window);
+					auto [self, eh] = get_event_handler(window);
 					eh->handle_event(
+						*self,
 						windowing_api::mouse_button_event{
 							.button = windowing_api::mouse_button_index{button},
 							.action = to_button_action(action),
@@ -153,7 +156,7 @@ namespace slideproj::image_presenter
 			{
 				windowing_api::frame_buffer_size_changed_event event;
 				glfwGetFramebufferSize(m_handle.get(), &event.width, &event.height);
-				eh.get().handle_event(event);
+				eh.get().handle_event(*this, event);
 			}
 		}
 

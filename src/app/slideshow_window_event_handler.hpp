@@ -4,6 +4,7 @@
 #include "./slideshow.hpp"
 
 #include "src/windowing_api/event_types.hpp"
+#include "src/windowing_api/application_window.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/pixel_store/rgba_image.hpp"
 #include "src/utils/bidirectional_sliding_window.hpp"
@@ -35,7 +36,10 @@ namespace slideproj::app
 			m_task_queue{task_queue}
 		{}
 
-		void handle_event(windowing_api::frame_buffer_size_changed_event event)
+		void handle_event(
+			windowing_api::application_window&,
+			windowing_api::frame_buffer_size_changed_event event
+		)
 		{
 			auto const w = event.width;
 			auto const h = event.height;
@@ -45,24 +49,33 @@ namespace slideproj::app
 			glViewport(0, 0, w, h);
 		}
 
-		void handle_event(slideproj::windowing_api::window_is_closing_event)
+		void handle_event(
+			windowing_api::application_window&,
+			slideproj::windowing_api::window_is_closing_event
+		)
 		{
 			fprintf(stderr, "(i) Window is closing\n");
 			m_application_should_exit = true;
 		}
 
-		void handle_event(windowing_api::typing_keyboard_event const& event)
+		void handle_event(
+			windowing_api::application_window& window,
+			windowing_api::typing_keyboard_event const& event
+		)
 		{
 			if(
 				event.scancode == windowing_api::typing_keyboard_scancode::f_11
 				&& event.action == windowing_api::button_action::press
 			)
-			{ utils::unwrap(m_window).toggle_fullscreen(); }
+			{ window.toggle_fullscreen(); }
 			else
 			{	fprintf(stderr, "(i) User pressed %d\n", event.scancode.value()); }
 		}
 
-		void handle_event(windowing_api::mouse_button_event const& event)
+		void handle_event(
+			windowing_api::application_window&,
+			windowing_api::mouse_button_event const& event
+		)
 		{
 			if(event.action != windowing_api::button_action::release || m_current_slideshow == nullptr)
 			{ return; }
