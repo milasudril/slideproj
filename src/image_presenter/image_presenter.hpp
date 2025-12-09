@@ -194,15 +194,7 @@ namespace slideproj::image_presenter
 	public:
 		static std::unique_ptr<glfw_window> create(glfw_context ctxt)
 		{
-			return std::make_unique<glfw_window>(ctxt);
-		}
-
-		explicit glfw_window(glfw_context ctxt):m_ctxt{ctxt}
-		{
-			ctxt.set_hits_for_current_video_mode();
-			m_handle = handle{glfwCreateWindow(800, 500, "slideproj", nullptr, nullptr)};
-			if(m_handle == nullptr)
-			{ throw glfw_exception{"Failed to create a window: {}"}; }
+			return std::unique_ptr<glfw_window>{new glfw_window(ctxt)};
 		}
 
 		void swap_buffers()
@@ -325,6 +317,14 @@ namespace slideproj::image_presenter
 		}
 
 	private:
+		explicit glfw_window(glfw_context ctxt):m_ctxt{ctxt}
+		{
+			ctxt.set_hits_for_current_video_mode();
+			m_handle = handle{glfwCreateWindow(800, 500, "slideproj", nullptr, nullptr)};
+			if(m_handle == nullptr)
+			{ throw glfw_exception{"Failed to create a window: {}"}; }
+		}
+
 		struct deleter
 		{
 			void operator()(GLFWwindow* window) const
