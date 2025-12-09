@@ -78,6 +78,7 @@ slideproj::image_presenter::glfw_window::glfw_window(char const* title)
 
 	m_saved_window_rect = get_window_rect();
 	enable_vsync();
+	glfwSetWindowUserPointer(m_handle.get(), this);
 }
 
 void slideproj::image_presenter::glfw_window::toggle_fullscreen()

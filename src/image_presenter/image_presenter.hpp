@@ -94,11 +94,16 @@ namespace slideproj::image_presenter
 		template<class EventHandler>
 		void set_event_handler(std::reference_wrapper<EventHandler> eh)
 		{
-			glfwSetWindowUserPointer(m_handle.get(), &eh.get());
+			m_event_handler = &eh.get();
+			static constexpr auto get_event_handler = [](GLFWwindow* window) {
+				auto self = static_cast<glfw_window*>(glfwGetWindowUserPointer(window));
+				return static_cast<EventHandler*>(self->m_event_handler);
+			};
+
 			glfwSetFramebufferSizeCallback(
 				m_handle.get(),
 				[](GLFWwindow* window, int width, int height) {
-					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					auto eh = get_event_handler(window);
 					eh->handle_event(
 						windowing_api::frame_buffer_size_changed_event{
 							.width = width,
@@ -111,7 +116,7 @@ namespace slideproj::image_presenter
 			glfwSetWindowCloseCallback(
 				m_handle.get(),
 				[](GLFWwindow* window) {
-					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					auto eh = get_event_handler(window);
 					eh->handle_event(windowing_api::window_is_closing_event{});
 				}
 			);
@@ -119,7 +124,7 @@ namespace slideproj::image_presenter
 			glfwSetKeyCallback(
 				m_handle.get(),
 				[](GLFWwindow* window, int, int scancode, int action, int modifiers) {
-					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					auto eh = get_event_handler(window);
 					eh->handle_event(
 						windowing_api::typing_keyboard_event{
 							.scancode = to_typing_keyboard_scancode(scancode),
@@ -133,7 +138,7 @@ namespace slideproj::image_presenter
 			glfwSetMouseButtonCallback(
 				m_handle.get(),
 				[](GLFWwindow* window, int button, int action, int modifiers) {
-					auto eh = static_cast<EventHandler*>(glfwGetWindowUserPointer(window));
+					auto eh = get_event_handler(window);
 					eh->handle_event(
 						windowing_api::mouse_button_event{
 							.button = windowing_api::mouse_button_index{button},
@@ -178,6 +183,7 @@ namespace slideproj::image_presenter
 
 		[[no_unique_address]] utils::instance_counter<glfw_window> m_instance_counter;
 		handle m_handle;
+		void* m_event_handler;
 		window_rectangle m_saved_window_rect{};
 		bool m_vsync_enabled{false};
 	};
