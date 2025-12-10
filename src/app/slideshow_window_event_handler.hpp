@@ -1,7 +1,7 @@
 #ifndef SLIDEPROJ_APP_SLIDESHOW_WINDOW_EVENT_HANDLER_HPP
 #define SLIDEPROJ_APP_SLIDESHOW_WINDOW_EVENT_HANDLER_HPP
 
-#include "./slideshow.hpp"
+#include "./slideshow_controller.hpp"
 
 #include "src/windowing_api/event_types.hpp"
 #include "src/windowing_api/application_window.hpp"
