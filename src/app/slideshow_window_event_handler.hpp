@@ -11,7 +11,6 @@
 #include "src/utils/unwrap.hpp"
 #include "src/utils/synchronized.hpp"
 #include "src/utils/task_queue.hpp"
-#include "src/utils/threadsafe_queue.hpp"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
