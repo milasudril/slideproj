@@ -105,7 +105,6 @@ namespace slideproj::app
 						m_current_slideshow->get_entry(1)
 					},
 					rect = m_target_rectangle,
-					worker_result = std::ref(m_result_queue),
 					loaded_images  = std::ref(m_loaded_images)
 				](){
 					std::array<pixel_store::rgba_image, std::tuple_size_v<decltype(images_to_load)>> img_array;
@@ -118,7 +117,8 @@ namespace slideproj::app
 							img_array[k]  = image_file_loader::load_rgba_image(path_to_load, rect);
 						}
 					}
-					utils::unwrap(worker_result).push(
+
+					return utils::task_completion_handler{
 						[
 							img_array = std::move(img_array),
 							loaded_images
@@ -129,20 +129,14 @@ namespace slideproj::app
 								std::move(img_array)
 							};
 						}
-					);
+					};
 				}
 			);
 		}
 
 		void handle_event(update_window const&)
 		{
-			while(true)
-			{
-				auto action = m_result_queue.try_pop();
-				if(!action.has_value())
-				{ return; }
-				(*action)();
-			}
+			utils::unwrap(m_task_queue).finalize_completed_tasks();
 		}
 
 		bool application_should_exit() const
@@ -153,8 +147,6 @@ namespace slideproj::app
 
 		slideshow* m_current_slideshow{nullptr};
 		image_file_loader::image_rectangle m_target_rectangle;
-		// TODO: This needs to be a threadsafe queue
-		utils::threadsafe_queue<std::move_only_function<void()>> m_result_queue;
 		utils::bidirectional_sliding_window<pixel_store::rgba_image, 1> m_loaded_images;
 		bool m_application_should_exit{false};
 	};

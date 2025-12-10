@@ -55,6 +55,9 @@ int main()
 				return a <=> b;
 			}
 		);
+
+		// TODO: Upon completion, notify eh
+		return slideproj::utils::task_completion_handler{[](){}};
 	});
 
 	size_t k = 0;

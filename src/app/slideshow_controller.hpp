@@ -34,7 +34,7 @@ namespace slideproj::app
 			if(image_to_show != nullptr)
 			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
 		}
-
+#if 0
 		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
@@ -73,6 +73,7 @@ namespace slideproj::app
 				}
 			);
 		}
+#endif
 
 	private:
 		std::reference_wrapper<utils::task_queue> m_task_queue;
