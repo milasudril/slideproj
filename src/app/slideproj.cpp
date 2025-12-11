@@ -4,7 +4,6 @@
 #include "./slideshow_window_event_handler.hpp"
 #include "./slideshow.hpp"
 #include "src/pixel_store/rgba_image.hpp"
-#include "src/utils/synchronized.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
@@ -28,37 +27,41 @@ int main()
 	slideproj::app::slideshow_window_event_handler eh{std::ref(pending_tasks)};
 	main_window->set_event_handler(std::ref(eh));
 
-	slideproj::utils::synchronized<slideproj::file_collector::file_list> file_list;
-	pending_tasks.submit([&file_list](){
-		slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
-		file_list = slideproj::file_collector::make_file_list(
-			// TODO: Use command line arguments
-			"/home/torbjorr/Bilder",
-			slideproj::app::input_filter{
-				.include = std::vector{
-					slideproj::app::input_filter_pattern{"*.jpg"},
-					slideproj::app::input_filter_pattern{"*.jpeg"},
-					slideproj::app::input_filter_pattern{"*.bmp"},
-					slideproj::app::input_filter_pattern{"*.gif"},
-					slideproj::app::input_filter_pattern{"*.png"}
-				},
-				.max_pixel_count = 1024*1024,
-				.image_dimension_provider = std::cref(metadata_repo)
+	slideproj::file_collector::file_list file_list;
+	pending_tasks.submit(
+		slideproj::utils::task{
+			.function = []() {
+				slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
+				return slideproj::file_collector::make_file_list(
+					// TODO: Use command line arguments
+					"/home/torbjorr/Bilder",
+					slideproj::app::input_filter{
+						.include = std::vector{
+							slideproj::app::input_filter_pattern{"*.jpg"},
+							slideproj::app::input_filter_pattern{"*.jpeg"},
+							slideproj::app::input_filter_pattern{"*.bmp"},
+							slideproj::app::input_filter_pattern{"*.gif"},
+							slideproj::app::input_filter_pattern{"*.png"}
+						},
+						.max_pixel_count = 1024*1024,
+						.image_dimension_provider = std::cref(metadata_repo)
+					},
+					std::array{
+						slideproj::file_collector::file_metadata_field::in_group,
+						slideproj::file_collector::file_metadata_field::timestamp
+					},
+					metadata_repo,
+					[](auto a, auto b) {
+						// TODO: Should use a local-correct comparison (or compare code.points rather than code-units)
+						return a <=> b;
+					}
+				);
 			},
-			std::array{
-				slideproj::file_collector::file_metadata_field::in_group,
-				slideproj::file_collector::file_metadata_field::timestamp
-			},
-			metadata_repo,
-			[](auto a, auto b) {
-				// TODO: Should use a local-correct comparison (or compare code.points rather than code-units)
-				return a <=> b;
+			.on_completed = [&file_list](auto&& result) {
+				file_list = std::move(result);
 			}
-		);
-
-		// TODO: Upon completion, notify eh
-		return slideproj::utils::task_completion_handler{[](){}};
-	});
+		}
+	);
 
 	size_t k = 0;
 	constexpr char const* progress_char = "-/|\\-/|\\";
@@ -68,11 +71,10 @@ int main()
 		auto now = std::chrono::steady_clock::now();
 		if(slideshow.empty())
 		{
-			auto current_file_list = file_list.take_value();
-			if(!current_file_list.empty())
+			if(!file_list.empty())
 			{
 				fprintf(stderr, "\n");
-				slideshow = slideproj::app::slideshow{std::move(current_file_list)};
+				slideshow = slideproj::app::slideshow{std::move(file_list)};
 				eh.handle_event(
 					slideproj::app::slideshow_loaded{
 						.current_slideshow = std::ref(slideshow)

@@ -97,38 +97,31 @@ namespace slideproj::app
 			fprintf(stderr, "(i) Slideshow loaded\n");
 			m_current_slideshow = &event.current_slideshow.get();
 			unwrap(m_task_queue).submit(
-				[
-					images_to_load = std::array{
-						m_current_slideshow->get_entry(-1),
-						m_current_slideshow->get_entry(0),
-						m_current_slideshow->get_entry(1)
-					},
-					rect = m_target_rectangle,
-					loaded_images  = std::ref(m_loaded_images)
-				](){
-					std::array<pixel_store::rgba_image, std::tuple_size_v<decltype(images_to_load)>> img_array;
-					for(size_t k = 0; k != std::size(images_to_load); ++k)
-					{
-						if(images_to_load[k] != nullptr)
+				utils::task{
+					.function = [
+							images_to_load = std::array{
+								m_current_slideshow->get_entry(-1),
+								m_current_slideshow->get_entry(0),
+								m_current_slideshow->get_entry(1)
+							},
+							rect = m_target_rectangle
+					](){
+						std::array<pixel_store::rgba_image, std::tuple_size_v<decltype(images_to_load)>> img_array;
+						for(size_t k = 0; k != std::size(images_to_load); ++k)
 						{
-							auto const& path_to_load = images_to_load[k]->path();
-							fprintf(stderr, "(i) Loading %s\n", path_to_load.c_str());
-							img_array[k]  = image_file_loader::load_rgba_image(path_to_load, rect);
+							if(images_to_load[k] != nullptr)
+							{
+								auto const& path_to_load = images_to_load[k]->path();
+								fprintf(stderr, "(i) Loading %s\n", path_to_load.c_str());
+								img_array[k]  = image_file_loader::load_rgba_image(path_to_load, rect);
+							}
 						}
+						return std::remove_cvref_t<decltype(m_loaded_images)>{std::move(img_array)};
+					},
+					.on_completed = [loaded_images  = std::ref(m_loaded_images)](auto&& img_array) mutable {
+						fprintf(stderr, "(i) First images loaded\n");
+						utils::unwrap(loaded_images) = std::move(img_array);
 					}
-
-					return utils::task_completion_handler{
-						[
-							img_array = std::move(img_array),
-							loaded_images
-						]() mutable {
-							fprintf(stderr, "(i) First images loaded\n");
-							auto& pending_images = utils::unwrap(loaded_images);
-							pending_images = typename decltype(loaded_images)::type{
-								std::move(img_array)
-							};
-						}
-					};
 				}
 			);
 		}

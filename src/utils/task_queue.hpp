@@ -23,10 +23,11 @@ namespace slideproj::utils
 		std::move_only_function<void()> m_handler{};
 	};
 
-	template<class T>
-	concept task = requires(T&& obj)
+	template<class Function, class OnCompleted>
+	struct task
 	{
-		{std::forward<T>(obj)()}->std::convertible_to<task_completion_handler>;
+		Function function;
+		OnCompleted on_completed;
 	};
 
 	class task_queue
@@ -40,11 +41,18 @@ namespace slideproj::utils
 			}
 		{}
 
-		template<task Task>
-		void submit(Task&& func)
+		template<class Function, class OnCompleted>
+		void submit(task<Function, OnCompleted>&& func)
 		{
 			std::lock_guard lock{m_task_queue_mtx};
-			m_tasks.push(std::forward<Task>(func));
+			m_tasks.push(
+				[
+					on_completed = std::move(func.on_completed),
+					function = std::move(func.function)
+				]() mutable {
+					return task_completion_handler{std::bind_front(std::move(on_completed), function())};
+				}
+			);
 			m_task_queue_cv.notify_one();
 		}
 
@@ -93,8 +101,7 @@ namespace slideproj::utils
 				{
 					auto task_result = task_to_run();
 					std::lock_guard completed_tasks_lock{m_completed_tasks_mtx};
-					m_completed_tasks.push(task_to_run());
-
+					m_completed_tasks.push(std::move(task_result));
 				}
 				catch(std::exception const& exception)
 				{ fprintf(stderr, "%s", exception.what()); }
