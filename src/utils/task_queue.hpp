@@ -69,7 +69,14 @@ namespace slideproj::utils
 					on_completed = std::move(func.on_completed),
 					function = std::move(func.function)
 				]() mutable {
-					return task_completion_handler{std::bind_front(std::move(on_completed), function())};
+					return task_completion_handler{
+						[
+							on_completed = std::move(on_completed),
+							result = function()
+						]() mutable {
+							on_completed(std::move(result));
+						}
+					};
 				}
 			);
 			m_task_queue_cv.notify_one();

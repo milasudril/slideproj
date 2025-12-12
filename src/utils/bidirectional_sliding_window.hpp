@@ -5,6 +5,7 @@
 #include <utility>
 #include <cstddef>
 #include <limits>
+#include <cstdio>
 
 namespace slideproj::utils
 {
@@ -33,11 +34,16 @@ namespace slideproj::utils
 		}
 
 		T const& get_current_element() const
-		{ return m_values[m_current_index]; }
+		{
+			fprintf(stderr, "get_current_element: current_index = %zu,  index_to_replace = %zu\n", m_current_index, m_index_to_replace);
+			return m_values[m_current_index];
+
+		}
 
 		// TODO: C++26 optional reference
 		T* get_element_to_replace()
 		{
+			fprintf(stderr, "get_element_to_replace: index_to_replace = %zu\n", m_index_to_replace);
 			if(m_index_to_replace == std::numeric_limits<size_t>::max())
 			{ return nullptr; }
 
