@@ -9,7 +9,6 @@
 #include "src/pixel_store/rgba_image.hpp"
 #include "src/utils/bidirectional_sliding_window.hpp"
 #include "src/utils/unwrap.hpp"
-#include "src/utils/synchronized.hpp"
 #include "src/utils/task_queue.hpp"
 
 namespace slideproj::app
@@ -82,7 +81,6 @@ namespace slideproj::app
 		std::reference_wrapper<utils::task_queue> m_task_queue;
 		slideshow* m_current_slideshow{nullptr};
 		image_file_loader::image_rectangle m_target_rectangle{};
-		utils::synchronized<std::move_only_function<void()>> m_worker_result;
 		utils::bidirectional_sliding_window<pixel_store::rgba_image, 1> m_loaded_images;
 	};
 }
