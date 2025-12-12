@@ -127,9 +127,7 @@ namespace slideproj::app
 		}
 
 		void handle_event(update_window const&)
-		{
-			utils::unwrap(m_task_queue).finalize_completed_tasks();
-		}
+		{ }
 
 		bool application_should_exit() const
 		{ return m_application_should_exit; }

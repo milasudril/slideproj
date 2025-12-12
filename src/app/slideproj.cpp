@@ -8,6 +8,7 @@
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/image_presenter/image_presenter.hpp"
 #include "src/utils/task_queue.hpp"
+#include "src/utils/task_result_queue.hpp"
 
 int main()
 {
@@ -23,7 +24,8 @@ int main()
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
 	slideproj::app::slideshow slideshow;
-	slideproj::utils::task_queue pending_tasks;
+	slideproj::utils::task_result_queue task_results;
+	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::app::slideshow_window_event_handler eh{std::ref(pending_tasks)};
 	main_window->set_event_handler(std::ref(eh));
 
@@ -69,6 +71,7 @@ int main()
 	while(!eh.application_should_exit())
 	{
 		auto now = std::chrono::steady_clock::now();
+		task_results.drain();
 		if(slideshow.empty())
 		{
 			if(!file_list.empty())
@@ -84,6 +87,8 @@ int main()
 			else
 			{ fprintf(stderr,"\r(i) Collecting files %c", progress_char[k%8]); }
 		}
+
+
 		eh.handle_event(
 			slideproj::app::update_window{
 				.frame_number = k,

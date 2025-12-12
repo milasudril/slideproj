@@ -30,13 +30,32 @@ namespace slideproj::utils
 		OnCompleted on_completed;
 	};
 
+	template<class T>
+	concept task_result_buffer = requires(T& obj, task_completion_handler&& result)
+	{
+		{obj.push(std::move(result))} -> std::same_as<void>;
+	};
+
+	struct type_erased_task_result_buffer
+	{
+		void* object;
+		void (*push)(void* object, task_completion_handler&& result);
+	};
+
 	class task_queue
 	{
 	public:
-		task_queue():
+		template<task_result_buffer ResultBuffer>
+		task_queue(ResultBuffer& res_buffer):
 			m_worker{
 				[this](){
 					run_tasks();
+				}
+			},
+			m_result_buffer{
+				.object = &res_buffer,
+				.push = [](void* object, task_completion_handler&& result) {
+					static_cast<ResultBuffer*>(object)->push(std::move(result));
 				}
 			}
 		{}
@@ -63,22 +82,6 @@ namespace slideproj::utils
 			m_worker.join();
 		}
 
-		void finalize_completed_tasks()
-		{
-			while(true)
-			{
-				std::unique_lock completed_tasks_lock{m_completed_tasks_mtx};
-				if(m_completed_tasks.empty())
-				{ return; }
-
-				auto completed_task = std::move(m_completed_tasks.front());
-				m_completed_tasks.pop();
-				completed_tasks_lock.unlock();
-
-				completed_task.finalize();
-			}
-		}
-
 	private:
 		void run_tasks()
 		{
@@ -99,9 +102,7 @@ namespace slideproj::utils
 				task_queue_lock.unlock();
 				try
 				{
-					auto task_result = task_to_run();
-					std::lock_guard completed_tasks_lock{m_completed_tasks_mtx};
-					m_completed_tasks.push(std::move(task_result));
+					m_result_buffer.push(m_result_buffer.object, task_to_run());
 				}
 				catch(std::exception const& exception)
 				{ fprintf(stderr, "%s", exception.what()); }
@@ -114,8 +115,7 @@ namespace slideproj::utils
 		std::atomic<bool> m_should_stop{false};
 		std::thread m_worker;
 
-		std::mutex m_completed_tasks_mtx;
-		std::queue<task_completion_handler> m_completed_tasks;
+		type_erased_task_result_buffer m_result_buffer;
 	};
 }
 
