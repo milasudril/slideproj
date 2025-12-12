@@ -3,6 +3,7 @@
 #include "./input_filter.hpp"
 #include "./slideshow_window_event_handler.hpp"
 #include "./slideshow.hpp"
+#include "src/app/slideshow_controller.hpp"
 #include "src/pixel_store/rgba_image.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
@@ -26,7 +27,8 @@ int main()
 	slideproj::app::slideshow slideshow;
 	slideproj::utils::task_result_queue task_results;
 	slideproj::utils::task_queue pending_tasks{task_results};
-	slideproj::app::slideshow_window_event_handler eh{std::ref(pending_tasks)};
+	slideproj::app::slideshow_controller slideshow_controller{pending_tasks};
+	slideproj::app::slideshow_window_event_handler eh{slideshow_controller};
 	main_window->set_event_handler(std::ref(eh));
 
 	slideproj::file_collector::file_list file_list;

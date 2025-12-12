@@ -6,11 +6,7 @@
 #include "src/windowing_api/event_types.hpp"
 #include "src/windowing_api/application_window.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
-#include "src/pixel_store/rgba_image.hpp"
-#include "src/utils/bidirectional_sliding_window.hpp"
 #include "src/utils/unwrap.hpp"
-#include "src/utils/synchronized.hpp"
-#include "src/utils/task_queue.hpp"
 
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -31,8 +27,8 @@ namespace slideproj::app
 	class slideshow_window_event_handler
 	{
 	public:
-		explicit slideshow_window_event_handler(utils::task_queue& task_queue):
-			m_task_queue{task_queue}
+		explicit slideshow_window_event_handler(slideshow_controller& slideshow_controller):
+			m_slideshow_controller{slideshow_controller}
 		{}
 
 		void handle_event(
@@ -43,8 +39,12 @@ namespace slideproj::app
 			auto const w = event.width;
 			auto const h = event.height;
 			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
-			m_target_rectangle.width = static_cast<uint32_t>(w);
-			m_target_rectangle.height = static_cast<uint32_t>(h);
+			utils::unwrap(m_slideshow_controller).set_window_size(
+				image_file_loader::image_rectangle{
+					.width = static_cast<uint32_t>(w),
+					.height = static_cast<uint32_t>(h)
+				}
+			);
 			glViewport(0, 0, w, h);
 		}
 
@@ -76,55 +76,18 @@ namespace slideproj::app
 			windowing_api::mouse_button_event const& event
 		)
 		{
-			if(event.action != windowing_api::button_action::release || m_current_slideshow == nullptr)
+			if(event.action != windowing_api::button_action::release)
 			{ return; }
 
-			auto const image_to_show = [&](auto const& event){
-				if(event.button == windowing_api::mouse_button_index::left)
-				{ return m_current_slideshow->step_and_get_entry(-1); }
-				else
-				if(event.button == windowing_api::mouse_button_index::right)
-				{ return m_current_slideshow->step_and_get_entry(1); }
-				return static_cast<file_collector::file_list_entry const*>(nullptr);
-			}(event);
-
-			if(image_to_show != nullptr)
-			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
+			if(event.button == windowing_api::mouse_button_index::left)
+			{ utils::unwrap(m_slideshow_controller).step_backward(); }
+			else
+			if(event.button == windowing_api::mouse_button_index::right)
+			{ utils::unwrap(m_slideshow_controller).step_forward();}
 		}
 
 		void handle_event(slideshow_loaded event)
-		{
-			fprintf(stderr, "(i) Slideshow loaded\n");
-			m_current_slideshow = &event.current_slideshow.get();
-			unwrap(m_task_queue).submit(
-				utils::task{
-					.function = [
-							images_to_load = std::array{
-								m_current_slideshow->get_entry(-1),
-								m_current_slideshow->get_entry(0),
-								m_current_slideshow->get_entry(1)
-							},
-							rect = m_target_rectangle
-					](){
-						std::array<pixel_store::rgba_image, std::tuple_size_v<decltype(images_to_load)>> img_array;
-						for(size_t k = 0; k != std::size(images_to_load); ++k)
-						{
-							if(images_to_load[k] != nullptr)
-							{
-								auto const& path_to_load = images_to_load[k]->path();
-								fprintf(stderr, "(i) Loading %s\n", path_to_load.c_str());
-								img_array[k]  = image_file_loader::load_rgba_image(path_to_load, rect);
-							}
-						}
-						return std::remove_cvref_t<decltype(m_loaded_images)>{std::move(img_array)};
-					},
-					.on_completed = [loaded_images  = std::ref(m_loaded_images)](auto&& img_array) mutable {
-						fprintf(stderr, "(i) First images loaded\n");
-						utils::unwrap(loaded_images) = std::move(img_array);
-					}
-				}
-			);
-		}
+		{ utils::unwrap(m_slideshow_controller).start_slideshow(event.current_slideshow); }
 
 		void handle_event(update_window const&)
 		{ }
@@ -133,11 +96,7 @@ namespace slideproj::app
 		{ return m_application_should_exit; }
 
 	private:
-		std::reference_wrapper<utils::task_queue> m_task_queue;
-
-		slideshow* m_current_slideshow{nullptr};
-		image_file_loader::image_rectangle m_target_rectangle;
-		utils::bidirectional_sliding_window<pixel_store::rgba_image, 1> m_loaded_images;
+		std::reference_wrapper<slideshow_controller> m_slideshow_controller;
 		bool m_application_should_exit{false};
 	};
 }

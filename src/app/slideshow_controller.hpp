@@ -21,8 +21,14 @@ namespace slideproj::app
 			m_task_queue{task_queue}
 		{}
 
+		void set_window_size(image_file_loader::image_rectangle rect)
+		{ m_target_rectangle = rect; }
+
 		void step_forward()
 		{
+			if(m_current_slideshow == nullptr)
+			{ return; }
+
 			auto const image_to_show = m_current_slideshow->step_and_get_entry(1);
 			if(image_to_show != nullptr)
 			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
@@ -30,6 +36,9 @@ namespace slideproj::app
 
 		void step_backward()
 		{
+			if(m_current_slideshow == nullptr)
+			{ return; }
+
 			auto const image_to_show = m_current_slideshow->step_and_get_entry(-1);
 			if(image_to_show != nullptr)
 			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
