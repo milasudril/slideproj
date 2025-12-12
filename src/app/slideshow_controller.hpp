@@ -75,7 +75,6 @@ namespace slideproj::app
 		image_file_loader::image_rectangle m_target_rectangle{};
 		utils::synchronized<std::move_only_function<void()>> m_worker_result;
 		utils::bidirectional_sliding_window<pixel_store::rgba_image, 1> m_loaded_images;
-		bool m_application_should_exit{false};
 	};
 }
 
