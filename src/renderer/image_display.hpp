@@ -2,6 +2,7 @@
 #define SLIDEPROJ_RENDERER_IMAGE_DISPLAY_HPP
 
 #include "./gl_mesh.hpp"
+#include "./gl_shader.hpp"
 
 #include "src/pixel_store/rgba_image.hpp"
 
@@ -20,6 +21,30 @@ namespace slideproj::renderer
 			}
 		};
 
+		gl_program m_shader_program{
+			gl_shader<GL_VERTEX_SHADER>{R"(#version 460 core
+const vec4 coords[4] = vec4[4](
+	vec4(-0.5f, -0.5, 0.0, 1.0f),
+	vec4(0.5, -0.5, 0.0, 1.0f),
+	vec4(0.5, 0.5, 0.0, 1.0f),
+	vec4(-0.5,0.5, 0.0, 1.0f)
+);
+
+void main()
+{
+	gl_Position = coords[gl_VertexID];
+}
+)"},
+			gl_shader<GL_FRAGMENT_SHADER>{R"(#version 460 core
+out vec4 fragment_color;
+
+void main()
+{
+	fragment_color = vec4(1, 1, 1, 1);
+}
+)"
+			}
+		};
 	};
 }
 
