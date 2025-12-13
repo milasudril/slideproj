@@ -24,11 +24,40 @@ namespace slideproj::app
 		std::chrono::steady_clock::duration time_since_last_frame;
 	};
 
+	template<class T>
+	concept image_rect_sink = requires(T& obj, pixel_store::image_rectangle rect)
+	{
+		{ obj.set_window_size(rect) } -> std::same_as<void>;
+	};
+
+	struct image_rect_sink_ref
+	{
+		void* object;
+		void (*set_window_size)(void*, pixel_store::image_rectangle);
+	};
+
+	template<class ... Args>
+	auto make_image_rect_sink_refs(Args&... objects)
+	{
+		return std::array{
+			image_rect_sink_ref{
+				.object = &objects,
+				.set_window_size = [](void* object, pixel_store::image_rectangle rect) {
+					static_cast<Args*>(object)->set_window_size(rect);
+				}
+			}...
+		};
+	}
+
 	class slideshow_window_event_handler
 	{
 	public:
-		explicit slideshow_window_event_handler(slideshow_controller& slideshow_controller):
-			m_slideshow_controller{slideshow_controller}
+		explicit slideshow_window_event_handler(
+			slideshow_controller& slideshow_controller,
+			std::span<image_rect_sink_ref const> rect_sinks
+		):
+			m_slideshow_controller{slideshow_controller},
+			m_rect_sinks{std::begin(rect_sinks), std::end(rect_sinks)}
 		{}
 
 		void handle_event(
@@ -39,12 +68,14 @@ namespace slideproj::app
 			auto const w = event.width;
 			auto const h = event.height;
 			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
-			utils::unwrap(m_slideshow_controller).set_window_size(
-				pixel_store::image_rectangle{
-					.width = static_cast<uint32_t>(w),
-					.height = static_cast<uint32_t>(h)
-				}
-			);
+			pixel_store::image_rectangle const rect{
+				.width = static_cast<uint32_t>(w),
+				.height = static_cast<uint32_t>(h)
+			};
+			for(auto item : m_rect_sinks)
+			{
+				item.set_window_size(item.object, rect);
+			}
 			glViewport(0, 0, w, h);
 		}
 
@@ -97,6 +128,7 @@ namespace slideproj::app
 
 	private:
 		std::reference_wrapper<slideshow_controller> m_slideshow_controller;
+		std::vector<image_rect_sink_ref> m_rect_sinks;
 		bool m_application_should_exit{false};
 	};
 }

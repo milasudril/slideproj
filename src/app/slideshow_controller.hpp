@@ -46,7 +46,11 @@ namespace slideproj::app
 		{}
 
 		void set_window_size(pixel_store::image_rectangle rect)
-		{ m_target_rectangle = rect; }
+		{
+			fprintf(stderr, "(i) slideshow_controller %p: Target rectangle updated\n", this);
+			m_target_rectangle = rect;
+
+		}
 
 		void step_forward()
 		{

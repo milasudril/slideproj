@@ -4,6 +4,7 @@
 #include "./gl_mesh.hpp"
 #include "./gl_shader.hpp"
 
+#include "src/pixel_store/basic_image.hpp"
 #include "src/pixel_store/rgba_image.hpp"
 
 namespace slideproj::renderer
@@ -13,6 +14,11 @@ namespace slideproj::renderer
 	public:
 		void show_image(pixel_store::rgba_image const&)
 		{}
+
+		void set_window_size(pixel_store::image_rectangle const&)
+		{
+			fprintf(stderr, "(i) image_display %p: Target rectangle updated\n", this);
+		}
 
 		void update()
 		{
