@@ -12,12 +12,33 @@ namespace slideproj::renderer
 	class image_display
 	{
 	public:
-		void show_image(pixel_store::rgba_image const&)
-		{}
+		image_display()
+		{
+			m_shader_program.set_uniform(0, 1.0f, 1.0f, 1.0f, 1.0f);
+			m_shader_program.set_uniform(1, 1.0f, 1.0f, 1.0f, 1.0f);
+		}
+
+		void show_image(pixel_store::rgba_image const& img)
+		{
+			auto const w = img.width();
+			auto const h = img.height();
+			fprintf(stderr, "(i) image_display %p: Showing image of size %u x %u\n", this, w, h);
+			if(h >= w)
+			{
+				auto const aspect_ratio = static_cast<float>(w)/static_cast<float>(h);
+				m_shader_program.set_uniform(1, aspect_ratio, 1.0f, 1.0f, 1.0f);
+			}
+			else
+			{
+				auto const aspect_ratio = static_cast<float>(h)/static_cast<float>(w);
+				m_shader_program.set_uniform(1, 1.0f, aspect_ratio, 1.0f, 1.0f);
+			}
+		}
 
 		void set_window_size(pixel_store::image_rectangle const& rect)
 		{
 			fprintf(stderr, "(i) image_display %p: Target rectangle updated\n", this);
+			m_current_rect = rect;
 			if(rect.height >= rect.width)
 			{
 				auto const aspect_ratio = static_cast<float>(rect.width)/static_cast<float>(rect.height);
@@ -38,6 +59,7 @@ namespace slideproj::renderer
 		}
 
 	private:
+		pixel_store::image_rectangle m_current_rect;
 		gl_mesh<unsigned int> m_mesh{
 			std::array<unsigned int, 6>{
 				0, 1, 2, 0, 2, 3
@@ -47,6 +69,7 @@ namespace slideproj::renderer
 		gl_program m_shader_program{
 			gl_shader<GL_VERTEX_SHADER>{R"(#version 460 core
 layout (location = 0) uniform vec4 world_scale;
+layout (location = 1) uniform vec4 model_scale;
 
 const vec4 coords[4] = vec4[4](
 	vec4(-1.0f, -1.0f, 0.0, 1.0f),
@@ -59,7 +82,7 @@ const vec4 origin = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 void main()
 {
-	gl_Position = world_scale*(coords[gl_VertexID] - origin) + origin;
+	gl_Position = model_scale*world_scale*(coords[gl_VertexID] - origin) + origin;
 }
 )"},
 			gl_shader<GL_FRAGMENT_SHADER>{R"(#version 460 core
