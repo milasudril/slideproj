@@ -14,8 +14,8 @@ namespace slideproj::renderer
 	public:
 		image_display()
 		{
-			m_shader_program.set_uniform(0, 1.0f, 1.0f, 1.0f, 1.0f);
-			m_shader_program.set_uniform(1, 1.0f, 1.0f, 1.0f, 1.0f);
+			m_shader_program.set_uniform(0, m_world_scale_x, m_world_scale_y, 1.0f, 0.0f);
+			m_shader_program.set_uniform(1, 1.0f, 1.0f, 1.0f, 0.0f);
 		}
 
 		void show_image(pixel_store::rgba_image const& img)
@@ -42,13 +42,16 @@ namespace slideproj::renderer
 			if(rect.height >= rect.width)
 			{
 				auto const aspect_ratio = static_cast<float>(rect.width)/static_cast<float>(rect.height);
-				m_shader_program.set_uniform(0, 1.0f, aspect_ratio, 1.0f, 1.0f);
+				m_world_scale_x = 1.0f;
+				m_world_scale_y = aspect_ratio;
 			}
 			else
 			{
 				auto const aspect_ratio = static_cast<float>(rect.height)/static_cast<float>(rect.width);
-				m_shader_program.set_uniform(0, aspect_ratio, 1.0f, 1.0f, 1.0f);
+				m_world_scale_x = aspect_ratio;
+				m_world_scale_y = 1.0f;
 			}
+			m_shader_program.set_uniform(0, m_world_scale_x, m_world_scale_y, 1.0f, 0.0f);
 		}
 
 		void update()
@@ -59,6 +62,9 @@ namespace slideproj::renderer
 		}
 
 	private:
+		float m_world_scale_x = 1.0f;
+		float m_world_scale_y = 1.0f;
+
 		pixel_store::image_rectangle m_current_rect;
 		gl_mesh<unsigned int> m_mesh{
 			std::array<unsigned int, 6>{
