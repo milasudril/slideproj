@@ -1,12 +1,12 @@
 //@	{
 //@		"dependencies_extra":[
-//@			{"ref":"./image_presenter.o", "rel":"implementation"},
+//@			{"ref":"./glfw_wrapper.o", "rel":"implementation"},
 //@			{"ref":"glfw3", "rel":"implementation", "origin":"pkg-config"}
 //@		]
 //@	}
 
-#ifndef SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
-#define SLIDEPROJ_IMAGE_PRESENTER_IMAGE_PRESENTER_HPP
+#ifndef SLIDEPROJ_IMAGE_GLFW_WRAPPER_HPP
+#define SLIDEPROJ_IMAGE_GLFW_WRAPPER_HPP
 
 #include "src/windowing_api/event_types.hpp"
 #include "src/windowing_api/application_window.hpp"
@@ -19,7 +19,7 @@
 #include <memory>
 #include <format>
 
-namespace slideproj::image_presenter
+namespace slideproj::glfw_wrapper
 {
 	constexpr auto to_typing_keyboard_scancode(int value)
 	{

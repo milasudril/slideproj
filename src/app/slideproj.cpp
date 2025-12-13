@@ -3,17 +3,18 @@
 #include "./input_filter.hpp"
 #include "./slideshow_window_event_handler.hpp"
 #include "./slideshow.hpp"
+
 #include "src/app/slideshow_controller.hpp"
 #include "src/pixel_store/rgba_image.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
-#include "src/image_presenter/image_presenter.hpp"
+#include "src/glfw_wrapper/glfw_wrapper.hpp"
 #include "src/utils/task_queue.hpp"
 #include "src/utils/task_result_queue.hpp"
 
 int main()
 {
-	auto main_window = slideproj::image_presenter::glfw_window::create("slideproj");
+	auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 	fprintf(
 		stderr,
 		"(i) Initialized OpenGL. Vendor = %s, Renderer = %s, Version = %s\n",

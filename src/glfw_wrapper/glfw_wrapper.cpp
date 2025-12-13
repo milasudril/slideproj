@@ -1,12 +1,13 @@
 //@	{
-//@		"target":{"name":"image_presenter.o"},
+//@		"target":{"name":"glfw_wrapper.o"},
 //@		"dependencies":[
 //@			{"ref":"glfw3", "rel":"implementation", "origin":"pkg-config"},
 //@			{"ref":"glew", "rel":"implementation", "origin":"pkg-config"}
 //@		]
 //@	}
 
-#include "./image_presenter.hpp"
+#include "./glfw_wrapper.hpp"
+
 #include <GLFW/glfw3.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -44,7 +45,7 @@ namespace
 	};
 }
 
-slideproj::image_presenter::glfw_window::glfw_window(char const* title)
+slideproj::glfw_wrapper::glfw_window::glfw_window(char const* title)
 {
 	if(m_instance_counter.value() == 1)
 	{
@@ -81,7 +82,7 @@ slideproj::image_presenter::glfw_window::glfw_window(char const* title)
 	glfwSetWindowUserPointer(m_handle.get(), this);
 }
 
-void slideproj::image_presenter::glfw_window::toggle_fullscreen()
+void slideproj::glfw_wrapper::glfw_window::toggle_fullscreen()
 {
 	if(glfwGetWindowMonitor(m_handle.get()) == nullptr)
 	{
@@ -116,7 +117,7 @@ void slideproj::image_presenter::glfw_window::toggle_fullscreen()
 	{ disable_vsync(); }
 }
 
-GLFWvidmode const& slideproj::image_presenter::glfw_window::get_primary_monitor_video_mode()
+GLFWvidmode const& slideproj::glfw_wrapper::glfw_window::get_primary_monitor_video_mode()
 	{
 		auto const monitor = glfwGetPrimaryMonitor();
 		if(monitor == nullptr)
