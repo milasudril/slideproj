@@ -11,6 +11,7 @@
 #include "src/glfw_wrapper/glfw_wrapper.hpp"
 #include "src/utils/task_queue.hpp"
 #include "src/utils/task_result_queue.hpp"
+#include "src/renderer/image_display.hpp"
 
 int main()
 {
@@ -28,7 +29,8 @@ int main()
 	slideproj::app::slideshow slideshow;
 	slideproj::utils::task_result_queue task_results;
 	slideproj::utils::task_queue pending_tasks{task_results};
-	slideproj::app::slideshow_controller slideshow_controller{pending_tasks};
+	slideproj::renderer::image_display img_display{};
+	slideproj::app::slideshow_controller slideshow_controller{pending_tasks, img_display};
 	slideproj::app::slideshow_window_event_handler eh{slideshow_controller};
 	main_window->set_event_handler(std::ref(eh));
 

@@ -19,11 +19,30 @@ namespace slideproj::app
 		pixel_store::rgba_image image_data;
 	};
 
+	template<class T>
+	concept image_display = requires(T& x, pixel_store::rgba_image const& img)
+	{
+		{x.show_image(img)}->std::same_as<void>;
+	};
+
+	struct type_erased_image_display
+	{
+		void* object;
+		void (*show_image)(void* object, pixel_store::rgba_image const& img);
+	};
+
 	class slideshow_controller
 	{
 	public:
-		explicit slideshow_controller(utils::task_queue& task_queue):
-			m_task_queue{task_queue}
+		template<image_display ImageDisplay>
+		explicit slideshow_controller(utils::task_queue& task_queue, ImageDisplay& img_display):
+			m_task_queue{task_queue},
+			m_image_display{
+				.object = &img_display,
+				.show_image = [](void* object, pixel_store::rgba_image const& img) {
+					static_cast<ImageDisplay*>(object)->show_image(img);
+				}
+			}
 		{}
 
 		void set_window_size(image_file_loader::image_rectangle rect)
@@ -113,6 +132,7 @@ namespace slideproj::app
 		void present_image(loaded_image const& img)
 		{
 			fprintf(stderr, "(i) Showing image %ld %s\n", img.index, img.source_file.path().c_str());
+			m_image_display.show_image(m_image_display.object, img.image_data);
 		}
 
 	private:
@@ -120,6 +140,7 @@ namespace slideproj::app
 		slideshow* m_current_slideshow{nullptr};
 		image_file_loader::image_rectangle m_target_rectangle{};
 		utils::rotating_cache<loaded_image, utils::power_of_two{2}> m_loaded_images;
+		type_erased_image_display m_image_display;
 	};
 }
 
