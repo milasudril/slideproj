@@ -49,10 +49,10 @@ namespace slideproj::renderer
 layout (location = 0) uniform vec4 world_scale;
 
 const vec4 coords[4] = vec4[4](
-	vec4(-0.5f, -0.5, 0.0, 1.0f),
-	vec4(0.5, -0.5, 0.0, 1.0f),
-	vec4(0.5, 0.5, 0.0, 1.0f),
-	vec4(-0.5,0.5, 0.0, 1.0f)
+	vec4(-1.0f, -1.0f, 0.0, 1.0f),
+	vec4(1.0f, -1.0f, 0.0, 1.0f),
+	vec4(1.0f, 1.0f, 0.0, 1.0f),
+	vec4(-1.0f, 1.0f, 0.0, 1.0f)
 );
 
 const vec4 origin = vec4(0.0f, 0.0f, 0.0f, 1.0f);
