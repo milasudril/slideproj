@@ -16,6 +16,8 @@ namespace slideproj::file_collector
 	class file_id
 	{
 	public:
+		constexpr file_id() = default;
+
 		constexpr explicit file_id(size_t value):
 			m_value{value}
 		{}
@@ -27,12 +29,14 @@ namespace slideproj::file_collector
 		constexpr bool operator!=(file_id const&) const = default;
 
 	private:
-		size_t m_value;
+		size_t m_value{0};
 	};
 
 	class file_list_entry
 	{
 	public:
+		file_list_entry() = default;
+
 		explicit file_list_entry(file_id id, std::filesystem::path const& path):
 			m_id{id}, m_path{path}
 		{}

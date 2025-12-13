@@ -2,9 +2,19 @@
 #define SLIDEPROJ_APP_SLIDESHOW_HPP
 
 #include "src/file_collector/file_collector.hpp"
+#include <sys/types.h>
 
 namespace slideproj::app
 {
+	struct slideshow_entry
+	{
+		ssize_t index = -1;
+		file_collector::file_list_entry source_file;
+
+		constexpr bool is_valid() const
+		{ return index >= 0; }
+	};
+
 	class slideshow
 	{
 	public:
@@ -14,25 +24,25 @@ namespace slideproj::app
 			m_files{std::move(files)}
 		{ set_current_index(start_at); }
 
-		// TODO: C++26 optional reference
-		file_collector::file_list_entry const* get_entry(ssize_t offset)
+		auto get_entry(ssize_t offset) const
 		{
 			auto const read_from = m_current_index + offset;
 			if(read_from < 0 || read_from >= std::ssize(m_files))
-			{ return nullptr; }
+			{ return slideshow_entry{}; }
 
-			return &m_files[read_from];
+			return slideshow_entry{
+				.index = read_from,
+				.source_file = m_files[read_from]
+			};
 		}
 
-		// TODO: C++26 optional reference
-		file_collector::file_list_entry const* step_and_get_entry(ssize_t offset)
+		void step(ssize_t offset)
 		{
 			auto const read_from = m_current_index + offset;
 			if(read_from < 0 || read_from >= std::ssize(m_files))
-			{ return nullptr; }
+			{ return; }
 
 			m_current_index = read_from;
-			return &m_files[read_from];
 		}
 
 		void set_current_index(ssize_t index)

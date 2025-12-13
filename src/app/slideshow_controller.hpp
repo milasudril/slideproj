@@ -3,17 +3,22 @@
 
 #include "./slideshow.hpp"
 
-#include "src/windowing_api/event_types.hpp"
-#include "src/windowing_api/application_window.hpp"
+#include "src/file_collector/file_collector.hpp"
+#include "src/utils/rotating_cache.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/pixel_store/rgba_image.hpp"
-#include "src/utils/bidirectional_sliding_window.hpp"
 #include "src/utils/unwrap.hpp"
 #include "src/utils/task_queue.hpp"
-#include <thread>
 
 namespace slideproj::app
 {
+	struct loaded_image
+	{
+		ssize_t index;
+		file_collector::file_list_entry source_file;
+		pixel_store::rgba_image image_data;
+	};
+
 	class slideshow_controller
 	{
 	public:
@@ -29,33 +34,9 @@ namespace slideproj::app
 			if(m_current_slideshow == nullptr)
 			{ return; }
 
-			auto& current_image = m_loaded_images.get_current_element();
-			if(current_image.is_empty())
-			{
-				fprintf(stderr, "(i) Busy, will try again later (1)\n");
-				m_pending_user_inputs.push([this](){
-					fprintf(stderr, "(i) Invoking buffered step_forward\n");
-					step_forward();
-
-				});
-				return;
-			}
-
-			auto const image_file_to_show = m_current_slideshow->step_and_get_entry(1);
-			if(image_file_to_show != nullptr)
-			{
-				m_loaded_images.step_forward();
-				prefetch_next_image();
-				auto& image_to_show = m_loaded_images.get_current_element();
-				if(image_to_show.is_empty())
-				{
-					fprintf(stderr, "(i) Busy, will show %s when ready\n", image_file_to_show->path().c_str());
-					m_pending_user_inputs.push([this](){ present_image(m_loaded_images.get_current_element()); });
-					return;
-				}
-				fprintf(stderr, "(i) Showing %s\n", image_file_to_show->path().c_str());
-				present_image(image_to_show);
-			}
+			m_current_slideshow->step(1);
+			prefetch_image(1);
+			present_image(m_current_slideshow->get_entry(0));
 		}
 
 		void step_backward()
@@ -63,91 +44,82 @@ namespace slideproj::app
 			if(m_current_slideshow == nullptr)
 			{ return; }
 
-			auto const image_to_show = m_current_slideshow->step_and_get_entry(-1);
-			if(image_to_show != nullptr)
-			{ fprintf(stderr, "(i) Showing %s\n", image_to_show->path().c_str()); }
-		}
-
-		void prefetch_next_image()
-		{
-			auto img_to_replace = m_loaded_images.get_element_to_replace();
-			if(img_to_replace->is_empty())
-			{
-				m_pending_user_inputs.push([this](){ prefetch_next_image(); });
-			}
-
-			*img_to_replace = pixel_store::rgba_image{};
-			utils::unwrap(m_task_queue).submit(
-				utils::task{
-					.function = [
-						image_to_load = m_current_slideshow->get_entry(1),
-						rect = m_target_rectangle
-					](){
-						std::this_thread::sleep_for(std::chrono::seconds{5});
-						if(image_to_load != nullptr)
-						{ return image_file_loader::load_rgba_image(image_to_load->path(), rect); }
-						else
-						{ return pixel_store::rgba_image{}; }
-					},
-					.on_completed = [this, img_to_replace](auto&& result) {
-						fprintf(stderr, "(i) Next image fetched\n");
-						*img_to_replace = std::move(result);
-						while(!m_pending_user_inputs.empty())
-						{
-							m_pending_user_inputs.front()();
-							m_pending_user_inputs.pop();
-						}
-					}
-				}
-			);
+			m_current_slideshow->step(-1);
+			prefetch_image(-1);
+			present_image(m_current_slideshow->get_entry(0));
 		}
 
 		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
 			m_current_slideshow = &slideshow.get();
+			present_image(m_current_slideshow->get_entry(0));
+			prefetch_image(1);
+			prefetch_image(-1);
+		}
+
+		void present_image(slideshow_entry const& entry)
+		{
+			if(!entry.is_valid())
+			{ return; }
+
+			auto& cached_entry = m_loaded_images[entry.index];
+			if(cached_entry.has_value() && cached_entry->source_file.id() == entry.source_file.id()) [[likely]]
+			{ present_image(*cached_entry); }
+			else
+			{
+				fprintf(stderr, "(i) Image not loaded. Fetching first.\n");
+				fetch_image(entry, true);
+			}
+		}
+
+		void prefetch_image(ssize_t offset)
+		{
+			auto entry = m_current_slideshow->get_entry(offset);
+			if(entry.is_valid())
+			{ fetch_image(entry, false);  }
+		}
+
+		void fetch_image(slideshow_entry const& entry, bool present_result)
+		{
 			unwrap(m_task_queue).submit(
 				utils::task{
 					.function = [
-							images_to_load = std::array{
-								m_current_slideshow->get_entry(-1),
-								m_current_slideshow->get_entry(0),
-								m_current_slideshow->get_entry(1)
-							},
-							rect = m_target_rectangle
+						path_to_load = entry.source_file.path(),
+						rect = m_target_rectangle
 					](){
-						std::array<pixel_store::rgba_image, std::tuple_size_v<decltype(images_to_load)>> img_array;
-						for(size_t k = 0; k != std::size(images_to_load); ++k)
-						{
-							if(images_to_load[k] != nullptr)
-							{
-								auto const& path_to_load = images_to_load[k]->path();
-								fprintf(stderr, "(i) Loading %s\n", path_to_load.c_str());
-								img_array[k]  = image_file_loader::load_rgba_image(path_to_load, rect);
-							}
-						}
-						return std::remove_cvref_t<decltype(m_loaded_images)>{std::move(img_array)};
+						return load_rgba_image(path_to_load, rect);
 					},
-					.on_completed = [this](auto&& img_array) mutable {
-						fprintf(stderr, "(i) First images loaded\n");
-						m_loaded_images = std::move(img_array);
-						present_image(m_loaded_images.get_current_element());
+					.on_completed = [
+						&cached_entry = m_loaded_images[entry.index],
+						source_file = entry.source_file,
+						index = entry.index,
+						present_result,
+						this
+					](auto&& result) mutable {
+						fprintf(stderr, "(i) Image %ld %s loaded\n", index, source_file.path().c_str());
+						cached_entry = loaded_image{
+							.index = index,
+							.source_file = std::move(source_file),
+							.image_data = std::move(result)
+						};
+						if(present_result)
+						{ present_image(*cached_entry); }
 					}
 				}
 			);
 		}
 
-		void present_image(pixel_store::rgba_image const& image)
+		void present_image(loaded_image const& img)
 		{
-			fprintf(stderr, "(i) Showing image width = %u, height = %u\n", image.width(), image.height());
+			fprintf(stderr, "(i) Showing image %ld %s\n", img.index, img.source_file.path().c_str());
 		}
 
 	private:
 		std::reference_wrapper<utils::task_queue> m_task_queue;
 		slideshow* m_current_slideshow{nullptr};
 		image_file_loader::image_rectangle m_target_rectangle{};
-		utils::bidirectional_sliding_window<pixel_store::rgba_image, 1> m_loaded_images;
-		std::queue<std::move_only_function<void()>> m_pending_user_inputs;
+		utils::rotating_cache<loaded_image, utils::power_of_two{2}> m_loaded_images;
 	};
 }
 
