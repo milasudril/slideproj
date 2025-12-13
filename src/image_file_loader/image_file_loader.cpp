@@ -165,21 +165,21 @@ slideproj::image_file_loader::image_file_metadata_repository::get_metadata(
 	return m_cache.insert(std::pair{entry.id(), load_metadata(entry.path())}).first->second;
 }
 
-slideproj::image_file_loader::image_rectangle
+slideproj::pixel_store::image_rectangle
 slideproj::image_file_loader::image_file_metadata_repository::get_dimensions(
 	std::filesystem::path const& path
 )
 {
 	auto input = OIIO::ImageInput::open(path);
 	if(input == nullptr)
-	{ return image_rectangle{}; }
+	{ return pixel_store::image_rectangle{}; }
 
 	auto const& spec = input->spec();
 
 	if(spec.width <= 0 || spec.height <= 0)
-	{ return image_rectangle{}; }
+	{ return pixel_store::image_rectangle{}; }
 
-	return image_rectangle{
+	return pixel_store::image_rectangle{
 		.width = static_cast<uint32_t>(spec.width),
 		.height = static_cast<uint32_t>(spec.height)
 	};
@@ -307,7 +307,10 @@ slideproj::image_file_loader::make_linear_rgba_image(
 	return ret;
 }
 
-uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle input, image_rectangle fit)
+uint32_t slideproj::image_file_loader::compute_scaling_factor(
+	pixel_store::image_rectangle input,
+	pixel_store::image_rectangle fit
+)
 {
 	if(input.width <= fit.width && input.height <= fit.height)
 	{ return 1; }
@@ -321,7 +324,7 @@ uint32_t slideproj::image_file_loader::compute_scaling_factor(image_rectangle in
 slideproj::pixel_store::rgba_image
 slideproj::image_file_loader::make_linear_rgba_image(
 	loaded_image const& input,
-	image_rectangle fit
+	pixel_store::image_rectangle fit
 )
 {
 	auto w_in = input.width();
@@ -331,7 +334,7 @@ slideproj::image_file_loader::make_linear_rgba_image(
 
 	return make_linear_rgba_image(
 		input, compute_scaling_factor(
-			image_rectangle{
+			pixel_store::image_rectangle{
 				.width = w_in,
 				.height = h_in
 			},

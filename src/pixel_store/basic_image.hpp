@@ -7,6 +7,12 @@
 
 namespace slideproj::pixel_store
 {
+	struct image_rectangle
+	{
+		uint32_t width;
+		uint32_t height;
+	};
+
 	struct make_uninitialized_pixel_buffer_tag{};
 
 	template<class T>

@@ -5,7 +5,7 @@
 
 #include "src/windowing_api/event_types.hpp"
 #include "src/windowing_api/application_window.hpp"
-#include "src/image_file_loader/image_file_loader.hpp"
+#include "src/pixel_store/basic_image.hpp"
 #include "src/utils/unwrap.hpp"
 
 #include <GL/glew.h>
@@ -40,7 +40,7 @@ namespace slideproj::app
 			auto const h = event.height;
 			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
 			utils::unwrap(m_slideshow_controller).set_window_size(
-				image_file_loader::image_rectangle{
+				pixel_store::image_rectangle{
 					.width = static_cast<uint32_t>(w),
 					.height = static_cast<uint32_t>(h)
 				}

@@ -45,7 +45,7 @@ namespace slideproj::app
 			}
 		{}
 
-		void set_window_size(image_file_loader::image_rectangle rect)
+		void set_window_size(pixel_store::image_rectangle rect)
 		{ m_target_rectangle = rect; }
 
 		void step_forward()
@@ -107,7 +107,7 @@ namespace slideproj::app
 						path_to_load = entry.source_file.path(),
 						rect = m_target_rectangle
 					](){
-						return load_rgba_image(path_to_load, rect);
+						return image_file_loader::load_rgba_image(path_to_load, rect);
 					},
 					.on_completed = [
 						&cached_entry = m_loaded_images[entry.index],
@@ -138,7 +138,7 @@ namespace slideproj::app
 	private:
 		std::reference_wrapper<utils::task_queue> m_task_queue;
 		slideshow* m_current_slideshow{nullptr};
-		image_file_loader::image_rectangle m_target_rectangle{};
+		pixel_store::image_rectangle m_target_rectangle{};
 		utils::rotating_cache<loaded_image, utils::power_of_two{2}> m_loaded_images;
 		type_erased_image_display m_image_display;
 	};

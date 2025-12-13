@@ -275,9 +275,9 @@ TESTCASE(slideproj_image_file_loader_load_rotated_jpeg_to_rgba_image)
 
 TESTCASE(slideproj_image_file_loader_load_rotated_jpeg_to_rgba_image_fit_rect)
 {
-	auto res = load_rgba_image(
+	auto res = slideproj::image_file_loader::load_rgba_image(
 		"testdata/IMG_1109.JPG",
-		slideproj::image_file_loader::image_rectangle{
+		slideproj::pixel_store::image_rectangle{
 			.width = 1920,
 			.height = 1080
 		}

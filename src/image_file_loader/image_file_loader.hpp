@@ -90,18 +90,12 @@ namespace slideproj::image_file_loader
 
 	image_file_info load_metadata(std::filesystem::path const& path);
 
-	struct image_rectangle
-	{
-		uint32_t width;
-		uint32_t height;
-	};
-
 	class image_file_metadata_repository
 	{
 	public:
 		image_file_info const& get_metadata(file_collector::file_list_entry const& entry) const;
 
-		static image_rectangle get_dimensions(std::filesystem::path const& path);
+		static pixel_store::image_rectangle get_dimensions(std::filesystem::path const& path);
 
 	private:
 		mutable std::unordered_map<file_collector::file_id, image_file_info> m_cache;
@@ -542,15 +536,15 @@ namespace slideproj::image_file_loader
 		return load_rgba_image(*img_reader, scaling_factor);
 	}
 
-	uint32_t compute_scaling_factor(image_rectangle input, image_rectangle fit);
+	uint32_t compute_scaling_factor(pixel_store::image_rectangle input, pixel_store::image_rectangle fit);
 
 	pixel_store::rgba_image
-	make_linear_rgba_image(loaded_image const& input, image_rectangle fit);
+	make_linear_rgba_image(loaded_image const& input, pixel_store::image_rectangle fit);
 
-	inline auto load_rgba_image(OIIO::ImageInput& input, image_rectangle fit)
+	inline auto load_rgba_image(OIIO::ImageInput& input, pixel_store::image_rectangle fit)
 	{ return make_linear_rgba_image(load_image(input), fit); }
 
-	inline auto load_rgba_image(std::filesystem::path const& path, image_rectangle fit)
+	inline auto load_rgba_image(std::filesystem::path const& path, pixel_store::image_rectangle fit)
 	{
 		auto img_reader = open_image_file(path);
 		if(img_reader == nullptr)
