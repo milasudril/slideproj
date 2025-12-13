@@ -15,10 +15,19 @@ namespace slideproj::renderer
 		void show_image(pixel_store::rgba_image const&)
 		{}
 
-		void set_window_size(pixel_store::image_rectangle const&)
+		void set_window_size(pixel_store::image_rectangle const& rect)
 		{
 			fprintf(stderr, "(i) image_display %p: Target rectangle updated\n", this);
-			m_shader_program.set_uniform(0, 1.0f, 1.0f, 1.0f, 1.0f);
+			if(rect.height >= rect.width)
+			{
+				auto const aspect_ratio = static_cast<float>(rect.width)/static_cast<float>(rect.height);
+				m_shader_program.set_uniform(0, 1.0f, aspect_ratio, 1.0f, 1.0f);
+			}
+			else
+			{
+				auto const aspect_ratio = static_cast<float>(rect.height)/static_cast<float>(rect.width);
+				m_shader_program.set_uniform(0, aspect_ratio, 1.0f, 1.0f, 1.0f);
+			}
 		}
 
 		void update()
