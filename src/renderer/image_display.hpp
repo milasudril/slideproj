@@ -14,6 +14,13 @@ namespace slideproj::renderer
 		void show_image(pixel_store::rgba_image const&)
 		{}
 
+		void update()
+		{
+			m_shader_program.bind();
+			m_mesh.bind();
+			gl_bindings::draw_triangles();
+		}
+
 	private:
 		gl_mesh<unsigned int> m_mesh{
 			std::array<unsigned int, 6>{
@@ -40,7 +47,7 @@ out vec4 fragment_color;
 
 void main()
 {
-	fragment_color = vec4(1, 1, 1, 1);
+	fragment_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 )"
 			}

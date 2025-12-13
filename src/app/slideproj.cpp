@@ -23,8 +23,14 @@ int main()
 		glGetString(GL_RENDERER),
 		glGetString(GL_VERSION)
 	);
+
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
 
 	slideproj::app::slideshow slideshow;
 	slideproj::utils::task_result_queue task_results;
@@ -93,7 +99,6 @@ int main()
 			{ fprintf(stderr,"\r(i) Collecting files %c", progress_char[k%8]); }
 		}
 
-
 		eh.handle_event(
 			slideproj::app::update_window{
 				.frame_number = k,
@@ -103,6 +108,7 @@ int main()
 
 		main_window->poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
+		img_display.update();
 		main_window->swap_buffers();
 		t_start = now;
 		++k;
