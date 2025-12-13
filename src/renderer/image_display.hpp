@@ -18,6 +18,7 @@ namespace slideproj::renderer
 		void set_window_size(pixel_store::image_rectangle const&)
 		{
 			fprintf(stderr, "(i) image_display %p: Target rectangle updated\n", this);
+			m_shader_program.set_uniform(0, 1.0f, 1.0f, 1.0f, 1.0f);
 		}
 
 		void update()
@@ -36,6 +37,8 @@ namespace slideproj::renderer
 
 		gl_program m_shader_program{
 			gl_shader<GL_VERTEX_SHADER>{R"(#version 460 core
+layout (location = 0) uniform vec4 world_scale;
+
 const vec4 coords[4] = vec4[4](
 	vec4(-0.5f, -0.5, 0.0, 1.0f),
 	vec4(0.5, -0.5, 0.0, 1.0f),
@@ -43,9 +46,11 @@ const vec4 coords[4] = vec4[4](
 	vec4(-0.5,0.5, 0.0, 1.0f)
 );
 
+const vec4 origin = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 void main()
 {
-	gl_Position = coords[gl_VertexID];
+	gl_Position = world_scale*(coords[gl_VertexID] - origin) + origin;
 }
 )"},
 			gl_shader<GL_FRAGMENT_SHADER>{R"(#version 460 core
