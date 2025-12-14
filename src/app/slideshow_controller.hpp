@@ -194,14 +194,21 @@ namespace slideproj::app
 			m_transition_start = std::chrono::steady_clock::now();
 		}
 
+		auto time_of_image_presentation() const
+		{
+			return m_transition_start;
+		}
+
 		void update_clock(std::chrono::steady_clock::time_point now)
 		{
-			auto const time_since_transition_start = now - m_transition_start;
-			std::chrono::duration<float> transition_time{2.0f};
-			m_image_display.set_transition_param(
-				m_image_display.object,
-				time_since_transition_start/m_transition_duration
-			);
+			if(m_transition_start.has_value())
+			{
+				auto const time_since_transition_start = now - *m_transition_start;
+				m_image_display.set_transition_param(
+					m_image_display.object,
+					time_since_transition_start/m_transition_duration
+				);
+			}
 		}
 
 	private:
@@ -211,7 +218,7 @@ namespace slideproj::app
 		utils::rotating_cache<loaded_image, utils::power_of_two{3}> m_loaded_images;
 		type_erased_image_display m_image_display;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
-		std::chrono::steady_clock::time_point m_transition_start;
+		std::optional<std::chrono::steady_clock::time_point> m_transition_start;
 		std::chrono::duration<float> m_transition_duration;
 	};
 }
