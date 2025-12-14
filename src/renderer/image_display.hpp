@@ -3,6 +3,7 @@
 
 #include "./gl_mesh.hpp"
 #include "./gl_shader.hpp"
+#include "./gl_texture.hpp"
 
 #include "src/pixel_store/basic_image.hpp"
 #include "src/pixel_store/rgba_image.hpp"
@@ -24,6 +25,7 @@ namespace slideproj::renderer
 			fprintf(stderr, "(i) image_display %p: Showing image of size %u x %u\n", this, w, h);
 			m_input_aspect_ratio = static_cast<float>(w)/static_cast<float>(h);
 			update_scale();
+			m_current_texture.upload(img);
 		}
 
 		void set_window_size(pixel_store::image_rectangle const& rect)
@@ -37,6 +39,7 @@ namespace slideproj::renderer
 		{
 			m_shader_program.bind();
 			m_mesh.bind();
+			m_current_texture.bind(0);
 			gl_bindings::draw_triangles();
 		}
 
@@ -79,6 +82,8 @@ namespace slideproj::renderer
 		float m_input_aspect_ratio = 1.0f;
 
 		pixel_store::image_rectangle m_current_rect;
+		gl_texture m_current_texture;
+
 		gl_mesh<unsigned int> m_mesh{
 			std::array<unsigned int, 6>{
 				0, 1, 2, 0, 2, 3
@@ -116,10 +121,11 @@ void main()
 			gl_shader<GL_FRAGMENT_SHADER>{R"(#version 460 core
 out vec4 fragment_color;
 in vec2 tex_coord;
+layout (binding = 0) uniform sampler2D image_to_display;
 
 void main()
 {
-	fragment_color = vec4(tex_coord.x, tex_coord.y, 0.5f, 1.0f);
+	fragment_color = texture(image_to_display, tex_coord);
 }
 )"
 			}

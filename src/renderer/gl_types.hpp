@@ -15,7 +15,7 @@ namespace slideproj::renderer
 	template<class T>
 	struct to_gl_type_id
 	{
-		static constexpr auto value = to_gl_type_id<typename T::value_type>::value;
+		static constexpr auto value = to_gl_type_id<typename T::sample_type>::value;
 	};
 
 	template<>
