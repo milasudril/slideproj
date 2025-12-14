@@ -38,10 +38,14 @@ namespace slideproj::app
 	class slideshow_controller
 	{
 	public:
-		template<image_display ImageDisplay>
+		template<
+			image_display ImageDisplay,
+			file_collector::file_metadata_provider FileMetadataProvider
+	>
 		explicit slideshow_controller(
 			utils::task_queue& task_queue,
 			ImageDisplay& img_display,
+			std::reference_wrapper<FileMetadataProvider const> file_metadata_provider,
 			std::chrono::duration<float> transition_duration
 		):
 			m_task_queue{task_queue},
@@ -52,6 +56,13 @@ namespace slideproj::app
 				},
 				.set_transition_param = [](void* object, float t) {
 					static_cast<ImageDisplay*>(object)->set_transition_param(t);
+				}
+			},
+			m_file_metadata_provider{
+				.object = &file_metadata_provider.get(),
+				.get_metadata = [](void const* object, file_collector::file_list_entry const& item)
+					->file_collector::file_metadata const& {
+					return static_cast<FileMetadataProvider const*>(object)->get_metadata(item);
 				}
 			},
 			m_transition_duration{transition_duration}
@@ -192,6 +203,11 @@ namespace slideproj::app
 			m_image_display.set_transition_param(m_image_display.object, 0.0f);
 			m_image_display.show_image(m_image_display.object, img.image_data);
 			m_transition_start = std::chrono::steady_clock::now();
+			auto const& caption = m_file_metadata_provider.get_metadata(
+				m_file_metadata_provider.object, img.source_file
+			).caption;
+
+			fprintf(stderr, "(i) %s\n", caption.c_str());
 		}
 
 		auto time_of_image_presentation() const
@@ -217,6 +233,7 @@ namespace slideproj::app
 		pixel_store::image_rectangle m_target_rectangle{};
 		utils::rotating_cache<loaded_image, utils::power_of_two{3}> m_loaded_images;
 		type_erased_image_display m_image_display;
+		file_collector::type_erased_file_metadata_provider m_file_metadata_provider;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 		std::optional<std::chrono::steady_clock::time_point> m_transition_start;
 		std::chrono::duration<float> m_transition_duration;

@@ -36,9 +36,11 @@ int main()
 	slideproj::utils::task_result_queue task_results;
 	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::renderer::image_display img_display{};
+	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
 	slideproj::app::slideshow_controller slideshow_controller{
 		pending_tasks,
 		img_display,
+		std::cref(metadata_repo),
 		std::chrono::seconds{2}
 	};
 	slideproj::app::slideshow_window_event_handler eh{
@@ -50,8 +52,9 @@ int main()
 	slideproj::file_collector::file_list file_list;
 	pending_tasks.submit(
 		slideproj::utils::task{
-			.function = []() {
-				slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
+			// Safe to pass a reference to metadata_repo since slideshow controller will not touch
+			// anything until the slideshow has been loaded.
+			.function = [&metadata_repo]() {
 				return slideproj::file_collector::make_file_list(
 					// TODO: Use command line arguments
 					"/home/torbjorr/Bilder",
