@@ -20,7 +20,7 @@ slideproj::file_collector::make_file_list(
 		// For now, only store regular files. Directories could be useful to generate automatic
 		// title screens
 		if(dir_entry.is_regular_file() && input_filter.accepts(input_filter.object, dir_entry))
-		{ ret.append(dir_entry.path());}
+		{ ret.append(dir_entry.path()); }
 	}
 
 	return ret;

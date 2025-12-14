@@ -386,6 +386,8 @@ TESTCASE(slideproj_image_file_loader_load_rgba_image_from_png_srbg_scale_by_2)
 	EXPECT_EQ(pixels[32].alpha, 0.50196081f);
 }
 
+// This is rotated 180 deg /home/torbjorr/Bilder/foto/IMG_0296.JPG
+
 TESTCASE(slideproj_image_file_loader_load_rgba_image_from_png_srbg)
 {
 	auto res = slideproj::image_file_loader::load_rgba_image("testdata/rgba_8bit_srgb.png", 1);

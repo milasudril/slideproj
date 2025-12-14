@@ -459,8 +459,8 @@ namespace slideproj::image_file_loader
 			{
 				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
 				{
-					auto const x_in = (h_out - 1) - y_out;
-					auto const y_in = x_out;
+					auto const x_in = y_out;
+					auto const y_in = (w_out - 1) - x_out;
 					ret(x_out, y_out) = src(x_in, y_in);
 				}
 			}
@@ -507,8 +507,8 @@ namespace slideproj::image_file_loader
 			{
 				for(uint32_t x_out = 0; x_out != w_out; ++x_out)
 				{
-					auto const x_in = y_out;
-					auto const y_in = (w_out - 1) - x_out;
+					auto const x_in = (h_out - 1) - y_out;
+					auto const y_in = x_out;
 					ret(x_out, y_out) = src(x_in, y_in);
 				}
 			}

@@ -53,13 +53,12 @@ int main()
 					"/home/torbjorr/Bilder",
 					slideproj::app::input_filter{
 						.include = std::vector{
-							slideproj::app::input_filter_pattern{"*.jpg"},
 							slideproj::app::input_filter_pattern{"*.jpeg"},
 							slideproj::app::input_filter_pattern{"*.bmp"},
 							slideproj::app::input_filter_pattern{"*.gif"},
 							slideproj::app::input_filter_pattern{"*.png"}
 						},
-						.max_pixel_count = 1024*1024,
+						.max_pixel_count = 8192*8192,
 						.image_dimension_provider = std::cref(metadata_repo)
 					},
 					std::array{

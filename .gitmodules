@@ -1,3 +1,6 @@
 [submodule "testfwk"]
 	path = testfwk
 	url = https://github.com/milasudril/testfwk
+[submodule "testdata/exif-orientation-examples"]
+	path = testdata/exif-orientation-examples
+	url = https://github.com/recurser/exif-orientation-examples.git
