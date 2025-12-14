@@ -14,8 +14,7 @@ namespace slideproj::renderer
 	public:
 		image_display()
 		{
-			m_shader_program.set_uniform(0, m_world_scale_x, m_world_scale_y, 1.0f, 0.0f);
-			m_shader_program.set_uniform(1, 1.0f, 1.0f, 1.0f, 0.0f);
+			update_scale();
 		}
 
 		void show_image(pixel_store::rgba_image const& img)
@@ -23,35 +22,15 @@ namespace slideproj::renderer
 			auto const w = img.width();
 			auto const h = img.height();
 			fprintf(stderr, "(i) image_display %p: Showing image of size %u x %u\n", this, w, h);
-			if(h >= w)
-			{
-				auto const aspect_ratio = static_cast<float>(w)/static_cast<float>(h);
-				m_shader_program.set_uniform(1, aspect_ratio, 1.0f, 1.0f, 1.0f);
-			}
-			else
-			{
-				auto const aspect_ratio = static_cast<float>(h)/static_cast<float>(w);
-				m_shader_program.set_uniform(1, 1.0f, aspect_ratio, 1.0f, 1.0f);
-			}
+			m_input_aspect_ratio = static_cast<float>(w)/static_cast<float>(h);
+			update_scale();
 		}
 
 		void set_window_size(pixel_store::image_rectangle const& rect)
 		{
 			fprintf(stderr, "(i) image_display %p: Target rectangle updated\n", this);
-			m_current_rect = rect;
-			if(rect.height >= rect.width)
-			{
-				auto const aspect_ratio = static_cast<float>(rect.width)/static_cast<float>(rect.height);
-				m_world_scale_x = 1.0f;
-				m_world_scale_y = aspect_ratio;
-			}
-			else
-			{
-				auto const aspect_ratio = static_cast<float>(rect.height)/static_cast<float>(rect.width);
-				m_world_scale_x = aspect_ratio;
-				m_world_scale_y = 1.0f;
-			}
-			m_shader_program.set_uniform(0, m_world_scale_x, m_world_scale_y, 1.0f, 0.0f);
+			m_output_aspect_ratio = static_cast<float>(rect.width)/static_cast<float>(rect.height);
+			update_scale();
 		}
 
 		void update()
@@ -61,9 +40,37 @@ namespace slideproj::renderer
 			gl_bindings::draw_triangles();
 		}
 
+		void update_scale()
+		{
+			fprintf(
+				stderr,
+				"(i) image_display update_scale: input_aspect_ratio = %.8g, m_output_aspect_ratio = %.8g\n",
+				m_input_aspect_ratio,
+				m_output_aspect_ratio
+			);
+
+			auto const output_scale_x = m_output_aspect_ratio >= 1.0f?
+				1.0f/m_output_aspect_ratio : 1.0f;
+			auto const output_scale_y = m_output_aspect_ratio >= 1.0f?
+				1.0f : m_output_aspect_ratio;
+
+			auto const input_scale_x = std::min(m_input_aspect_ratio, m_output_aspect_ratio);
+			auto const input_scale_y = input_scale_x/m_input_aspect_ratio;
+
+			m_shader_program.set_uniform(
+				0,
+				output_scale_x*input_scale_x,
+				output_scale_y*input_scale_y,
+				1.0f,
+				0.0f
+			);
+
+			//return (input_aspect_ratio >= output_aspect_ratio)? input.width/fit.width : input.height/fit.height;
+		}
+
 	private:
-		float m_world_scale_x = 1.0f;
-		float m_world_scale_y = 1.0f;
+		float m_output_aspect_ratio = 1.0f;
+		float m_input_aspect_ratio = 1.0f;
 
 		pixel_store::image_rectangle m_current_rect;
 		gl_mesh<unsigned int> m_mesh{
@@ -74,8 +81,7 @@ namespace slideproj::renderer
 
 		gl_program m_shader_program{
 			gl_shader<GL_VERTEX_SHADER>{R"(#version 460 core
-layout (location = 0) uniform vec4 world_scale;
-layout (location = 1) uniform vec4 model_scale;
+layout (location = 0) uniform vec4 scale;
 
 const vec4 coords[4] = vec4[4](
 	vec4(-1.0f, -1.0f, 0.0, 1.0f),
@@ -85,18 +91,21 @@ const vec4 coords[4] = vec4[4](
 );
 
 const vec4 origin = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+out vec2 tex_coord;
 
 void main()
 {
-	gl_Position = model_scale*world_scale*(coords[gl_VertexID] - origin) + origin;
+	gl_Position = scale*(coords[gl_VertexID] - origin) + origin;
+	tex_coord = 0.5*(coords[gl_VertexID] - origin).xy + vec2(0.5f, 0.5f);
 }
 )"},
 			gl_shader<GL_FRAGMENT_SHADER>{R"(#version 460 core
 out vec4 fragment_color;
+in vec2 tex_coord;
 
 void main()
 {
-	fragment_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	fragment_color = vec4(tex_coord.x, tex_coord.y, 0.5f, 1.0f);
 }
 )"
 			}
