@@ -18,10 +18,10 @@ namespace slideproj::app
 		std::reference_wrapper<slideshow> current_slideshow;
 	};
 
-	struct update_window
+	struct frame_started_event
 	{
 		size_t frame_number;
-		std::chrono::steady_clock::duration time_since_last_frame;
+		std::chrono::steady_clock::time_point now;
 	};
 
 	template<class T>
@@ -120,8 +120,10 @@ namespace slideproj::app
 		void handle_event(slideshow_loaded event)
 		{ utils::unwrap(m_slideshow_controller).start_slideshow(event.current_slideshow); }
 
-		void handle_event(update_window const&)
-		{ }
+		void handle_event(frame_started_event const& event)
+		{
+			utils::unwrap(m_slideshow_controller).update_clock(event.now);
+		}
 
 		bool application_should_exit() const
 		{ return m_application_should_exit; }

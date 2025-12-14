@@ -81,10 +81,9 @@ int main()
 
 	size_t k = 0;
 	constexpr char const* progress_char = "-/|\\-/|\\";
-	auto t_start = std::chrono::steady_clock::now();
 	while(!eh.application_should_exit())
 	{
-		auto now = std::chrono::steady_clock::now();
+		auto const now = std::chrono::steady_clock::now();
 		task_results.drain();
 		if(slideshow.empty())
 		{
@@ -103,9 +102,9 @@ int main()
 		}
 
 		eh.handle_event(
-			slideproj::app::update_window{
+			slideproj::app::frame_started_event{
 				.frame_number = k,
-				.time_since_last_frame = now - t_start
+				.now = now
 			}
 		);
 
@@ -113,7 +112,6 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		img_display.update();
 		main_window->swap_buffers();
-		t_start = now;
 		++k;
 	}
 

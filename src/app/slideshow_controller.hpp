@@ -22,15 +22,17 @@ namespace slideproj::app
 	};
 
 	template<class T>
-	concept image_display = requires(T& x, pixel_store::rgba_image const& img)
+	concept image_display = requires(T& x, pixel_store::rgba_image const& img, float t)
 	{
 		{x.show_image(img)}->std::same_as<void>;
+		{x.set_transition_param(t)}->std::same_as<void>;
 	};
 
 	struct type_erased_image_display
 	{
 		void* object;
-		void (*show_image)(void* object, pixel_store::rgba_image const& img);
+		void (*show_image)(void*, pixel_store::rgba_image const&);
+		void (*set_transition_param)(void*, float);
 	};
 
 	class slideshow_controller
@@ -43,6 +45,9 @@ namespace slideproj::app
 				.object = &img_display,
 				.show_image = [](void* object, pixel_store::rgba_image const& img) {
 					static_cast<ImageDisplay*>(object)->show_image(img);
+				},
+				.set_transition_param = [](void* object, float t) {
+					static_cast<ImageDisplay*>(object)->set_transition_param(t);
 				}
 			}
 		{}
@@ -179,7 +184,19 @@ namespace slideproj::app
 		void present_image(loaded_image const& img)
 		{
 			fprintf(stderr, "(i) Showing image %ld\n", img.index);
+			m_image_display.set_transition_param(m_image_display.object, 0.0f);
 			m_image_display.show_image(m_image_display.object, img.image_data);
+			m_transition_start = std::chrono::steady_clock::now();
+		}
+
+		void update_clock(std::chrono::steady_clock::time_point now)
+		{
+			auto const time_since_transition_start = now - m_transition_start;
+			std::chrono::duration<float> transition_time{2.0f};
+			m_image_display.set_transition_param(
+				m_image_display.object,
+				time_since_transition_start/transition_time
+			);
 		}
 
 	private:
@@ -189,6 +206,7 @@ namespace slideproj::app
 		utils::rotating_cache<loaded_image, utils::power_of_two{3}> m_loaded_images;
 		type_erased_image_display m_image_display;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
+		std::chrono::steady_clock::time_point m_transition_start;
 	};
 }
 
