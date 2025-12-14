@@ -71,8 +71,6 @@ namespace slideproj::renderer
 	private:
 		float m_output_aspect_ratio = 1.0f;
 		float m_input_aspect_ratio = 1.0f;
-
-		pixel_store::image_rectangle m_current_rect;
 		gl_texture m_current_texture;
 
 		gl_mesh<unsigned int> m_mesh{
