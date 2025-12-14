@@ -65,11 +65,10 @@ namespace slideproj::renderer
 			{
 				auto const output_scale_x = 1.0f;
 				auto const output_scale_y = m_output_aspect_ratio;
-				auto const input_scale_x = std::min(m_input_aspect_ratio, m_output_aspect_ratio);
-				auto const input_scale_y = m_input_aspect_ratio;
-
-				scale_x = output_scale_x/input_scale_x;
-				scale_y = output_scale_y/input_scale_y;
+				auto const input_scale_y = std::min(1.0f/m_input_aspect_ratio, 1.0f/m_output_aspect_ratio);
+				auto const input_scale_x = input_scale_y*m_input_aspect_ratio;
+				scale_x = input_scale_x*output_scale_x;
+				scale_y = input_scale_y*output_scale_y;
 			}
 
 			m_shader_program.set_uniform(0, scale_x, scale_y, 1.0f, 0.0f);
