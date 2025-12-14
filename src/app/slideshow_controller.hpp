@@ -4,6 +4,7 @@
 #include "./slideshow.hpp"
 
 #include "src/file_collector/file_collector.hpp"
+#include "src/pixel_store/basic_image.hpp"
 #include "src/utils/rotating_cache.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
 #include "src/pixel_store/rgba_image.hpp"
@@ -17,6 +18,7 @@ namespace slideproj::app
 		ssize_t index;
 		file_collector::file_list_entry source_file;
 		pixel_store::rgba_image image_data;
+		pixel_store::image_rectangle target_rectangle;
 	};
 
 	template<class T>
@@ -46,7 +48,11 @@ namespace slideproj::app
 		{}
 
 		void set_window_size(pixel_store::image_rectangle rect)
-		{ m_target_rectangle = rect; }
+		{
+			m_target_rectangle = rect;
+			if(m_current_slideshow != nullptr)
+			{ start_slideshow(*m_current_slideshow); }
+		}
 
 		void step_forward()
 		{
@@ -91,7 +97,11 @@ namespace slideproj::app
 			{ return; }
 
 			auto& cached_entry = m_loaded_images[entry.index];
-			if(cached_entry.has_value() && cached_entry->source_file.id() == entry.source_file.id()) [[likely]]
+			if(
+				cached_entry.has_value() &&
+				cached_entry->source_file.id() == entry.source_file.id() &&
+				cached_entry->target_rectangle == m_target_rectangle
+			) [[likely]]
 			{ present_image(*cached_entry); }
 			else
 			{
@@ -135,18 +145,26 @@ namespace slideproj::app
 					},
 					.on_completed = [
 						&cached_entry = m_loaded_images[entry.index],
-						source_file = entry.source_file,
-						index = entry.index,
+						entry,
+						saved_rect = m_target_rectangle,
 						this
 					](auto&& result) mutable {
-						fprintf(stderr, "(i) Image %ld loaded\n", index);
+						fprintf(stderr, "(i) Image %ld loaded\n", entry.index);
+						if(saved_rect != m_target_rectangle)
+						{
+							fprintf(stderr, "(i) Image %ld loaded, but window size changed\n", entry.index);
+							fetch_image(entry);
+							return;
+						}
+
 						cached_entry = loaded_image{
-							.index = index,
-							.source_file = std::move(source_file),
-							.image_data = std::move(result)
+							.index = entry.index,
+							.source_file = std::move(entry.source_file),
+							.image_data = std::move(result),
+							.target_rectangle = saved_rect
 						};
 
-						auto i = m_present_immediately.find(source_file.id());
+						auto i = m_present_immediately.find(cached_entry->source_file.id());
 						if(i != std::end(m_present_immediately))
 						{
 							if(i->second)

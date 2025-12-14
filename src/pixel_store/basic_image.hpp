@@ -11,6 +11,9 @@ namespace slideproj::pixel_store
 	{
 		uint32_t width;
 		uint32_t height;
+
+		constexpr bool operator==(image_rectangle const&) const = default;
+		constexpr bool operator!=(image_rectangle const&) const = default;
 	};
 
 	struct make_uninitialized_pixel_buffer_tag{};
