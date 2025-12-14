@@ -97,12 +97,20 @@ const vec4 coords[4] = vec4[4](
 );
 
 const vec4 origin = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+const vec2 uv_coords[4] = vec2[4](
+	vec2(0.0f, 1.0f),
+	vec2(1.0f, 1.0f),
+	vec2(1.0f, 0.0f),
+	vec2(0.0f, 0.0f)
+);
+
 out vec2 tex_coord;
 
 void main()
 {
 	gl_Position = scale*(coords[gl_VertexID] - origin) + origin;
-	tex_coord = 0.5*(coords[gl_VertexID] - origin).xy + vec2(0.5f, 0.5f);
+	tex_coord = uv_coords[gl_VertexID];
 }
 )"},
 			gl_shader<GL_FRAGMENT_SHADER>{R"(#version 460 core
