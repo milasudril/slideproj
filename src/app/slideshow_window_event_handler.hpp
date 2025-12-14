@@ -98,8 +98,17 @@ namespace slideproj::app
 				&& event.action == windowing_api::button_action::press
 			)
 			{ window.toggle_fullscreen(); }
-			else
-			{	fprintf(stderr, "(i) User pressed %d\n", event.scancode.value()); }
+
+			if( event.action == windowing_api::button_action::press
+				|| event.action == windowing_api::button_action::repeat
+			)
+			{
+				if(event.scancode== windowing_api::typing_keyboard_scancode::arrow_left)
+				{ utils::unwrap(m_slideshow_controller).step_backward(); }
+				else
+				if(event.scancode== windowing_api::typing_keyboard_scancode::arrow_right)
+				{ utils::unwrap(m_slideshow_controller).step_forward(); }
+			}
 		}
 
 		void handle_event(
