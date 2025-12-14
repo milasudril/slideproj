@@ -49,23 +49,30 @@ namespace slideproj::renderer
 				m_output_aspect_ratio
 			);
 
-			auto const output_scale_x = m_output_aspect_ratio >= 1.0f?
-				1.0f/m_output_aspect_ratio : 1.0f;
-			auto const output_scale_y = m_output_aspect_ratio >= 1.0f?
-				1.0f : m_output_aspect_ratio;
+			auto scale_x = 1.0f;
+			auto scale_y = 1.0f;
 
-			auto const input_scale_x = std::min(m_input_aspect_ratio, m_output_aspect_ratio);
-			auto const input_scale_y = input_scale_x/m_input_aspect_ratio;
+			if(m_output_aspect_ratio >= 1.0f)
+			{
+				auto const output_scale_x = 1.0f/m_output_aspect_ratio;
+				auto const output_scale_y = 1.0f;
+				auto const input_scale_x = std::min(m_input_aspect_ratio, m_output_aspect_ratio);
+				auto const input_scale_y = input_scale_x/m_input_aspect_ratio;
+				scale_x = input_scale_x*output_scale_x;
+				scale_y = input_scale_y*output_scale_y;
+			}
+			else
+			{
+				auto const output_scale_x = 1.0f;
+				auto const output_scale_y = m_output_aspect_ratio;
+				auto const input_scale_x = std::min(m_input_aspect_ratio, m_output_aspect_ratio);
+				auto const input_scale_y = m_input_aspect_ratio;
 
-			m_shader_program.set_uniform(
-				0,
-				output_scale_x*input_scale_x,
-				output_scale_y*input_scale_y,
-				1.0f,
-				0.0f
-			);
+				scale_x = output_scale_x/input_scale_x;
+				scale_y = output_scale_y/input_scale_y;
+			}
 
-			//return (input_aspect_ratio >= output_aspect_ratio)? input.width/fit.width : input.height/fit.height;
+			m_shader_program.set_uniform(0, scale_x, scale_y, 1.0f, 0.0f);
 		}
 
 	private:
