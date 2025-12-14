@@ -36,7 +36,11 @@ int main()
 	slideproj::utils::task_result_queue task_results;
 	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::renderer::image_display img_display{};
-	slideproj::app::slideshow_controller slideshow_controller{pending_tasks, img_display};
+	slideproj::app::slideshow_controller slideshow_controller{
+		pending_tasks,
+		img_display,
+		std::chrono::seconds{2}
+	};
 	slideproj::app::slideshow_window_event_handler eh{
 		slideshow_controller,
 		slideproj::app::make_image_rect_sink_refs(slideshow_controller, img_display)

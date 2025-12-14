@@ -39,7 +39,11 @@ namespace slideproj::app
 	{
 	public:
 		template<image_display ImageDisplay>
-		explicit slideshow_controller(utils::task_queue& task_queue, ImageDisplay& img_display):
+		explicit slideshow_controller(
+			utils::task_queue& task_queue,
+			ImageDisplay& img_display,
+			std::chrono::duration<float> transition_duration
+		):
 			m_task_queue{task_queue},
 			m_image_display{
 				.object = &img_display,
@@ -49,7 +53,8 @@ namespace slideproj::app
 				.set_transition_param = [](void* object, float t) {
 					static_cast<ImageDisplay*>(object)->set_transition_param(t);
 				}
-			}
+			},
+			m_transition_duration{transition_duration}
 		{}
 
 		void set_window_size(pixel_store::image_rectangle rect)
@@ -195,7 +200,7 @@ namespace slideproj::app
 			std::chrono::duration<float> transition_time{2.0f};
 			m_image_display.set_transition_param(
 				m_image_display.object,
-				time_since_transition_start/transition_time
+				time_since_transition_start/m_transition_duration
 			);
 		}
 
@@ -207,6 +212,7 @@ namespace slideproj::app
 		type_erased_image_display m_image_display;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 		std::chrono::steady_clock::time_point m_transition_start;
+		std::chrono::duration<float> m_transition_duration;
 	};
 }
 
