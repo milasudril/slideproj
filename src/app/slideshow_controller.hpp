@@ -35,16 +35,30 @@ namespace slideproj::app
 		void (*set_transition_param)(void*, float);
 	};
 
+	template<class T>
+	concept title_display = requires(T& x, char const* str)
+	{
+		{x.set_title(str)} -> std::same_as<void>;
+	};
+
+	struct type_erased_title_display
+	{
+		void* object;
+		void (*set_title)(void* object, char const*);
+	};
+
 	class slideshow_controller
 	{
 	public:
 		template<
 			image_display ImageDisplay,
+			title_display TitleDisplay,
 			file_collector::file_metadata_provider FileMetadataProvider
 	>
 		explicit slideshow_controller(
 			utils::task_queue& task_queue,
 			ImageDisplay& img_display,
+			TitleDisplay& title_display,
 			std::reference_wrapper<FileMetadataProvider const> file_metadata_provider,
 			std::chrono::duration<float> transition_duration
 		):
@@ -56,6 +70,12 @@ namespace slideproj::app
 				},
 				.set_transition_param = [](void* object, float t) {
 					static_cast<ImageDisplay*>(object)->set_transition_param(t);
+				}
+			},
+			m_title_display{
+				.object = &title_display,
+				.set_title = [](void* object, char const* value) {
+					static_cast<TitleDisplay*>(object)->set_title(value);
 				}
 			},
 			m_file_metadata_provider{
@@ -207,7 +227,7 @@ namespace slideproj::app
 				m_file_metadata_provider.object, img.source_file
 			).caption;
 
-			fprintf(stderr, "(i) %s\n", caption.c_str());
+			m_title_display.set_title(m_title_display.object, caption.c_str());
 		}
 
 		auto time_of_image_presentation() const
@@ -233,6 +253,7 @@ namespace slideproj::app
 		pixel_store::image_rectangle m_target_rectangle{};
 		utils::rotating_cache<loaded_image, utils::power_of_two{3}> m_loaded_images;
 		type_erased_image_display m_image_display;
+		type_erased_title_display m_title_display;
 		file_collector::type_erased_file_metadata_provider m_file_metadata_provider;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 		std::optional<std::chrono::steady_clock::time_point> m_transition_start;

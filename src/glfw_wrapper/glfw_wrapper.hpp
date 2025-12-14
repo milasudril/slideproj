@@ -55,7 +55,7 @@ namespace slideproj::glfw_wrapper
 		int height;
 	};
 
-	class glfw_window:public windowing_api::application_window
+	class glfw_window final:public windowing_api::application_window
 	{
 	public:
 		static std::unique_ptr<glfw_window> create(char const* title)
@@ -173,6 +173,9 @@ namespace slideproj::glfw_wrapper
 			glfwSetWindowSize(m_handle.get(), val.width, val.height);
 			glfwSetWindowPos(m_handle.get(), val.x, val.y);
 		}
+
+		void set_title(char const* str)
+		{ glfwSetWindowTitle(m_handle.get(), str); }
 
 	private:
 		explicit glfw_window(char const* title);

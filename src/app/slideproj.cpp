@@ -40,6 +40,7 @@ int main()
 	slideproj::app::slideshow_controller slideshow_controller{
 		pending_tasks,
 		img_display,
+		*main_window,
 		std::cref(metadata_repo),
 		std::chrono::seconds{2}
 	};
