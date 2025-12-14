@@ -91,8 +91,17 @@ namespace slideproj::app
 			{ present_image(*cached_entry); }
 			else
 			{
-				fprintf(stderr, "(i) Image not loaded. Fetching first.\n");
-				fetch_image(entry, true);
+				auto ip = m_present_immediately.insert(std::pair{entry.source_file.id(), true});
+				if(ip.second)
+				{
+					fprintf(stderr, "(i) Image %ld not loaded. Fetching first.\n", entry.index);
+					fetch_image(entry);
+				}
+				else
+				{
+					fprintf(stderr, "(i) Waiting for %ld image to be loaded\n", entry.index);
+					ip.first->second = true;
+				}
 			}
 		}
 
@@ -100,10 +109,13 @@ namespace slideproj::app
 		{
 			auto entry = m_current_slideshow->get_entry(offset);
 			if(entry.is_valid())
-			{ fetch_image(entry, false);  }
+			{
+				m_present_immediately.insert(std::pair{entry.source_file.id(), false});
+				fetch_image(entry);
+			}
 		}
 
-		void fetch_image(slideshow_entry const& entry, bool present_result)
+		void fetch_image(slideshow_entry const& entry)
 		{
 			unwrap(m_task_queue).submit(
 				utils::task{
@@ -117,17 +129,22 @@ namespace slideproj::app
 						&cached_entry = m_loaded_images[entry.index],
 						source_file = entry.source_file,
 						index = entry.index,
-						present_result,
 						this
 					](auto&& result) mutable {
-						fprintf(stderr, "(i) Image %ld %s loaded\n", index, source_file.path().c_str());
+						fprintf(stderr, "(i) Image %ld loaded\n", index);
 						cached_entry = loaded_image{
 							.index = index,
 							.source_file = std::move(source_file),
 							.image_data = std::move(result)
 						};
-						if(present_result)
-						{ present_image(*cached_entry); }
+
+						auto i = m_present_immediately.find(source_file.id());
+						if(i != std::end(m_present_immediately))
+						{
+							if(i->second)
+							{ present_image(*cached_entry); }
+							m_present_immediately.erase(i);
+						}
 					}
 				}
 			);
@@ -135,7 +152,7 @@ namespace slideproj::app
 
 		void present_image(loaded_image const& img)
 		{
-			fprintf(stderr, "(i) Showing image %ld %s\n", img.index, img.source_file.path().c_str());
+			fprintf(stderr, "(i) Showing image %ld\n", img.index);
 			m_image_display.show_image(m_image_display.object, img.image_data);
 		}
 
@@ -145,6 +162,7 @@ namespace slideproj::app
 		pixel_store::image_rectangle m_target_rectangle{};
 		utils::rotating_cache<loaded_image, utils::power_of_two{2}> m_loaded_images;
 		type_erased_image_display m_image_display;
+		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 	};
 }
 

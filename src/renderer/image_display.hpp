@@ -22,7 +22,6 @@ namespace slideproj::renderer
 		{
 			auto const w = img.width();
 			auto const h = img.height();
-			fprintf(stderr, "(i) image_display %p: Showing image of size %u x %u\n", this, w, h);
 			m_input_aspect_ratio = static_cast<float>(w)/static_cast<float>(h);
 			update_scale();
 			m_current_texture.upload(img);
@@ -30,7 +29,6 @@ namespace slideproj::renderer
 
 		void set_window_size(pixel_store::image_rectangle const& rect)
 		{
-			fprintf(stderr, "(i) image_display %p: Target rectangle updated\n", this);
 			m_output_aspect_ratio = static_cast<float>(rect.width)/static_cast<float>(rect.height);
 			update_scale();
 		}
@@ -45,13 +43,6 @@ namespace slideproj::renderer
 
 		void update_scale()
 		{
-			fprintf(
-				stderr,
-				"(i) image_display update_scale: input_aspect_ratio = %.8g, m_output_aspect_ratio = %.8g\n",
-				m_input_aspect_ratio,
-				m_output_aspect_ratio
-			);
-
 			auto scale_x = 1.0f;
 			auto scale_y = 1.0f;
 
