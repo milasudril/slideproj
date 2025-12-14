@@ -46,11 +46,7 @@ namespace slideproj::app
 		{}
 
 		void set_window_size(pixel_store::image_rectangle rect)
-		{
-			fprintf(stderr, "(i) slideshow_controller %p: Target rectangle updated\n", this);
-			m_target_rectangle = rect;
-
-		}
+		{ m_target_rectangle = rect; }
 
 		void step_forward()
 		{
@@ -59,6 +55,8 @@ namespace slideproj::app
 
 			m_current_slideshow->step(1);
 			prefetch_image(1);
+			prefetch_image(2);
+			prefetch_image(3);
 			present_image(m_current_slideshow->get_entry(0));
 		}
 
@@ -69,6 +67,8 @@ namespace slideproj::app
 
 			m_current_slideshow->step(-1);
 			prefetch_image(-1);
+			prefetch_image(-2);
+			prefetch_image(-3);
 			present_image(m_current_slideshow->get_entry(0));
 		}
 
@@ -78,7 +78,11 @@ namespace slideproj::app
 			m_current_slideshow = &slideshow.get();
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
+			prefetch_image(2);
+			prefetch_image(3);
 			prefetch_image(-1);
+			prefetch_image(-2);
+			prefetch_image(-3);
 		}
 
 		void present_image(slideshow_entry const& entry)
@@ -108,11 +112,15 @@ namespace slideproj::app
 		void prefetch_image(ssize_t offset)
 		{
 			auto entry = m_current_slideshow->get_entry(offset);
-			if(entry.is_valid())
-			{
-				m_present_immediately.insert(std::pair{entry.source_file.id(), false});
-				fetch_image(entry);
-			}
+			if(!entry.is_valid())
+			{ return; }
+
+			auto& cached_entry = m_loaded_images[entry.index];
+			if(cached_entry.has_value() && cached_entry->source_file.id() == entry.source_file.id())
+			{ return; }
+
+			if(m_present_immediately.insert(std::pair{entry.source_file.id(), false}).second)
+			{ fetch_image(entry); }
 		}
 
 		void fetch_image(slideshow_entry const& entry)
@@ -160,7 +168,7 @@ namespace slideproj::app
 		std::reference_wrapper<utils::task_queue> m_task_queue;
 		slideshow* m_current_slideshow{nullptr};
 		pixel_store::image_rectangle m_target_rectangle{};
-		utils::rotating_cache<loaded_image, utils::power_of_two{2}> m_loaded_images;
+		utils::rotating_cache<loaded_image, utils::power_of_two{3}> m_loaded_images;
 		type_erased_image_display m_image_display;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 	};
