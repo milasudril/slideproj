@@ -119,13 +119,9 @@ int main()
 
 		auto const last_step = slideshow_controller.time_of_image_presentation();
 		if(last_step.has_value() && now - *last_step >= step_interval)
-		{
-			slideshow_controller.step_forward();
-		}
+		{ slideshow_controller.step_forward(); }
 		else
-		{
-			main_window->poll_events();
-		}
+		{ main_window->poll_events(); }
 		glClear(GL_COLOR_BUFFER_BIT);
 		img_display.update();
 		main_window->swap_buffers();

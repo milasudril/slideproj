@@ -99,6 +99,7 @@ namespace slideproj::app
 		{
 			if(m_current_slideshow == nullptr)
 			{ return; }
+			m_transition_start = std::chrono::steady_clock::now();
 
 			m_current_slideshow->step(1);
 			prefetch_image(1);
@@ -111,6 +112,7 @@ namespace slideproj::app
 		{
 			if(m_current_slideshow == nullptr)
 			{ return; }
+			m_transition_start = std::chrono::steady_clock::now();
 
 			m_current_slideshow->step(-1);
 			prefetch_image(-1);
@@ -122,7 +124,10 @@ namespace slideproj::app
 		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
+			m_loaded_images.clear();
 			m_current_slideshow = &slideshow.get();
+			m_transition_start.reset();
+			m_present_immediately.clear();
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
 			prefetch_image(2);

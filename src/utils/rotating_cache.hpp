@@ -35,6 +35,8 @@ namespace slideproj::utils
 		auto const& operator[](size_t index) const
 		{ return m_items[index%elem_count]; }
 
+		void clear()
+		{ m_items = std::array<std::optional<T>, elem_count>{}; }
 
 	private:
 		std::array<std::optional<T>, elem_count> m_items;
