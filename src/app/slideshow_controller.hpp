@@ -128,6 +128,7 @@ namespace slideproj::app
 			m_current_slideshow = &slideshow.get();
 			m_transition_start.reset();
 			m_present_immediately.clear();
+			m_image_display.set_transition_param(m_image_display.object, 1.0f);
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
 			prefetch_image(2);
