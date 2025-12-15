@@ -31,7 +31,6 @@ int main()
 	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-
 	slideproj::app::slideshow slideshow;
 	slideproj::utils::task_result_queue task_results;
 	slideproj::utils::task_queue pending_tasks{task_results};

@@ -82,41 +82,6 @@ slideproj::glfw_wrapper::glfw_window::glfw_window(char const* title)
 	glfwSetWindowUserPointer(m_handle.get(), this);
 }
 
-void slideproj::glfw_wrapper::glfw_window::toggle_fullscreen()
-{
-	if(glfwGetWindowMonitor(m_handle.get()) == nullptr)
-	{
-		m_saved_window_rect = get_window_rect();
-		auto const& vidmode = get_primary_monitor_video_mode();
-		glfwSetWindowMonitor(
-			m_handle.get(),
-			glfwGetPrimaryMonitor(),
-			0,
-			0,
-			vidmode.width,
-			vidmode.height,
-			vidmode.refreshRate
-		);
-	}
-	else
-	{
-		glfwSetWindowMonitor(
-			m_handle.get(),
-			nullptr,
-			m_saved_window_rect.x,
-			m_saved_window_rect.y,
-			m_saved_window_rect.width,
-			m_saved_window_rect.height,
-			GLFW_DONT_CARE
-		);
-	}
-
-	if(m_vsync_enabled == true)
-	{ enable_vsync(); }
-	else
-	{ disable_vsync(); }
-}
-
 GLFWvidmode const& slideproj::glfw_wrapper::glfw_window::get_primary_monitor_video_mode()
 	{
 		auto const monitor = glfwGetPrimaryMonitor();

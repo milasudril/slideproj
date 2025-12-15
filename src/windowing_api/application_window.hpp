@@ -7,7 +7,9 @@ namespace slideproj::windowing_api
 	{
 	public:
 		virtual ~application_window() = default;
-		virtual void toggle_fullscreen() = 0;
+		virtual void enable_fullscreen() = 0;
+		virtual void disable_fullscreen() = 0;
+		virtual bool fullscreen_is_enabled() const = 0;
 
 	private:
 	};

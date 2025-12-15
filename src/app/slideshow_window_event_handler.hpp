@@ -97,7 +97,13 @@ namespace slideproj::app
 				event.scancode == windowing_api::typing_keyboard_scancode::f_11
 				&& event.action == windowing_api::button_action::press
 			)
-			{ window.toggle_fullscreen(); }
+			{
+				if(window.fullscreen_is_enabled())
+				{ window.disable_fullscreen(); }
+				else
+				{ window.enable_fullscreen(); }
+
+			}
 
 			if( event.action == windowing_api::button_action::press
 				|| event.action == windowing_api::button_action::repeat

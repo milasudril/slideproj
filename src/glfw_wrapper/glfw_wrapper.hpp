@@ -89,7 +89,46 @@ namespace slideproj::glfw_wrapper
 			m_vsync_enabled = false;
 		}
 
-		void toggle_fullscreen() override;
+		void enable_fullscreen() override
+		{
+			m_saved_window_rect = get_window_rect();
+			auto const& vidmode = get_primary_monitor_video_mode();
+			glfwSetWindowMonitor(
+				m_handle.get(),
+				glfwGetPrimaryMonitor(),
+				0,
+				0,
+				vidmode.width,
+				vidmode.height,
+				vidmode.refreshRate
+			);
+			restore_vsync();
+		}
+
+		void disable_fullscreen() override
+		{
+			glfwSetWindowMonitor(
+				m_handle.get(),
+				nullptr,
+				m_saved_window_rect.x,
+				m_saved_window_rect.y,
+				m_saved_window_rect.width,
+				m_saved_window_rect.height,
+				GLFW_DONT_CARE
+			);
+			restore_vsync();
+		}
+
+		bool fullscreen_is_enabled() const override
+		{ return glfwGetWindowMonitor(m_handle.get()) != nullptr; }
+
+		void restore_vsync()
+		{
+			if(m_vsync_enabled == true)
+			{ enable_vsync(); }
+			else
+			{ disable_vsync(); }
+		}
 
 		template<class EventHandler>
 		void set_event_handler(std::reference_wrapper<EventHandler> eh)
