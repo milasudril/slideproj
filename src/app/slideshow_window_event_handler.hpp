@@ -118,7 +118,7 @@ namespace slideproj::app
 		}
 
 		void handle_event(
-			windowing_api::application_window&,
+			windowing_api::application_window& window,
 			windowing_api::mouse_button_event const& event
 		)
 		{
@@ -130,6 +130,14 @@ namespace slideproj::app
 			else
 			if(event.button == windowing_api::mouse_button_index::right)
 			{ utils::unwrap(m_slideshow_controller).step_forward();}
+			else
+			if(event.button == windowing_api::mouse_button_index::middle)
+			{
+				if(window.get_cursor_mode() == windowing_api::cursor_mode::normal)
+				{ window.set_cursor_mode(windowing_api::cursor_mode::hidden); }
+				else
+				{ window.set_cursor_mode(windowing_api::cursor_mode::normal); }
+			}
 		}
 
 		void handle_event(slideshow_loaded event)

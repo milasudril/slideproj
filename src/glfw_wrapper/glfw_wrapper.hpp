@@ -42,6 +42,21 @@ namespace slideproj::glfw_wrapper
 		}
 	}
 
+	constexpr auto to_glfw_cursor_mode(windowing_api::cursor_mode mode)
+	{
+		switch(mode)
+		{
+			case slideproj::windowing_api::cursor_mode::normal:
+				return GLFW_CURSOR_NORMAL;
+			case slideproj::windowing_api::cursor_mode::hidden:
+				return GLFW_CURSOR_HIDDEN;
+			case slideproj::windowing_api::cursor_mode::disabled:
+				return GLFW_CURSOR_DISABLED;
+			default:
+				return GLFW_CURSOR_NORMAL;
+		}
+	}
+
 	constexpr auto to_typing_keyboard_modifier_mask(int value)
 	{
 		return static_cast<windowing_api::typing_keyboard_modifier_mask>(value);
@@ -121,6 +136,15 @@ namespace slideproj::glfw_wrapper
 
 		bool fullscreen_is_enabled() const override
 		{ return glfwGetWindowMonitor(m_handle.get()) != nullptr; }
+
+		void set_cursor_mode(windowing_api::cursor_mode mode) override
+		{
+			glfwSetInputMode(m_handle.get(), GLFW_CURSOR, to_glfw_cursor_mode(mode));
+			m_cursor_mode = mode;
+		}
+
+		windowing_api::cursor_mode get_cursor_mode() const override
+		{ return m_cursor_mode; }
 
 		void restore_vsync()
 		{
@@ -231,6 +255,7 @@ namespace slideproj::glfw_wrapper
 		void* m_event_handler;
 		window_rectangle m_saved_window_rect{};
 		bool m_vsync_enabled{false};
+		windowing_api::cursor_mode m_cursor_mode{windowing_api::cursor_mode::normal};
 	};
 }
 

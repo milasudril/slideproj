@@ -12,6 +12,7 @@
 #include "src/utils/task_queue.hpp"
 #include "src/utils/task_result_queue.hpp"
 #include "src/renderer/image_display.hpp"
+#include "src/windowing_api/application_window.hpp"
 
 int main()
 {

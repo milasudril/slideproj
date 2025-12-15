@@ -3,6 +3,13 @@
 
 namespace slideproj::windowing_api
 {
+	enum class cursor_mode
+	{
+		normal,
+		hidden,
+		disabled
+	};
+
 	class application_window
 	{
 	public:
@@ -10,8 +17,8 @@ namespace slideproj::windowing_api
 		virtual void enable_fullscreen() = 0;
 		virtual void disable_fullscreen() = 0;
 		virtual bool fullscreen_is_enabled() const = 0;
-
-	private:
+		virtual void set_cursor_mode(cursor_mode mode) = 0;
+		virtual cursor_mode get_cursor_mode() const = 0;
 	};
 }
 

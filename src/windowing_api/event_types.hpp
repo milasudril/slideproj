@@ -83,6 +83,7 @@ namespace slideproj::windowing_api
 
 		static const mouse_button_index left;
 		static const mouse_button_index right;
+		static const mouse_button_index middle;
 
 	private:
 		int m_value;
@@ -90,6 +91,7 @@ namespace slideproj::windowing_api
 
 	inline constexpr mouse_button_index mouse_button_index::left{0};
 	inline constexpr mouse_button_index mouse_button_index::right{1};
+	inline constexpr mouse_button_index mouse_button_index::middle{2};
 
 	struct mouse_button_event
 	{
