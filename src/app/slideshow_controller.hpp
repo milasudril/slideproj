@@ -102,10 +102,10 @@ namespace slideproj::app
 			m_transition_start = std::chrono::steady_clock::now();
 
 			m_current_slideshow->step(1);
+			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
 			prefetch_image(2);
 			prefetch_image(3);
-			present_image(m_current_slideshow->get_entry(0));
 		}
 
 		void step_backward()
@@ -115,10 +115,10 @@ namespace slideproj::app
 			m_transition_start = std::chrono::steady_clock::now();
 
 			m_current_slideshow->step(-1);
+			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(-1);
 			prefetch_image(-2);
 			prefetch_image(-3);
-			present_image(m_current_slideshow->get_entry(0));
 		}
 
 		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
