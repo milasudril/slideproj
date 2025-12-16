@@ -123,6 +123,7 @@ namespace slideproj::app
 		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
+			utils::unwrap(m_task_queue).clear();
 			m_loaded_images.clear();
 			m_current_slideshow = &slideshow.get();
 			m_present_immediately.clear();

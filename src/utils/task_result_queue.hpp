@@ -31,9 +31,16 @@ namespace slideproj::utils
 			}
 		}
 
+		void clear()
+		{
+			std::lock_guard lock{m_mutex};
+			m_queue = queue{};
+		}
+
 	private:
 		std::mutex m_mutex;
-		std::queue<task_completion_handler> m_queue;
+		using queue = std::queue<task_completion_handler>;
+		queue m_queue;
 	};
 }
 
