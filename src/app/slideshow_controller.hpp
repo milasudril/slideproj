@@ -242,7 +242,12 @@ namespace slideproj::app
 		{
 			if(m_transition_start.has_value())
 			{
-				auto const time_since_transition_start = now - *m_transition_start;
+				auto time_since_transition_start = now - *m_transition_start;
+				if(time_since_transition_start >= m_transition_duration)
+				{
+					time_since_transition_start = m_transition_duration;
+					m_transition_start.reset();
+				}
 				m_image_display.set_transition_param(
 					m_image_display.object,
 					time_since_transition_start/std::chrono::duration<float>(m_transition_duration)
