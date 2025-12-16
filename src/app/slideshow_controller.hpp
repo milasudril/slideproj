@@ -247,12 +247,18 @@ namespace slideproj::app
 				{
 					time_since_transition_start = m_transition_duration;
 					m_transition_start.reset();
+					m_transition_end = now;
 				}
 				m_image_display.set_transition_param(
 					m_image_display.object,
 					time_since_transition_start/std::chrono::duration<float>(m_transition_duration)
 				);
 			}
+		}
+
+		std::optional<clock::time_point> take_transition_end()
+		{
+			return std::exchange(m_transition_end, std::nullopt);
 		}
 
 	private:
@@ -266,6 +272,7 @@ namespace slideproj::app
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 		std::optional<clock::time_point> m_transition_start;
 		clock::duration m_transition_duration;
+		std::optional<clock::time_point> m_transition_end;
 	};
 }
 

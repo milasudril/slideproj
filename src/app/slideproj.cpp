@@ -13,6 +13,7 @@
 #include "src/utils/task_result_queue.hpp"
 #include "src/renderer/image_display.hpp"
 #include "src/windowing_api/application_window.hpp"
+#include <chrono>
 
 int main()
 {
@@ -89,7 +90,8 @@ int main()
 
 	size_t k = 0;
 	constexpr char const* progress_char = "-/|\\-/|\\";
-	//std::chrono::duration<float> step_interval{6.0f};
+	std::chrono::duration<float> step_interval{6.0f};
+	std::optional<std::chrono::steady_clock::time_point> last_transition_completed;
 	while(!eh.application_should_exit())
 	{
 		auto const now = std::chrono::steady_clock::now();
@@ -116,6 +118,17 @@ int main()
 				.now = now
 			}
 		);
+
+		if(last_transition_completed.has_value())
+		{
+			if(now - *last_transition_completed >= step_interval)
+			{
+				slideshow_controller.step_forward();
+				last_transition_completed.reset();
+			}
+		}
+		else
+		{ last_transition_completed = slideshow_controller.take_transition_end(); }
 
 		main_window->poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
