@@ -50,17 +50,19 @@ namespace slideproj::app
 	class slideshow_controller
 	{
 	public:
+		using clock = std::chrono::steady_clock;
+
 		template<
 			image_display ImageDisplay,
 			title_display TitleDisplay,
 			file_collector::file_metadata_provider FileMetadataProvider
-	>
+		>
 		explicit slideshow_controller(
 			utils::task_queue& task_queue,
 			ImageDisplay& img_display,
 			TitleDisplay& title_display,
 			std::reference_wrapper<FileMetadataProvider const> file_metadata_provider,
-			std::chrono::duration<float> transition_duration
+			clock::duration transition_duration
 		):
 			m_task_queue{task_queue},
 			m_image_display{
@@ -228,7 +230,7 @@ namespace slideproj::app
 			fprintf(stderr, "(i) Showing image %ld\n", img.index);
 			m_image_display.set_transition_param(m_image_display.object, 0.0f);
 			m_image_display.show_image(m_image_display.object, img.image_data);
-			m_transition_start = std::chrono::steady_clock::now();
+			m_transition_start = clock::now();
 			auto const& caption = m_file_metadata_provider.get_metadata(
 				m_file_metadata_provider.object, img.source_file
 			).caption;
@@ -236,14 +238,14 @@ namespace slideproj::app
 			m_title_display.set_title(m_title_display.object, caption.c_str());
 		}
 
-		void update_clock(std::chrono::steady_clock::time_point now)
+		void update_clock(clock::time_point now)
 		{
 			if(m_transition_start.has_value())
 			{
 				auto const time_since_transition_start = now - *m_transition_start;
 				m_image_display.set_transition_param(
 					m_image_display.object,
-					time_since_transition_start/m_transition_duration
+					time_since_transition_start/std::chrono::duration<float>(m_transition_duration)
 				);
 			}
 		}
@@ -257,8 +259,8 @@ namespace slideproj::app
 		type_erased_title_display m_title_display;
 		file_collector::type_erased_file_metadata_provider m_file_metadata_provider;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
-		std::optional<std::chrono::steady_clock::time_point> m_transition_start;
-		std::chrono::duration<float> m_transition_duration;
+		std::optional<clock::time_point> m_transition_start;
+		clock::duration m_transition_duration;
 	};
 }
 
