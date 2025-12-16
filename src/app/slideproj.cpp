@@ -89,7 +89,7 @@ int main()
 
 	size_t k = 0;
 	constexpr char const* progress_char = "-/|\\-/|\\";
-	std::chrono::duration<float> step_interval{6.0f};
+	//std::chrono::duration<float> step_interval{6.0f};
 	while(!eh.application_should_exit())
 	{
 		auto const now = std::chrono::steady_clock::now();
@@ -117,11 +117,7 @@ int main()
 			}
 		);
 
-		auto const last_step = slideshow_controller.time_of_image_presentation();
-		if(last_step.has_value() && now - *last_step >= step_interval)
-		{ slideshow_controller.step_forward(); }
-		else
-		{ main_window->poll_events(); }
+		main_window->poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);
 		img_display.update();
 		main_window->swap_buffers();

@@ -99,7 +99,6 @@ namespace slideproj::app
 		{
 			if(m_current_slideshow == nullptr)
 			{ return; }
-			m_transition_start = std::chrono::steady_clock::now();
 
 			m_current_slideshow->step(1);
 			present_image(m_current_slideshow->get_entry(0));
@@ -126,8 +125,8 @@ namespace slideproj::app
 			fprintf(stderr, "(i) Slideshow loaded\n");
 			m_loaded_images.clear();
 			m_current_slideshow = &slideshow.get();
-			m_transition_start.reset();
 			m_present_immediately.clear();
+			m_transition_start.reset();
 			m_image_display.set_transition_param(m_image_display.object, 1.0f);
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
@@ -234,11 +233,6 @@ namespace slideproj::app
 			).caption;
 
 			m_title_display.set_title(m_title_display.object, caption.c_str());
-		}
-
-		auto time_of_image_presentation() const
-		{
-			return m_transition_start;
 		}
 
 		void update_clock(std::chrono::steady_clock::time_point now)
