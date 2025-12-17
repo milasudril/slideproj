@@ -58,6 +58,14 @@ namespace slideproj::app
 		file_collector::file_list m_files;
 		ssize_t m_current_index{0};
 	};
+
+	class slideshow_navigator
+	{
+	public:
+		virtual void step_forward() = 0;
+		virtual void step_backward() = 0;
+		virtual void start_slideshow(std::reference_wrapper<slideshow> slideshow) = 0;
+	};
 }
 
 #endif

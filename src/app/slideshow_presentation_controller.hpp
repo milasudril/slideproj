@@ -47,7 +47,7 @@ namespace slideproj::app
 		void (*set_title)(void* object, char const*);
 	};
 
-	class slideshow_presentation_controller
+	class slideshow_presentation_controller : public slideshow_navigator
 	{
 	public:
 		using clock = std::chrono::steady_clock;
@@ -97,7 +97,7 @@ namespace slideproj::app
 			{ start_slideshow(*m_current_slideshow); }
 		}
 
-		void step_forward()
+		void step_forward() override
 		{
 			if(m_current_slideshow == nullptr)
 			{ return; }
@@ -109,7 +109,7 @@ namespace slideproj::app
 			prefetch_image(3);
 		}
 
-		void step_backward()
+		void step_backward() override
 		{
 			if(m_current_slideshow == nullptr)
 			{ return; }
@@ -122,7 +122,7 @@ namespace slideproj::app
 			prefetch_image(-3);
 		}
 
-		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
+		void start_slideshow(std::reference_wrapper<slideshow> slideshow) override
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
 			utils::unwrap(m_task_queue).clear();
