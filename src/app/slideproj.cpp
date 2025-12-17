@@ -4,7 +4,7 @@
 #include "./slideshow_window_event_handler.hpp"
 #include "./slideshow.hpp"
 
-#include "src/app/slideshow_controller.hpp"
+#include "src/app/slideshow_presentation_controller.hpp"
 #include "src/pixel_store/rgba_image.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
@@ -38,7 +38,7 @@ int main()
 	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::renderer::image_display img_display{};
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
-	slideproj::app::slideshow_controller slideshow_controller{
+	slideproj::app::slideshow_presentation_controller slideshow_presentation_controller{
 		pending_tasks,
 		img_display,
 		*main_window,
@@ -46,8 +46,8 @@ int main()
 		std::chrono::seconds{2}
 	};
 	slideproj::app::slideshow_window_event_handler eh{
-		slideshow_controller,
-		slideproj::app::make_image_rect_sink_refs(slideshow_controller, img_display)
+		slideshow_presentation_controller,
+		slideproj::app::make_image_rect_sink_refs(slideshow_presentation_controller, img_display)
 	};
 	main_window->set_event_handler(std::ref(eh));
 
@@ -123,12 +123,12 @@ int main()
 		{
 			if(now - *last_transition_completed >= step_interval)
 			{
-				slideshow_controller.step_forward();
+				slideshow_presentation_controller.step_forward();
 				last_transition_completed.reset();
 			}
 		}
 		else
-		{ last_transition_completed = slideshow_controller.take_transition_end(); }
+		{ last_transition_completed = slideshow_presentation_controller.take_transition_end(); }
 
 		main_window->poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);

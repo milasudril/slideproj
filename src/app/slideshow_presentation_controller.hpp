@@ -1,5 +1,5 @@
-#ifndef SLIDEPROJ_APP_SLIDESHOW_CONTROLLER_HPP
-#define SLIDEPROJ_APP_SLIDESHOW_CONTROLLER_HPP
+#ifndef SLIDEPROJ_APP_SLIDESHOW_PRESENTATION_CONTROLLER_HPP
+#define SLIDEPROJ_APP_SLIDESHOW_PRESENTATION_CONTROLLER_HPP
 
 #include "./slideshow.hpp"
 
@@ -47,7 +47,7 @@ namespace slideproj::app
 		void (*set_title)(void* object, char const*);
 	};
 
-	class slideshow_controller
+	class slideshow_presentation_controller
 	{
 	public:
 		using clock = std::chrono::steady_clock;
@@ -57,7 +57,7 @@ namespace slideproj::app
 			title_display TitleDisplay,
 			file_collector::file_metadata_provider FileMetadataProvider
 		>
-		explicit slideshow_controller(
+		explicit slideshow_presentation_controller(
 			utils::task_queue& task_queue,
 			ImageDisplay& img_display,
 			TitleDisplay& title_display,
