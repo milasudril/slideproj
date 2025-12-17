@@ -14,6 +14,42 @@
 #include "src/renderer/image_display.hpp"
 #include "src/windowing_api/application_window.hpp"
 #include <chrono>
+#include <valarray>
+
+namespace slideproj::app
+{
+	struct slideshow_navigator_scheduler
+	{
+	public:
+		void handle_event(slideshow_navigator&, slideshow_step_event)
+		{
+			fprintf(stderr, "(i) Step\n");
+			m_latest_transtion_end.reset();
+		}
+
+		void handle_event(slideshow_navigator&, slideshow_transition_end_event event)
+		{
+			fprintf(stderr, "(i) Transition ended\n");
+			m_latest_transtion_end = event.when;
+		}
+
+		void handle_event(slideshow_navigator& navigator, slideshow_time_event event)
+		{
+			if(m_latest_transtion_end.has_value())
+			{
+				if(event.when - *m_latest_transtion_end >= m_step_delay)
+				{
+					fprintf(stderr, "(i) Frame expired\n");
+					navigator.step_forward();
+				}
+			}
+		}
+
+	private:
+		std::chrono::duration<float> m_step_delay{6.0f};
+		std::optional<slideshow_clock::time_point> m_latest_transtion_end;
+	};
+}
 
 int main()
 {
@@ -38,11 +74,13 @@ int main()
 	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::renderer::image_display img_display{};
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
+	slideproj::app::slideshow_navigator_scheduler nav_sched;
 	slideproj::app::slideshow_presentation_controller slideshow_presentation_controller{
 		pending_tasks,
 		img_display,
 		*main_window,
 		std::cref(metadata_repo),
+		nav_sched,
 		std::chrono::seconds{2}
 	};
 	slideproj::app::slideshow_window_event_handler eh{
@@ -90,8 +128,6 @@ int main()
 
 	size_t k = 0;
 	constexpr char const* progress_char = "-/|\\-/|\\";
-	std::chrono::duration<float> step_interval{6.0f};
-	std::optional<std::chrono::steady_clock::time_point> last_transition_completed;
 	while(!eh.application_should_exit())
 	{
 		auto const now = std::chrono::steady_clock::now();
@@ -118,17 +154,6 @@ int main()
 				.now = now
 			}
 		);
-
-		if(last_transition_completed.has_value())
-		{
-			if(now - *last_transition_completed >= step_interval)
-			{
-				slideshow_presentation_controller.step_forward();
-				last_transition_completed.reset();
-			}
-		}
-		else
-		{ last_transition_completed = slideshow_presentation_controller.take_transition_end(); }
 
 		main_window->poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);

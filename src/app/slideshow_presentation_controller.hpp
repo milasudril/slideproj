@@ -47,21 +47,58 @@ namespace slideproj::app
 		void (*set_title)(void* object, char const*);
 	};
 
+	struct slideshow_step_event
+	{};
+
+	using slideshow_clock = std::chrono::steady_clock;
+
+	struct slideshow_transition_end_event
+	{
+		slideshow_clock::time_point when;
+	};
+
+	struct slideshow_time_event
+	{
+		slideshow_clock::time_point when;
+	};
+
+	template<class T>
+	concept slideshow_event_handler = requires(
+		T& obj,
+		slideshow_navigator& navigator
+	)
+	{
+		{obj.handle_event(navigator, slideshow_step_event{})} -> std::same_as<void>;
+		{obj.handle_event(navigator, slideshow_transition_end_event{})} -> std::same_as<void>;
+		{obj.handle_event(navigator, slideshow_time_event{})} -> std::same_as<void>;
+	};
+
+	struct type_erased_slideshow_event_handler
+	{
+		void* object;
+		void (*handle_sse)(void*, slideshow_navigator&, slideshow_step_event);
+		void (*handle_stee)(void*, slideshow_navigator&, slideshow_transition_end_event);
+		void (*handle_ste)(void*, slideshow_navigator&, slideshow_time_event);
+	};
+
+
 	class slideshow_presentation_controller : public slideshow_navigator
 	{
 	public:
-		using clock = std::chrono::steady_clock;
+		using clock = slideshow_clock;
 
 		template<
 			image_display ImageDisplay,
 			title_display TitleDisplay,
-			file_collector::file_metadata_provider FileMetadataProvider
+			file_collector::file_metadata_provider FileMetadataProvider,
+			slideshow_event_handler EventHandler
 		>
 		explicit slideshow_presentation_controller(
 			utils::task_queue& task_queue,
 			ImageDisplay& img_display,
 			TitleDisplay& title_display,
 			std::reference_wrapper<FileMetadataProvider const> file_metadata_provider,
+			EventHandler& event_handler,
 			clock::duration transition_duration
 		):
 			m_task_queue{task_queue},
@@ -87,6 +124,18 @@ namespace slideproj::app
 					return static_cast<FileMetadataProvider const*>(object)->get_metadata(item);
 				}
 			},
+			m_event_handler{
+				.object = &event_handler,
+				.handle_sse = [](void* object, slideshow_navigator& navigator, slideshow_step_event event) {
+					static_cast<EventHandler*>(object)->handle_event(navigator, event);
+				},
+				.handle_stee = [](void* object, slideshow_navigator& navigator, slideshow_transition_end_event event) {
+					static_cast<EventHandler*>(object)->handle_event(navigator, event);
+				},
+				.handle_ste = [](void* object, slideshow_navigator& navigator, slideshow_time_event event) {
+					static_cast<EventHandler*>(object)->handle_event(navigator, event);
+				}
+			},
 			m_transition_duration{transition_duration}
 		{}
 
@@ -102,6 +151,7 @@ namespace slideproj::app
 			if(m_current_slideshow == nullptr)
 			{ return; }
 
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
 			m_current_slideshow->step(1);
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
@@ -113,8 +163,8 @@ namespace slideproj::app
 		{
 			if(m_current_slideshow == nullptr)
 			{ return; }
-			m_transition_start = std::chrono::steady_clock::now();
 
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
 			m_current_slideshow->step(-1);
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(-1);
@@ -131,6 +181,7 @@ namespace slideproj::app
 			m_present_immediately.clear();
 			m_transition_start.reset();
 			m_image_display.set_transition_param(m_image_display.object, 1.0f);
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
 			prefetch_image(2);
@@ -247,18 +298,18 @@ namespace slideproj::app
 				{
 					time_since_transition_start = m_transition_duration;
 					m_transition_start.reset();
-					m_transition_end = now;
+					m_event_handler.handle_stee(
+						m_event_handler.object,
+						*this,
+						slideshow_transition_end_event{.when = now}
+					);
 				}
 				m_image_display.set_transition_param(
 					m_image_display.object,
 					time_since_transition_start/std::chrono::duration<float>(m_transition_duration)
 				);
 			}
-		}
-
-		std::optional<clock::time_point> take_transition_end()
-		{
-			return std::exchange(m_transition_end, std::nullopt);
+			m_event_handler.handle_ste(m_event_handler.object, *this, slideshow_time_event{.when = now});
 		}
 
 	private:
@@ -269,10 +320,10 @@ namespace slideproj::app
 		type_erased_image_display m_image_display;
 		type_erased_title_display m_title_display;
 		file_collector::type_erased_file_metadata_provider m_file_metadata_provider;
+		type_erased_slideshow_event_handler m_event_handler;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 		std::optional<clock::time_point> m_transition_start;
 		clock::duration m_transition_duration;
-		std::optional<clock::time_point> m_transition_end;
 	};
 }
 
