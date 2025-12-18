@@ -1,7 +1,7 @@
 #ifndef SLIDEPROJ_APP_SLIDESHOW_WINDOW_EVENT_HANDLER_HPP
 #define SLIDEPROJ_APP_SLIDESHOW_WINDOW_EVENT_HANDLER_HPP
 
-#include "./slideshow_presentation_controller.hpp"
+#include "./slideshow.hpp"
 
 #include "src/windowing_api/event_types.hpp"
 #include "src/windowing_api/application_window.hpp"
@@ -66,11 +66,11 @@ namespace slideproj::app
 	public:
 		template<playback_controller PlaybackController>
 		explicit slideshow_window_event_handler(
-			slideshow_presentation_controller& slideshow_presentation_controller,
+			slideshow_navigator& slideshow_presentation_controller,
 			std::span<image_rect_sink_ref const> rect_sinks,
 			PlaybackController& playback_controller
 		):
-			m_slideshow_presentation_controller{slideshow_presentation_controller},
+			m_navigator{slideshow_presentation_controller},
 			m_rect_sinks{std::begin(rect_sinks), std::end(rect_sinks)},
 			m_playback_controller{
 				.object = &playback_controller,
@@ -132,16 +132,16 @@ namespace slideproj::app
 			)
 			{
 				if(event.scancode == windowing_api::typing_keyboard_scancode::arrow_left)
-				{ utils::unwrap(m_slideshow_presentation_controller).step_backward(); }
+				{ utils::unwrap(m_navigator).step_backward(); }
 				else
 				if(event.scancode == windowing_api::typing_keyboard_scancode::arrow_right)
-				{ utils::unwrap(m_slideshow_presentation_controller).step_forward(); }
+				{ utils::unwrap(m_navigator).step_forward(); }
 				else
 				if(event.scancode == windowing_api::typing_keyboard_scancode::home)
-				{ utils::unwrap(m_slideshow_presentation_controller).go_to_begin(); }
+				{ utils::unwrap(m_navigator).go_to_begin(); }
 				else
 				if(event.scancode == windowing_api::typing_keyboard_scancode::end)
-				{ utils::unwrap(m_slideshow_presentation_controller).go_to_end(); }
+				{ utils::unwrap(m_navigator).go_to_end(); }
 			}
 		}
 
@@ -154,10 +154,10 @@ namespace slideproj::app
 			{ return; }
 
 			if(event.button == windowing_api::mouse_button_index::left)
-			{ utils::unwrap(m_slideshow_presentation_controller).step_backward(); }
+			{ utils::unwrap(m_navigator).step_backward(); }
 			else
 			if(event.button == windowing_api::mouse_button_index::right)
-			{ utils::unwrap(m_slideshow_presentation_controller).step_forward();}
+			{ utils::unwrap(m_navigator).step_forward();}
 			else
 			if(event.button == windowing_api::mouse_button_index::middle)
 			{
@@ -169,18 +169,18 @@ namespace slideproj::app
 		}
 
 		void handle_event(slideshow_loaded event)
-		{ utils::unwrap(m_slideshow_presentation_controller).start_slideshow(event.current_slideshow); }
+		{ utils::unwrap(m_navigator).start_slideshow(event.current_slideshow); }
 
 		void handle_event(frame_started_event const& event)
 		{
-			utils::unwrap(m_slideshow_presentation_controller).update_clock(event.now);
+			utils::unwrap(m_navigator).update_clock(event.now);
 		}
 
 		bool application_should_exit() const
 		{ return m_application_should_exit; }
 
 	private:
-		std::reference_wrapper<slideshow_presentation_controller> m_slideshow_presentation_controller;
+		std::reference_wrapper<slideshow_navigator> m_navigator;
 		std::vector<image_rect_sink_ref> m_rect_sinks;
 		bool m_application_should_exit{false};
 		type_erased_playback_controller m_playback_controller;

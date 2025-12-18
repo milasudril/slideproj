@@ -329,7 +329,7 @@ namespace slideproj::app
 			m_title_display.set_title(m_title_display.object, caption.c_str());
 		}
 
-		void update_clock(clock::time_point now)
+		void update_clock(clock::time_point now) override
 		{
 			if(m_transition_start.has_value())
 			{
