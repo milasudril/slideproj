@@ -46,13 +46,33 @@ namespace slideproj::app
 		}
 
 		void set_current_index(ssize_t index)
-		{ m_current_index = std::clamp(index, static_cast<ssize_t>(-1), std::ssize(m_files) - 1); }
+		{
+			if(std::size(m_files) <= 1)
+			{
+				m_current_index = 0;
+				return;
+			}
+
+			m_current_index = std::clamp(index, static_cast<ssize_t>(0), std::ssize(m_files) - 1);
+		}
+
+		void go_to_end()
+		{
+			if(std::size(m_files) == 0)
+			{
+				m_current_index = 0;
+				return;
+			}
+			m_current_index = std::size(m_files) - 1;
+		}
 
 		size_t get_current_index() const
 		{ return m_current_index; }
 
 		bool empty() const
 		{ return m_files.empty(); }
+
+
 
 	private:
 		file_collector::file_list m_files;
@@ -64,6 +84,8 @@ namespace slideproj::app
 	public:
 		virtual void step_forward() = 0;
 		virtual void step_backward() = 0;
+		virtual void go_to_begin() = 0;
+		virtual void go_to_end() = 0;
 		virtual void start_slideshow(std::reference_wrapper<slideshow> slideshow) = 0;
 	};
 }

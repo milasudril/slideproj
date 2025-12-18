@@ -31,6 +31,8 @@ namespace slideproj::windowing_api
 		static const typing_keyboard_scancode arrow_left;
 		static const typing_keyboard_scancode arrow_right;
 		static const typing_keyboard_scancode f_11;
+		static const typing_keyboard_scancode home;
+		static const typing_keyboard_scancode end;
 
 	private:
 		int m_value;
@@ -41,6 +43,8 @@ namespace slideproj::windowing_api
 	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::arrow_left{105};
 	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::arrow_right{106};
 	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::f_11{87};
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::home{102};
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::end{107};
 
 	enum class button_action
 	{

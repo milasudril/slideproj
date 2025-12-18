@@ -109,11 +109,19 @@ namespace slideproj::app
 				|| event.action == windowing_api::button_action::repeat
 			)
 			{
-				if(event.scancode== windowing_api::typing_keyboard_scancode::arrow_left)
+				if(event.scancode == windowing_api::typing_keyboard_scancode::arrow_left)
 				{ utils::unwrap(m_slideshow_presentation_controller).step_backward(); }
 				else
-				if(event.scancode== windowing_api::typing_keyboard_scancode::arrow_right)
+				if(event.scancode == windowing_api::typing_keyboard_scancode::arrow_right)
 				{ utils::unwrap(m_slideshow_presentation_controller).step_forward(); }
+				else
+				if(event.scancode == windowing_api::typing_keyboard_scancode::home)
+				{ utils::unwrap(m_slideshow_presentation_controller).go_to_begin(); }
+				else
+				if(event.scancode == windowing_api::typing_keyboard_scancode::end)
+				{ utils::unwrap(m_slideshow_presentation_controller).go_to_end(); }
+
+				fprintf(stderr, "(i) %d\n", event.scancode.value());
 			}
 		}
 

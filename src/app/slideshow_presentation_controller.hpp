@@ -172,6 +172,32 @@ namespace slideproj::app
 			prefetch_image(-3);
 		}
 
+		void go_to_begin() override
+		{
+			if(m_current_slideshow == nullptr)
+			{ return; }
+
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
+			m_current_slideshow->set_current_index(0);
+			present_image(m_current_slideshow->get_entry(0));
+			prefetch_image(1);
+			prefetch_image(2);
+			prefetch_image(3);
+		}
+
+		void go_to_end() override
+		{
+			if(m_current_slideshow == nullptr)
+			{ return; }
+
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
+			m_current_slideshow->go_to_end();
+			present_image(m_current_slideshow->get_entry(0));
+			prefetch_image(-1);
+			prefetch_image(-2);
+			prefetch_image(-3);
+		}
+
 		void start_slideshow(std::reference_wrapper<slideshow> slideshow) override
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
