@@ -93,16 +93,18 @@ namespace slideproj::app
 			windowing_api::typing_keyboard_event const& event
 		)
 		{
-			if(
-				event.scancode == windowing_api::typing_keyboard_scancode::f_11
-				&& event.action == windowing_api::button_action::press
-			)
+			if(event.action == windowing_api::button_action::press)
 			{
-				if(window.fullscreen_is_enabled())
-				{ window.disable_fullscreen(); }
+				if(event.scancode == windowing_api::typing_keyboard_scancode::f_11)
+				{
+					if(window.fullscreen_is_enabled())
+					{ window.disable_fullscreen(); }
+					else
+					{ window.enable_fullscreen(); }
+				}
 				else
-				{ window.enable_fullscreen(); }
-
+				if(event.scancode == windowing_api::typing_keyboard_scancode::whitespace)
+				{ fprintf(stderr, "(i) Pause not implemented\n"); }
 			}
 
 			if( event.action == windowing_api::button_action::press
@@ -120,8 +122,6 @@ namespace slideproj::app
 				else
 				if(event.scancode == windowing_api::typing_keyboard_scancode::end)
 				{ utils::unwrap(m_slideshow_presentation_controller).go_to_end(); }
-
-				fprintf(stderr, "(i) %d\n", event.scancode.value());
 			}
 		}
 

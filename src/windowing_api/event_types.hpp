@@ -33,6 +33,7 @@ namespace slideproj::windowing_api
 		static const typing_keyboard_scancode f_11;
 		static const typing_keyboard_scancode home;
 		static const typing_keyboard_scancode end;
+		static const typing_keyboard_scancode whitespace;
 
 	private:
 		int m_value;
@@ -45,6 +46,7 @@ namespace slideproj::windowing_api
 	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::f_11{87};
 	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::home{102};
 	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::end{107};
+	inline constexpr typing_keyboard_scancode typing_keyboard_scancode::whitespace{57};
 
 	enum class button_action
 	{

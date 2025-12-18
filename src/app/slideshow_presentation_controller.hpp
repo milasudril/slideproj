@@ -47,8 +47,12 @@ namespace slideproj::app
 		void (*set_title)(void* object, char const*);
 	};
 
+	enum class step_direction{forward, backward, none};
+
 	struct slideshow_step_event
-	{};
+	{
+		step_direction direction;
+	};
 
 	using slideshow_clock = std::chrono::steady_clock;
 
@@ -151,7 +155,9 @@ namespace slideproj::app
 			if(m_current_slideshow == nullptr)
 			{ return; }
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
+				.direction = step_direction::forward
+			});
 			m_current_slideshow->step(1);
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
@@ -164,7 +170,9 @@ namespace slideproj::app
 			if(m_current_slideshow == nullptr)
 			{ return; }
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
+				.direction = step_direction::backward
+			});
 			m_current_slideshow->step(-1);
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(-1);
@@ -177,7 +185,9 @@ namespace slideproj::app
 			if(m_current_slideshow == nullptr)
 			{ return; }
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
+				.direction = step_direction::backward
+			});
 			m_current_slideshow->set_current_index(0);
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
@@ -190,7 +200,9 @@ namespace slideproj::app
 			if(m_current_slideshow == nullptr)
 			{ return; }
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
+				.direction = step_direction::forward
+			});
 			m_current_slideshow->go_to_end();
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(-1);
@@ -207,7 +219,9 @@ namespace slideproj::app
 			m_present_immediately.clear();
 			m_transition_start.reset();
 			m_image_display.set_transition_param(m_image_display.object, 1.0f);
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{});
+			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
+				.direction = step_direction::none
+			});
 			present_image(m_current_slideshow->get_entry(0));
 			prefetch_image(1);
 			prefetch_image(2);

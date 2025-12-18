@@ -14,6 +14,7 @@
 #include "src/renderer/image_display.hpp"
 #include "src/windowing_api/application_window.hpp"
 #include <chrono>
+#include <linux/stat.h>
 #include <valarray>
 
 namespace slideproj::app
@@ -21,9 +22,11 @@ namespace slideproj::app
 	struct slideshow_navigator_scheduler
 	{
 	public:
-		void handle_event(slideshow_navigator&, slideshow_step_event)
+		void handle_event(slideshow_navigator&, slideshow_step_event event)
 		{
 			fprintf(stderr, "(i) Step\n");
+			if(event.direction != step_direction::none)
+			{ m_direction = event.direction; }
 			m_latest_transtion_end.reset();
 		}
 
@@ -40,7 +43,17 @@ namespace slideproj::app
 				if(event.when - *m_latest_transtion_end >= m_step_delay)
 				{
 					fprintf(stderr, "(i) Frame expired\n");
-					navigator.step_forward();
+					switch (m_direction)
+					{
+						case step_direction::forward:
+							navigator.step_forward();
+							break;
+						case step_direction::backward:
+							navigator.step_backward();
+							break;
+						default:
+							break;
+					}
 				}
 			}
 		}
@@ -48,6 +61,7 @@ namespace slideproj::app
 	private:
 		std::chrono::duration<float> m_step_delay{6.0f};
 		std::optional<slideshow_clock::time_point> m_latest_transtion_end;
+		step_direction m_direction{step_direction::forward};
 	};
 }
 
