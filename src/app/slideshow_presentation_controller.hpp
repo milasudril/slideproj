@@ -47,25 +47,6 @@ namespace slideproj::app
 		void (*set_title)(void* object, char const*);
 	};
 
-	enum class step_direction{forward, backward, none};
-
-	struct slideshow_step_event
-	{
-		step_direction direction;
-	};
-
-	using slideshow_clock = std::chrono::steady_clock;
-
-	struct slideshow_transition_end_event
-	{
-		slideshow_clock::time_point when;
-	};
-
-	struct slideshow_time_event
-	{
-		slideshow_clock::time_point when;
-	};
-
 	template<class T>
 	concept slideshow_event_handler = requires(
 		T& obj,

@@ -77,6 +77,25 @@ namespace slideproj::app
 		ssize_t m_current_index{0};
 	};
 
+	enum class step_direction{forward, backward, none};
+
+	struct slideshow_step_event
+	{
+		step_direction direction;
+	};
+
+	using slideshow_clock = std::chrono::steady_clock;
+
+	struct slideshow_transition_end_event
+	{
+		slideshow_clock::time_point when;
+	};
+
+	struct slideshow_time_event
+	{
+		slideshow_clock::time_point when;
+	};
+
 	class slideshow_navigator
 	{
 	public:
