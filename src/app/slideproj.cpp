@@ -173,12 +173,7 @@ int main()
 			{ fprintf(stderr,"\r(i) Collecting files %c", progress_char[k%8]); }
 		}
 
-		eh.handle_event(
-			slideproj::app::frame_started_event{
-				.frame_number = k,
-				.now = now
-			}
-		);
+		slideshow_presentation_controller.update_clock(now);
 
 		main_window->poll_events();
 		glClear(GL_COLOR_BUFFER_BIT);

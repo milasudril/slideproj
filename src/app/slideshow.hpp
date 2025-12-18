@@ -87,7 +87,6 @@ namespace slideproj::app
 		virtual void go_to_begin() = 0;
 		virtual void go_to_end() = 0;
 		virtual void start_slideshow(std::reference_wrapper<slideshow> slideshow) = 0;
-		virtual void update_clock(std::chrono::steady_clock::time_point) = 0;
 	};
 }
 
