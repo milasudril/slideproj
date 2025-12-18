@@ -163,11 +163,7 @@ int main()
 			{
 				fprintf(stderr, "\n");
 				slideshow = slideproj::app::slideshow{std::move(file_list)};
-				eh.handle_event(
-					slideproj::app::slideshow_loaded{
-						.current_slideshow = std::ref(slideshow)
-					}
-				);
+				slideshow_presentation_controller.start_slideshow(slideshow);
 			}
 			else
 			{ fprintf(stderr,"\r(i) Collecting files %c", progress_char[k%8]); }

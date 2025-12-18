@@ -72,8 +72,6 @@ namespace slideproj::app
 		bool empty() const
 		{ return m_files.empty(); }
 
-
-
 	private:
 		file_collector::file_list m_files;
 		ssize_t m_current_index{0};
@@ -86,7 +84,6 @@ namespace slideproj::app
 		virtual void step_backward() = 0;
 		virtual void go_to_begin() = 0;
 		virtual void go_to_end() = 0;
-		virtual void start_slideshow(std::reference_wrapper<slideshow> slideshow) = 0;
 	};
 }
 

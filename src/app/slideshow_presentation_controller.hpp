@@ -210,7 +210,7 @@ namespace slideproj::app
 			prefetch_image(-3);
 		}
 
-		void start_slideshow(std::reference_wrapper<slideshow> slideshow) override
+		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
 		{
 			fprintf(stderr, "(i) Slideshow loaded\n");
 			utils::unwrap(m_task_queue).clear();

@@ -13,11 +13,6 @@
 
 namespace slideproj::app
 {
-	struct slideshow_loaded
-	{
-		std::reference_wrapper<slideshow> current_slideshow;
-	};
-
 	template<class T>
 	concept image_rect_sink = requires(T& obj, pixel_store::image_rectangle rect)
 	{
@@ -60,11 +55,11 @@ namespace slideproj::app
 	public:
 		template<playback_controller PlaybackController>
 		explicit slideshow_window_event_handler(
-			slideshow_navigator& slideshow_presentation_controller,
+			slideshow_navigator& navigator,
 			std::span<image_rect_sink_ref const> rect_sinks,
 			PlaybackController& playback_controller
 		):
-			m_navigator{slideshow_presentation_controller},
+			m_navigator{navigator},
 			m_rect_sinks{std::begin(rect_sinks), std::end(rect_sinks)},
 			m_playback_controller{
 				.object = &playback_controller,
@@ -161,9 +156,6 @@ namespace slideproj::app
 				{ window.set_cursor_mode(windowing_api::cursor_mode::normal); }
 			}
 		}
-
-		void handle_event(slideshow_loaded event)
-		{ utils::unwrap(m_navigator).start_slideshow(event.current_slideshow); }
 
 		bool application_should_exit() const
 		{ return m_application_should_exit; }
