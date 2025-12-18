@@ -49,15 +49,35 @@ namespace slideproj::app
 		};
 	}
 
+	template<class T>
+	concept playback_controller = requires(T& x)
+	{
+		{ x.toggle_pause() } -> std::same_as<void>;
+	};
+
+	struct type_erased_playback_controller
+	{
+		void* object;
+		void (*toggle_pause)(void*);
+	};
+
 	class slideshow_window_event_handler
 	{
 	public:
+		template<playback_controller PlaybackController>
 		explicit slideshow_window_event_handler(
 			slideshow_presentation_controller& slideshow_presentation_controller,
-			std::span<image_rect_sink_ref const> rect_sinks
+			std::span<image_rect_sink_ref const> rect_sinks,
+			PlaybackController& playback_controller
 		):
 			m_slideshow_presentation_controller{slideshow_presentation_controller},
-			m_rect_sinks{std::begin(rect_sinks), std::end(rect_sinks)}
+			m_rect_sinks{std::begin(rect_sinks), std::end(rect_sinks)},
+			m_playback_controller{
+				.object = &playback_controller,
+				.toggle_pause = [](void* object){
+					static_cast<PlaybackController*>(object)->toggle_pause();
+				}
+			}
 		{}
 
 		void handle_event(
@@ -104,7 +124,7 @@ namespace slideproj::app
 				}
 				else
 				if(event.scancode == windowing_api::typing_keyboard_scancode::whitespace)
-				{ fprintf(stderr, "(i) Pause not implemented\n"); }
+				{ m_playback_controller.toggle_pause(m_playback_controller.object); }
 			}
 
 			if( event.action == windowing_api::button_action::press
@@ -163,6 +183,7 @@ namespace slideproj::app
 		std::reference_wrapper<slideshow_presentation_controller> m_slideshow_presentation_controller;
 		std::vector<image_rect_sink_ref> m_rect_sinks;
 		bool m_application_should_exit{false};
+		type_erased_playback_controller m_playback_controller;
 	};
 }
 

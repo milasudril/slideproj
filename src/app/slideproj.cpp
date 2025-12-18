@@ -38,7 +38,7 @@ namespace slideproj::app
 
 		void handle_event(slideshow_navigator& navigator, slideshow_time_event event)
 		{
-			if(m_latest_transtion_end.has_value())
+			if(m_latest_transtion_end.has_value() && m_direction != step_direction::none)
 			{
 				if(event.when - *m_latest_transtion_end >= m_step_delay)
 				{
@@ -58,10 +58,20 @@ namespace slideproj::app
 			}
 		}
 
+		void toggle_pause()
+		{
+			if(m_direction == step_direction::none)
+			{ m_direction = m_saved_direction; }
+			else
+			{ m_saved_direction = std::exchange(m_direction, step_direction::none); }
+		}
+
+
 	private:
 		std::chrono::duration<float> m_step_delay{6.0f};
 		std::optional<slideshow_clock::time_point> m_latest_transtion_end;
 		step_direction m_direction{step_direction::forward};
+		step_direction m_saved_direction{step_direction::forward};
 	};
 }
 
@@ -99,7 +109,8 @@ int main()
 	};
 	slideproj::app::slideshow_window_event_handler eh{
 		slideshow_presentation_controller,
-		slideproj::app::make_image_rect_sink_refs(slideshow_presentation_controller, img_display)
+		slideproj::app::make_image_rect_sink_refs(slideshow_presentation_controller, img_display),
+		nav_sched
 	};
 	main_window->set_event_handler(std::ref(eh));
 
