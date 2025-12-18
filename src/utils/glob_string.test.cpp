@@ -1,12 +1,12 @@
-//@	{"target":{"name":"input_filter.test"}}
+//@	{"target":{"name":"glob_string.test"}}
 
-#include "./input_filter.hpp"
+#include "./glob_string.hpp"
 
 #include "testfwk/testfwk.hpp"
 
-TESTCASE(slideproj_app_input_filter_pattern_wildcard_in_the_middle)
+TESTCASE(slideproj_utils_glob_string_wildcard_in_the_middle)
 {
-	slideproj::app::input_filter_pattern const pattern{"img*.jpg"};
+	slideproj::utils::glob_string const pattern{"img*.jpg"};
 
 	EXPECT_EQ(pattern.matches("IMG0001.JPG"), true);
 	EXPECT_EQ(pattern.matches("IMG.0001.JPG"), true);
@@ -15,9 +15,9 @@ TESTCASE(slideproj_app_input_filter_pattern_wildcard_in_the_middle)
 	EXPECT_EQ(pattern.matches("FOO.JPG"), false);
 }
 
-TESTCASE(slideproj_app_input_filter_pattern_wildcard_in_the_middle_single_char_at_end)
+TESTCASE(slideproj_utils_glob_string_wildcard_in_the_middle_single_char_at_end)
 {
-	slideproj::app::input_filter_pattern const pattern{"img*j"};
+	slideproj::utils::glob_string const pattern{"img*j"};
 
 	EXPECT_EQ(pattern.matches("IMG0001.J"), true);
 	EXPECT_EQ(pattern.matches("IMG.0001.J"), true);
@@ -26,9 +26,9 @@ TESTCASE(slideproj_app_input_filter_pattern_wildcard_in_the_middle_single_char_a
 	EXPECT_EQ(pattern.matches("FOO.J"), false);
 }
 
-TESTCASE(slideproj_app_input_filter_pattern_wildcard_at_end)
+TESTCASE(slideproj_utils_glob_string_wildcard_at_end)
 {
-	slideproj::app::input_filter_pattern const pattern{"img*"};
+	slideproj::utils::glob_string const pattern{"img*"};
 
 	EXPECT_EQ(pattern.matches("IMG0001.J"), true);
 	EXPECT_EQ(pattern.matches("IMG.0001.J"), true);
@@ -37,9 +37,9 @@ TESTCASE(slideproj_app_input_filter_pattern_wildcard_at_end)
 	EXPECT_EQ(pattern.matches("FOO.J"), false);
 }
 
-TESTCASE(slideproj_app_input_filter_pattern_wildcard_at_begin)
+TESTCASE(slideproj_utils_glob_string_wildcard_at_begin)
 {
-	slideproj::app::input_filter_pattern const pattern{"*.jpg"};
+	slideproj::utils::glob_string const pattern{"*.jpg"};
 
 	EXPECT_EQ(pattern.matches("IMG0001.JPG"), true);
 	EXPECT_EQ(pattern.matches("IMG.0001.JPG"), true);
@@ -48,33 +48,33 @@ TESTCASE(slideproj_app_input_filter_pattern_wildcard_at_begin)
 	EXPECT_EQ(pattern.matches("FOO.JPG"), true);
 }
 
-TESTCASE(slideproj_app_input_filter_pattern_multiple_wildcards)
+TESTCASE(slideproj_utils_glob_string_multiple_wildcards)
 {
-	slideproj::app::input_filter_pattern const pattern{"foo*img*.jpg"};
+	slideproj::utils::glob_string const pattern{"foo*img*.jpg"};
 
 	EXPECT_EQ(pattern.matches("foobarIMG0001.JPG"), true);
 	EXPECT_EQ(pattern.matches("IMG.0001.JPG"), false);
 	EXPECT_EQ(pattern.matches("foobarblah.0001.JPG"), false);
 }
 
-TESTCASE(slideproj_app_input_filter_pattern_multiple_consecutive_wildcards)
+TESTCASE(slideproj_utils_glob_string_multiple_consecutive_wildcards)
 {
-	slideproj::app::input_filter_pattern const pattern{"foo**.jpg"};
+	slideproj::utils::glob_string const pattern{"foo**.jpg"};
 
 	EXPECT_EQ(pattern.matches("foobarIMG0001.JPG"), true);
 	EXPECT_EQ(pattern.matches("IMG.0001.JPG"), false);
 }
 
-TESTCASE(slideproj_app_input_filter_pattern_multiple_wildcards_no_match_in_between)
+TESTCASE(slideproj_utils_glob_string_multiple_wildcards_no_match_in_between)
 {
-	slideproj::app::input_filter_pattern const pattern{"foo*i*.jpg"};
+	slideproj::utils::glob_string const pattern{"foo*i*.jpg"};
 
 	EXPECT_EQ(pattern.matches("foobar_bajs_whatever.JPG"), false);
 }
 
-TESTCASE(slideproj_app_input_filter_pattern_single_wildcard_alone_matches_anything)
+TESTCASE(slideproj_utils_glob_string_single_wildcard_alone_matches_anything)
 {
-	slideproj::app::input_filter_pattern const pattern{"*"};
+	slideproj::utils::glob_string const pattern{"*"};
 
 	EXPECT_EQ(pattern.matches("foobar_bajs_whatever.JPG"), true);
 	EXPECT_EQ(pattern.matches(""), false);

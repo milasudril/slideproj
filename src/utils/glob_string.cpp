@@ -1,18 +1,21 @@
-//@	{ "target": {"name": "input_filter.o"}}
+//@	{
+//@		"target": {"name": "glob_string.o"},
+//@		"dependencies": [{"ref":"icu-uc", "rel":"implementation", "origin":"pkg-config"}]
+//@	}
 
-#include "./input_filter.hpp"
+#include "./glob_string.hpp"
 #include <unicode/unistr.h>
 #include <unicode/stringoptions.h>
 #include <utility>
 
-slideproj::app::input_filter_pattern::input_filter_pattern(std::string_view pattern_string)
+slideproj::utils::glob_string::glob_string(std::string_view pattern_string)
 {
 	auto converted = icu::UnicodeString::fromUTF8(pattern_string);
 	converted.foldCase(U_FOLD_CASE_DEFAULT)
 		.toUTF8String(m_pattern);
 }
 
-bool slideproj::app::input_filter_pattern::matches(std::string_view string_to_match) const
+bool slideproj::utils::glob_string::matches(std::string_view string_to_match) const
 {
 	auto converted = icu::UnicodeString::fromUTF8(string_to_match);
 	std::string case_folded;

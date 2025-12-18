@@ -1,14 +1,8 @@
-//@	{
-//@		"dependencies_extra":[
-//@			{"ref":"./input_filter.o", "rel":"implementation"},
-//@			{"ref":"icu-uc", "rel":"implementation", "origin":"pkg-config"}
-//@		]
-//@	}
-
 #ifndef SLIDEPROJ_APP_INPUT_FILTER_HPP
 #define SLIDEPROJ_APP_INPUT_FILTER_HPP
 
 #include "src/utils/unwrap.hpp"
+#include "src/utils/glob_string.hpp"
 
 #include <filesystem>
 #include <vector>
@@ -17,17 +11,6 @@
 
 namespace slideproj::app
 {
-	class input_filter_pattern
-	{
-	public:
-		explicit input_filter_pattern(std::string_view pattern_string);
-
-		bool matches(std::string_view string_to_match) const;
-
-	private:
-		std::string m_pattern;
-	};
-
 	template<class ImageDimensionProvider>
 	struct input_filter
 	{
@@ -47,7 +30,7 @@ namespace slideproj::app
 			return false;
 		}
 
-		std::vector<input_filter_pattern> include;
+		std::vector<utils::glob_string> include;
 		size_t max_pixel_count;
 		[[no_unique_address]] ImageDimensionProvider image_dimension_provider;
 	};

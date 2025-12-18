@@ -1,0 +1,23 @@
+//@	{"dependencies_extra":[{"ref":"./glob_string.o", "rel":"implementation"}]}
+
+#ifndef SLIDEPROJ_UTILS_GLOB_STRING_HPP
+#define SLIDEPROJ_UTILS_GLOB_STRING_HPP
+
+#include <string>
+#include <string_view>
+
+namespace slideproj::utils
+{
+	class glob_string
+	{
+	public:
+		explicit glob_string(std::string_view pattern_string);
+
+		bool matches(std::string_view string_to_match) const;
+
+	private:
+		std::string m_pattern;
+	};
+}
+
+#endif

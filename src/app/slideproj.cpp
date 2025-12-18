@@ -125,11 +125,11 @@ int main()
 					"/home/torbjorr/Bilder",
 					slideproj::app::input_filter{
 						.include = std::vector{
-							slideproj::app::input_filter_pattern{"*.jpg"},
-							slideproj::app::input_filter_pattern{"*.jpeg"},
-							slideproj::app::input_filter_pattern{"*.bmp"},
-							slideproj::app::input_filter_pattern{"*.gif"},
-							slideproj::app::input_filter_pattern{"*.png"}
+							slideproj::utils::glob_string{"*.jpg"},
+							slideproj::utils::glob_string{"*.jpeg"},
+							slideproj::utils::glob_string{"*.bmp"},
+							slideproj::utils::glob_string{"*.gif"},
+							slideproj::utils::glob_string{"*.png"}
 						},
 						.max_pixel_count = 8192*8192,
 						.image_dimension_provider = std::cref(metadata_repo)
