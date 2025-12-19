@@ -1,3 +1,5 @@
+//@	{"dependencies_extra":[{"ref":"./slideshow_presentation_controller.o", "rel":"implementation"}]}
+
 #ifndef SLIDEPROJ_APP_SLIDESHOW_PRESENTATION_CONTROLLER_HPP
 #define SLIDEPROJ_APP_SLIDESHOW_PRESENTATION_CONTROLLER_HPP
 
@@ -131,207 +133,25 @@ namespace slideproj::app
 			{ start_slideshow(*m_current_slideshow); }
 		}
 
-		void step_forward() override
-		{
-			if(m_current_slideshow == nullptr)
-			{ return; }
+		void step_forward() override;
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
-				.direction = step_direction::forward
-			});
-			m_current_slideshow->step(1);
-			present_image(m_current_slideshow->get_entry(0));
-			prefetch_image(1);
-			prefetch_image(2);
-			prefetch_image(3);
-		}
+		void step_backward() override;
 
-		void step_backward() override
-		{
-			if(m_current_slideshow == nullptr)
-			{ return; }
+		void go_to_begin() override;
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
-				.direction = step_direction::backward
-			});
-			m_current_slideshow->step(-1);
-			present_image(m_current_slideshow->get_entry(0));
-			prefetch_image(-1);
-			prefetch_image(-2);
-			prefetch_image(-3);
-		}
+		void go_to_end() override;
 
-		void go_to_begin() override
-		{
-			if(m_current_slideshow == nullptr)
-			{ return; }
+		void start_slideshow(std::reference_wrapper<slideshow> slideshow);
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
-				.direction = step_direction::backward
-			});
-			m_current_slideshow->set_current_index(0);
-			present_image(m_current_slideshow->get_entry(0));
-			prefetch_image(1);
-			prefetch_image(2);
-			prefetch_image(3);
-		}
+		void present_image(slideshow_entry const& entry);
 
-		void go_to_end() override
-		{
-			if(m_current_slideshow == nullptr)
-			{ return; }
+		void prefetch_image(ssize_t offset);
 
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
-				.direction = step_direction::forward
-			});
-			m_current_slideshow->go_to_end();
-			present_image(m_current_slideshow->get_entry(0));
-			prefetch_image(-1);
-			prefetch_image(-2);
-			prefetch_image(-3);
-		}
+		void fetch_image(slideshow_entry const& entry);
 
-		void start_slideshow(std::reference_wrapper<slideshow> slideshow)
-		{
-			fprintf(stderr, "(i) Slideshow loaded\n");
-			utils::unwrap(m_task_queue).clear();
-			m_loaded_images.clear();
-			m_current_slideshow = &slideshow.get();
-			m_present_immediately.clear();
-			m_transition_start.reset();
-			m_image_display.set_transition_param(m_image_display.object, 1.0f);
-			m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
-				.direction = step_direction::none
-			});
-			present_image(m_current_slideshow->get_entry(0));
-			prefetch_image(1);
-			prefetch_image(2);
-			prefetch_image(3);
-			prefetch_image(-1);
-			prefetch_image(-2);
-			prefetch_image(-3);
-		}
+		void present_image(loaded_image const& img);
 
-		void present_image(slideshow_entry const& entry)
-		{
-			if(!entry.is_valid())
-			{ return; }
-
-			auto& cached_entry = m_loaded_images[entry.index];
-			if(
-				cached_entry.has_value() &&
-				cached_entry->source_file.id() == entry.source_file.id() &&
-				cached_entry->target_rectangle == m_target_rectangle
-			) [[likely]]
-			{ present_image(*cached_entry); }
-			else
-			{
-				auto ip = m_present_immediately.insert(std::pair{entry.source_file.id(), true});
-				if(ip.second)
-				{
-					fprintf(stderr, "(i) Image %ld not loaded. Fetching first.\n", entry.index);
-					fetch_image(entry);
-				}
-				else
-				{
-					fprintf(stderr, "(i) Waiting for %ld image to be loaded\n", entry.index);
-					ip.first->second = true;
-				}
-			}
-		}
-
-		void prefetch_image(ssize_t offset)
-		{
-			auto entry = m_current_slideshow->get_entry(offset);
-			if(!entry.is_valid())
-			{ return; }
-
-			auto& cached_entry = m_loaded_images[entry.index];
-			if(cached_entry.has_value() && cached_entry->source_file.id() == entry.source_file.id())
-			{ return; }
-
-			if(m_present_immediately.insert(std::pair{entry.source_file.id(), false}).second)
-			{ fetch_image(entry); }
-		}
-
-		void fetch_image(slideshow_entry const& entry)
-		{
-			unwrap(m_task_queue).submit(
-				utils::task{
-					.function = [
-						path_to_load = entry.source_file.path(),
-						rect = m_target_rectangle
-					](){
-						return image_file_loader::load_rgba_image(path_to_load, rect);
-					},
-					.on_completed = [
-						&cached_entry = m_loaded_images[entry.index],
-						entry,
-						saved_rect = m_target_rectangle,
-						this
-					](auto&& result) mutable {
-						fprintf(stderr, "(i) Image %ld loaded\n", entry.index);
-						if(saved_rect != m_target_rectangle)
-						{
-							fprintf(stderr, "(i) Image %ld loaded, but window size changed\n", entry.index);
-							fetch_image(entry);
-							return;
-						}
-
-						cached_entry = loaded_image{
-							.index = entry.index,
-							.source_file = std::move(entry.source_file),
-							.image_data = std::move(result),
-							.target_rectangle = saved_rect
-						};
-
-						auto i = m_present_immediately.find(cached_entry->source_file.id());
-						if(i != std::end(m_present_immediately))
-						{
-							if(i->second)
-							{ present_image(*cached_entry); }
-							m_present_immediately.erase(i);
-						}
-					}
-				}
-			);
-		}
-
-		void present_image(loaded_image const& img)
-		{
-			fprintf(stderr, "(i) Showing image %ld\n", img.index);
-			m_image_display.set_transition_param(m_image_display.object, 0.0f);
-			m_image_display.show_image(m_image_display.object, img.image_data);
-			m_transition_start = clock::now();
-			auto const& caption = m_file_metadata_provider.get_metadata(
-				m_file_metadata_provider.object, img.source_file
-			).caption;
-
-			m_title_display.set_title(m_title_display.object, caption.c_str());
-		}
-
-		void update_clock(clock::time_point now)
-		{
-			if(m_transition_start.has_value())
-			{
-				auto time_since_transition_start = now - *m_transition_start;
-				if(time_since_transition_start >= m_transition_duration)
-				{
-					time_since_transition_start = m_transition_duration;
-					m_transition_start.reset();
-					m_event_handler.handle_stee(
-						m_event_handler.object,
-						*this,
-						slideshow_transition_end_event{.when = now}
-					);
-				}
-				m_image_display.set_transition_param(
-					m_image_display.object,
-					time_since_transition_start/std::chrono::duration<float>(m_transition_duration)
-				);
-			}
-			m_event_handler.handle_ste(m_event_handler.object, *this, slideshow_time_event{.when = now});
-		}
+		void update_clock(clock::time_point now);
 
 	private:
 		std::reference_wrapper<utils::task_queue> m_task_queue;
