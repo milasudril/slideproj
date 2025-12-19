@@ -13,7 +13,7 @@ namespace slideproj::app
 		void handle_event(slideshow_navigator&, slideshow_step_event event)
 		{
 			fprintf(stderr, "(i) Step\n");
-			if(event.direction != step_direction::none)
+			if(event.direction != step_direction::none && m_direction != step_direction::none)
 			{ m_direction = event.direction; }
 			m_latest_transtion_end.reset();
 		}
