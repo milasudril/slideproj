@@ -120,7 +120,6 @@ void slideproj::app::slideshow_presentation_controller::go_to_end()
 
 void slideproj::app::slideshow_presentation_controller::start_slideshow(std::reference_wrapper<slideshow> slideshow)
 {
-	fprintf(stderr, "(i) Slideshow loaded\n");
 	utils::unwrap(m_task_queue).clear();
 	m_loaded_images.clear();
 	m_current_slideshow = &slideshow.get();
@@ -157,15 +156,9 @@ void slideproj::app::slideshow_presentation_controller::present_image(slideshow_
 	{
 		auto ip = m_present_immediately.insert(std::pair{entry.source_file.id(), true});
 		if(ip.second)
-		{
-			fprintf(stderr, "(i) Image %ld not loaded. Fetching first.\n", entry.index);
-			fetch_image(entry);
-		}
+		{ fetch_image(entry); }
 		else
-		{
-			fprintf(stderr, "(i) Waiting for %ld image to be loaded\n", entry.index);
-			ip.first->second = true;
-		}
+		{ ip.first->second = true; }
 	}
 }
 
@@ -211,10 +204,8 @@ void slideproj::app::slideshow_presentation_controller::fetch_image(slideshow_en
 				saved_rect = m_target_rectangle,
 				this
 			](auto&& result) mutable {
-				fprintf(stderr, "(i) Image %ld loaded\n", entry.index);
 				if(saved_rect != m_target_rectangle)
 				{
-					fprintf(stderr, "(i) Image %ld loaded, but window size changed\n", entry.index);
 					fetch_image(entry);
 					return;
 				}
@@ -240,7 +231,6 @@ void slideproj::app::slideshow_presentation_controller::fetch_image(slideshow_en
 
 void slideproj::app::slideshow_presentation_controller::present_image(loaded_image const& img)
 {
-	fprintf(stderr, "(i) Showing image %ld\n", img.index);
 	m_image_display.set_transition_param(m_image_display.object, 0.0f);
 	m_image_display.show_image(m_image_display.object, img.image_data);
 	m_transition_start = clock::now();

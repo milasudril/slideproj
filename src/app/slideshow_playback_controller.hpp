@@ -12,7 +12,6 @@ namespace slideproj::app
 	public:
 		void handle_event(slideshow_navigator&, slideshow_step_event event)
 		{
-			fprintf(stderr, "(i) Step\n");
 			if(event.direction != step_direction::none && m_direction != step_direction::none)
 			{ m_direction = event.direction; }
 			m_latest_transtion_end.reset();
@@ -20,7 +19,6 @@ namespace slideproj::app
 
 		void handle_event(slideshow_navigator&, slideshow_transition_end_event event)
 		{
-			fprintf(stderr, "(i) Transition ended\n");
 			m_latest_transtion_end = event.when;
 		}
 
@@ -30,7 +28,6 @@ namespace slideproj::app
 			{
 				if(event.when - *m_latest_transtion_end >= m_step_delay)
 				{
-					fprintf(stderr, "(i) Frame expired\n");
 					switch (m_direction)
 					{
 						case step_direction::forward:

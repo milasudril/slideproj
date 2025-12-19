@@ -76,7 +76,6 @@ namespace slideproj::app
 		{
 			auto const w = event.width;
 			auto const h = event.height;
-			fprintf(stderr, "(i) Framebuffer size changed to %d %d\n", w, h);
 			pixel_store::image_rectangle const rect{
 				.width = static_cast<uint32_t>(w),
 				.height = static_cast<uint32_t>(h)
@@ -92,10 +91,7 @@ namespace slideproj::app
 			windowing_api::application_window&,
 			slideproj::windowing_api::window_is_closing_event
 		)
-		{
-			fprintf(stderr, "(i) Window is closing\n");
-			m_application_should_exit = true;
-		}
+		{ m_application_should_exit = true; }
 
 		void handle_event(
 			windowing_api::application_window& window,
