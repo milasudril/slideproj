@@ -70,8 +70,8 @@ namespace slideproj::app
 
 	struct slideshow_presentation_descriptor
 	{
-		slideshow_clock::duration transition_duration;
-		bool loop;
+		slideshow_clock::duration transition_duration = std::chrono::seconds{2};
+		bool loop = true;
 	};
 
 	class slideshow_presentation_controller : public slideshow_navigator

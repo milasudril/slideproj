@@ -40,7 +40,12 @@ int main()
 	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::renderer::image_display img_display{};
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
-	slideproj::app::slideshow_playback_controller playback_ctrl;
+	slideproj::app::slideshow_playback_controller playback_ctrl{
+		slideproj::app::slideshow_playback_descriptor{
+			.step_delay = std::chrono::seconds{6},
+			.step_direction = slideproj::app::step_direction::forward
+		}
+	};
 	slideproj::app::slideshow_presentation_controller slideshow_presentation_controller{
 		pending_tasks,
 		img_display,
