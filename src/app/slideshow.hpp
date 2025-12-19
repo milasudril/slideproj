@@ -36,13 +36,15 @@ namespace slideproj::app
 			};
 		}
 
-		void step(ssize_t offset)
+		[[nodiscard]] auto step(ssize_t offset)
 		{
 			auto const read_from = m_current_index + offset;
 			if(read_from < 0 || read_from >= std::ssize(m_files))
-			{ return; }
+			{ return m_current_index; }
 
+			auto const ret = m_current_index;
 			m_current_index = read_from;
+			return ret;
 		}
 
 		void set_current_index(ssize_t index)
@@ -66,7 +68,10 @@ namespace slideproj::app
 			m_current_index = std::size(m_files) - 1;
 		}
 
-		size_t get_current_index() const
+		void go_to_begin()
+		{ set_current_index(0); }
+
+		ssize_t get_current_index() const
 		{ return m_current_index; }
 
 		bool empty() const

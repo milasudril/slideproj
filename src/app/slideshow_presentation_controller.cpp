@@ -56,7 +56,11 @@ void slideproj::app::slideshow_presentation_controller::step_forward()
 	m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
 		.direction = step_direction::forward
 	});
-	m_current_slideshow->step(1);
+
+	auto const index_before = m_current_slideshow->step(1);
+	if(m_params.loop && m_current_slideshow->get_current_index() == index_before)
+	{ m_current_slideshow->go_to_begin(); }
+
 	present_image(m_current_slideshow->get_entry(0));
 	prefetch_image(1);
 	prefetch_image(2);
@@ -71,7 +75,11 @@ void slideproj::app::slideshow_presentation_controller::step_backward()
 	m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
 		.direction = step_direction::backward
 	});
-	m_current_slideshow->step(-1);
+
+	auto const index_before = m_current_slideshow->step(-1);
+
+	if(m_params.loop && index_before == m_current_slideshow->get_current_index())
+	{ m_current_slideshow->go_to_end(); }
 	present_image(m_current_slideshow->get_entry(0));
 	prefetch_image(-1);
 	prefetch_image(-2);
@@ -86,7 +94,8 @@ void slideproj::app::slideshow_presentation_controller::go_to_begin()
 	m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
 		.direction = step_direction::backward
 	});
-	m_current_slideshow->set_current_index(0);
+
+	m_current_slideshow->go_to_begin();
 	present_image(m_current_slideshow->get_entry(0));
 	prefetch_image(1);
 	prefetch_image(2);
@@ -101,6 +110,7 @@ void slideproj::app::slideshow_presentation_controller::go_to_end()
 	m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
 		.direction = step_direction::forward
 	});
+
 	m_current_slideshow->go_to_end();
 	present_image(m_current_slideshow->get_entry(0));
 	prefetch_image(-1);
@@ -117,9 +127,11 @@ void slideproj::app::slideshow_presentation_controller::start_slideshow(std::ref
 	m_present_immediately.clear();
 	m_transition_start.reset();
 	m_image_display.set_transition_param(m_image_display.object, 1.0f);
+
 	m_event_handler.handle_sse(m_event_handler.object, *this, slideshow_step_event{
 		.direction = step_direction::none
 	});
+
 	present_image(m_current_slideshow->get_entry(0));
 	prefetch_image(1);
 	prefetch_image(2);
@@ -244,9 +256,9 @@ void slideproj::app::slideshow_presentation_controller::update_clock(clock::time
 	if(m_transition_start.has_value())
 	{
 		auto time_since_transition_start = now - *m_transition_start;
-		if(time_since_transition_start >= m_transition_duration)
+		if(time_since_transition_start >= m_params.transition_duration)
 		{
-			time_since_transition_start = m_transition_duration;
+			time_since_transition_start = m_params.transition_duration;
 			m_transition_start.reset();
 			m_event_handler.handle_stee(
 				m_event_handler.object,
@@ -256,7 +268,7 @@ void slideproj::app::slideshow_presentation_controller::update_clock(clock::time
 		}
 		m_image_display.set_transition_param(
 			m_image_display.object,
-			time_since_transition_start/std::chrono::duration<float>(m_transition_duration)
+			time_since_transition_start/std::chrono::duration<float>(m_params.transition_duration)
 		);
 	}
 	m_event_handler.handle_ste(m_event_handler.object, *this, slideshow_time_event{.when = now});

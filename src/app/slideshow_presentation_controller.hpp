@@ -68,6 +68,11 @@ namespace slideproj::app
 		void (*handle_ste)(void*, slideshow_navigator&, slideshow_time_event);
 	};
 
+	struct slideshow_presentation_descriptor
+	{
+		slideshow_clock::duration transition_duration;
+		bool loop;
+	};
 
 	class slideshow_presentation_controller : public slideshow_navigator
 	{
@@ -86,7 +91,7 @@ namespace slideproj::app
 			TitleDisplay& title_display,
 			std::reference_wrapper<FileMetadataProvider const> file_metadata_provider,
 			EventHandler& event_handler,
-			clock::duration transition_duration
+			slideshow_presentation_descriptor const& params
 		):
 			m_task_queue{task_queue},
 			m_image_display{
@@ -123,7 +128,7 @@ namespace slideproj::app
 					static_cast<EventHandler*>(object)->handle_event(navigator, event);
 				}
 			},
-			m_transition_duration{transition_duration}
+			m_params{params}
 		{}
 
 		void set_window_size(pixel_store::image_rectangle rect)
@@ -164,7 +169,8 @@ namespace slideproj::app
 		type_erased_slideshow_event_handler m_event_handler;
 		std::unordered_map<file_collector::file_id, bool> m_present_immediately;
 		std::optional<clock::time_point> m_transition_start;
-		clock::duration m_transition_duration;
+
+		slideshow_presentation_descriptor m_params;
 	};
 }
 

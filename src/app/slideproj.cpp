@@ -47,7 +47,10 @@ int main()
 		*main_window,
 		std::cref(metadata_repo),
 		playback_ctrl,
-		std::chrono::seconds{2}
+		slideproj::app::slideshow_presentation_descriptor{
+			.transition_duration = std::chrono::seconds{2},
+			.loop = true
+		}
 	};
 	slideproj::app::slideshow_window_event_handler eh{
 		slideshow_presentation_controller,
