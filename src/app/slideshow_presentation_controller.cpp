@@ -1,6 +1,51 @@
 //@	{"target": {"name":"slideshow_presentation_controller.o"}}
 
 #include "./slideshow_presentation_controller.hpp"
+#include "src/pixel_store/basic_image.hpp"
+#include "src/pixel_store/rgba_image.hpp"
+
+
+namespace
+{
+	slideproj::pixel_store::rgba_image display_error()
+	{
+		static constexpr const char* message{
+			"                                                                                                             "
+			"  **       **                                                                                                "
+			"  ***      **                                                                                                "
+			"  ****     **                             **                                                                 "
+			"  ** **    **                             **                                                                 "
+			"  **  **   **                                                                                                "
+			"  **   **  **      *******               ***      ******* *****       ******       ******  *      *******    "
+			"  **    ** **    ***     ***              **      **    **    **           **    ***     ***    **      ***  "
+			"  **     ****    **       **              **      **    **    **     ***** **    **       **    ***********  "
+			"  **      ***    ***     ***              **      **    **    **    **    ***    ***    ****    **           "
+			"  **       **      *******              ******    **    **    **     ****** *      ****** **      ********   "
+			"                                                                                          **                 "
+			"                                                                                          **                 "
+			"                                                                                 ***     ***                 "
+			"                                                                                   *******                   "
+			"                                                                                                             "
+		};
+
+		constexpr uint32_t height = 16;
+		constexpr auto width = static_cast<uint32_t>(strlen(message))/height;
+
+		slideproj::pixel_store::rgba_image ret{
+			width,
+			height,
+			slideproj::pixel_store::make_uninitialized_pixel_buffer_tag{}
+		};
+		auto const message_end = message + width*height;
+		std::transform(message, message_end, ret.pixels(), [](auto item){
+			return item == '*'?
+				slideproj::pixel_store::rgba_pixel{1.0f, 1.0f, 1.0f, 1.0f}:
+				slideproj::pixel_store::rgba_pixel{0.0f, 0.0f, 0.0f, 0.0f};
+			}
+		);
+		return ret;
+	}
+}
 
 
 void slideproj::app::slideshow_presentation_controller::step_forward()
@@ -134,7 +179,19 @@ void slideproj::app::slideshow_presentation_controller::fetch_image(slideshow_en
 				path_to_load = entry.source_file.path(),
 				rect = m_target_rectangle
 			](){
-				return image_file_loader::load_rgba_image(path_to_load, rect);
+				try
+				{
+					auto ret = image_file_loader::load_rgba_image(path_to_load, rect);
+					if(ret.is_empty())
+					{
+						// TODO: Write a proper error message (Requires some basic text utility)
+						return display_error();
+
+					}
+					return ret;
+				}
+				catch(...)
+				{ return display_error(); }
 			},
 			.on_completed = [
 				&cached_entry = m_loaded_images[entry.index],
