@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		slideproj::utils::parsed_command_line cmdline{argc, argv};
+		slideproj::utils::parsed_command_line cmdline{"slideproj", argc, argv};
 
 		auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 		fprintf(

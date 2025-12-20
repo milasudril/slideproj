@@ -26,7 +26,7 @@ namespace slideproj::utils
 	public:
 		parsed_command_line() = default;
 
-		explicit parsed_command_line(int argc, char const* const* argv);
+		explicit parsed_command_line(char const* appname, int argc, char const* const* argv);
 
 		std::string_view get_action() const
 		{ return m_action; }
