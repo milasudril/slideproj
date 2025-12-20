@@ -174,6 +174,15 @@ int main(int argc, char** argv)
 								.cardinality = 1
 							}
 						},
+						std::pair{
+							"loop",
+							slideproj::utils::option_info{
+								.description = "Enables loop mode (goes back to beginning/end at last/first entry",
+								.default_value = std::vector<std::string>{"no"},
+								.cardinality = 1,
+								.valid_values = slideproj::utils::string_set{"no", "yes"}
+							}
+						}
 					}
 				}
 			}
