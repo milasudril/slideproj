@@ -182,7 +182,7 @@ namespace
 
 TESTCASE(slideproj_file_collector_make_real_file_list)
 {
-	auto files = slideproj::file_collector::make_file_list("testdata", input_filter{});
+	auto files = slideproj::file_collector::make_file_list(std::vector<std::string>{"testdata"}, input_filter{});
 	for(auto const& item: files)
 	{ EXPECT_EQ(item.path().is_absolute(), false); }
 }

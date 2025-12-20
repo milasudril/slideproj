@@ -5,6 +5,7 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace slideproj::utils
 {
@@ -18,6 +19,8 @@ namespace slideproj::utils
 	private:
 		std::string m_pattern;
 	};
+
+	std::vector<glob_string> make_glob_strings(std::vector<std::string> const& strings);
 }
 
 #endif

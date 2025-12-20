@@ -106,18 +106,18 @@ namespace slideproj::file_collector
 	};
 
 	file_list make_file_list(
-		std::filesystem::path const& input_directory,
+		std::vector<std::string> const& input_directories,
 		type_erased_input_filter input_filter
 	);
 
 	template<input_filter InputFilter>
 	file_list make_file_list(
-		std::filesystem::path const& input_directory,
+		std::vector<std::string> const& input_directories,
 		InputFilter&& input_filter
 	)
 	{
 		return make_file_list(
-			input_directory,
+			input_directories,
 			type_erased_input_filter{
 				.object = &input_filter,
 				.accepts = [](void const* obj, std::filesystem::directory_entry const& entry){
@@ -132,6 +132,8 @@ namespace slideproj::file_collector
 		caption,
 		timestamp
 	};
+
+	std::vector<file_metadata_field> make_metadata_field_array(std::vector<std::string> const&);
 
 	class file_clock
 	{
@@ -157,7 +159,11 @@ namespace slideproj::file_collector
 	};
 
 	template<class T>
-	concept string_comparator = requires(T const& obj, std::string_view a, std::string_view b){
+	concept string_comparator = requires(
+		T const& obj,
+		std::string const& a,
+		std::string const& b
+	){
 		{obj(a, b)} -> std::same_as<std::strong_ordering>;
 	};
 
@@ -193,7 +199,7 @@ namespace slideproj::file_collector
 
 	struct type_erased_string_comparator{
 		void const* object;
-		std::strong_ordering (*compare)(void const*, std::string_view a, std::string_view b);
+		std::strong_ordering (*compare)(void const*, std::string const&, std::string const&);
 	};
 
 	void sort(
@@ -225,7 +231,7 @@ namespace slideproj::file_collector
 			},
 			type_erased_string_comparator{
 				.object = &string_comparator,
-				.compare = [](void const* handle, std::string_view a, std::string_view b) {
+				.compare = [](void const* handle, std::string const& a, std::string const& b) {
 					return (*static_cast<StringComparator const*>(handle))(a, b);
 				}
 			}
@@ -238,14 +244,14 @@ namespace slideproj::file_collector
 		string_comparator StringComparator
 	>
 	inline file_list make_file_list(
-		std::filesystem::path const& input_directory,
+		std::vector<std::string> const& input_directories,
 		InputFilter&& input_filter,
 		std::span<file_metadata_field const> sort_by,
 		FileMetadataProvider const& metadata_provider,
 		StringComparator const& string_comparator
 	)
 	{
-		auto ret = make_file_list(input_directory, std::forward<InputFilter>(input_filter));
+		auto ret = make_file_list(input_directories, std::forward<InputFilter>(input_filter));
 		sort(ret, sort_by, metadata_provider, string_comparator);
 		return ret;
 	}

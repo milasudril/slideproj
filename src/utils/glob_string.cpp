@@ -7,6 +7,7 @@
 #include <unicode/unistr.h>
 #include <unicode/stringoptions.h>
 #include <utility>
+#include <algorithm>
 
 slideproj::utils::glob_string::glob_string(std::string_view pattern_string)
 {
@@ -122,4 +123,14 @@ bool slideproj::utils::glob_string::matches(std::string_view string_to_match) co
 		}
 	}
 	return false;
+}
+
+std::vector<slideproj::utils::glob_string>
+slideproj::utils::make_glob_strings(std::vector<std::string> const& strings)
+{
+	std::vector<slideproj::utils::glob_string> ret;
+	std::ranges::transform(strings, std::back_inserter(ret), [](auto const& item){
+		return glob_string{item};
+	});
+	return ret;
 }

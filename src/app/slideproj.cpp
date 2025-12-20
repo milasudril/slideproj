@@ -22,7 +22,37 @@
 
 int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
 {
-	fprintf(stderr, "(i) Creating list of files\n\n");
+	fprintf(stderr, "(i) Creating list of files\n");
+	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
+	auto const maxnum_pixels = slideproj::utils::to_number(
+		args.at("max-pixel-count").at(0),
+		std::ranges::minmax_result{1U, 1'073'741'824U}
+	);
+	if(!maxnum_pixels.has_value())
+	{ throw std::runtime_error{"Invalid value for max-pixel-count. Value should be within 1 and 2^30."}; }
+
+	auto const file_list = slideproj::file_collector::make_file_list(
+		args.at("scan-directories"),
+		slideproj::app::input_filter{
+			.include = slideproj::utils::make_glob_strings(args.at("include")),
+			.max_pixel_count = *maxnum_pixels,
+				.image_dimension_provider = std::cref(metadata_repo)
+			},
+		slideproj::file_collector::make_metadata_field_array(args.at("order-by")),
+		metadata_repo,
+		[](auto const& a, auto const& b) {
+			auto const res = strcoll(a.c_str(), b.c_str());
+			if(res < 0)
+			{ return std::strong_ordering::less; }
+			if(res == 0)
+			{ return std::strong_ordering::equal; }
+			return std::strong_ordering::greater;
+		}
+	);
+
+	fprintf(stderr, "(i) Collected %zu files\n", file_list.size());
+
+#if 0
 	for(auto const& option : args)
 	{
 		fprintf(stderr, "%s", option.first.c_str());
@@ -34,6 +64,7 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 		}
 		fprintf(stderr, "\n");
 	}
+#endif
 
 	return 0;
 
