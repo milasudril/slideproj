@@ -182,6 +182,14 @@ int main(int argc, char** argv)
 								.cardinality = 1,
 								.valid_values = slideproj::utils::string_set{"no", "yes"}
 							}
+						},
+						std::pair{
+							"savestate-file",
+							slideproj::utils::option_info{
+								.description = "Sets the file used for state storage (the active slide at exit)",
+								.default_value = std::vector<std::string>{user_dirs.savestates/"slideproj.json"},
+								.cardinality = 1
+							}
 						}
 					}
 				}
