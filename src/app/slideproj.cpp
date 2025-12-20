@@ -19,6 +19,7 @@
 #include "src/utils/parsed_command_line.hpp"
 
 #include <chrono>
+#include <nlohmann/json.hpp>
 
 int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
 {
@@ -51,6 +52,28 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	);
 
 	fprintf(stderr, "(i) Collected %zu files\n", file_list.size());
+
+	nlohmann::json to_serialize;
+	nlohmann::json slideproj_create_opts;
+	slideproj_create_opts.emplace("max_pixel_count", *maxnum_pixels);
+	slideproj_create_opts.emplace("order_by", args.at("order-by"));
+	slideproj_create_opts.emplace("include", args.at("include"));
+	slideproj_create_opts.emplace("scan_directories", args.at("scan-directories"));
+	to_serialize.emplace("slideproj_create_opts", std::move(slideproj_create_opts));
+
+	nlohmann::json serialized_file_list;
+	for(auto const& item : file_list)
+	{
+		nlohmann::json entry;
+		entry.emplace("path", item.path());
+		serialized_file_list.push_back(std::move(entry));
+	}
+	to_serialize.emplace("files", std::move(serialized_file_list));
+
+
+	std::ofstream output{args.at("output-file").at(0)};
+	output << std::setw(2) << to_serialize << '\n';
+
 
 #if 0
 	for(auto const& option : args)
