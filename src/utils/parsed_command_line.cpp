@@ -144,18 +144,18 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 						{
 							printf(". Valid values are ");
 							auto i = option.second.valid_values.begin();
-							printf("%s", i->c_str());
+							printf("`%s`", i->c_str());
 							++i;
 							while(i != std::end(option.second.valid_values))
 							{
-								printf(", %s", i->c_str());
+								printf(", `%s`", i->c_str());
 								++i;
 							}
 							printf(".");
 						}
 						printf("\n");
 					}
-					printf("\nDefault command:\n\n");
+					printf("\nFull command with default values:\n\n");
 					printf("%s %s ", appname.c_str(), action.first.c_str());
 					for(auto const& option : action.second.valid_options)
 					{

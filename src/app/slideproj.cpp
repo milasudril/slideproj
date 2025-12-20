@@ -22,6 +22,9 @@
 int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const&)
 { return 0; }
 
+int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const&)
+{ return 0; }
+
 int main(int argc, char** argv)
 {
 	try
@@ -89,7 +92,7 @@ int main(int argc, char** argv)
 			std::pair{
 				std::string{"show"},
 				slideproj::utils::action_info{
-					.main = create_file_list,
+					.main = show_file_list,
 					.description = "Shows a slideshow, given a file created by the create action",
 					.valid_options = slideproj::utils::string_lookup_table<slideproj::utils::option_info>{
 						std::pair{
@@ -99,7 +102,58 @@ int main(int argc, char** argv)
 								.default_value = std::vector<std::string>{"/dev/stdin"},
 								.cardinality = 1
 							}
-						}
+						},
+						std::pair{
+							"fullscreen",
+							slideproj::utils::option_info{
+								.description = "Enables sets fullscreen mode at startup",
+								.default_value = std::vector<std::string>{"no"},
+								.cardinality = 1,
+								.valid_values = slideproj::utils::string_set{"no", "yes"}
+							}
+						},
+						std::pair{
+							"hide-cursor",
+							slideproj::utils::option_info{
+								.description = "Hides the cursor at startup",
+								.default_value = std::vector<std::string>{"no"},
+								.cardinality = 1,
+								.valid_values = slideproj::utils::string_set{"no", "yes"}
+							}
+						},
+						std::pair{
+							"step-delay",
+							slideproj::utils::option_info{
+								.description = "The time in seconds to wait before showing the next image",
+								.default_value = std::vector<std::string>{"6"},
+								.cardinality = 1,
+							}
+						},
+						std::pair{
+							"transition-duration",
+							slideproj::utils::option_info{
+								.description = "The time in seconds for transitions",
+								.default_value = std::vector<std::string>{"2"},
+								.cardinality = 1,
+							}
+						},
+						std::pair{
+							"step-direction",
+							slideproj::utils::option_info{
+								.description = "The direction to step",
+								.default_value = std::vector{std::string{"forward"}},
+								.cardinality = 1,
+								.valid_values = slideproj::utils::string_set{"forward", "backward", "paused"}
+							}
+						},
+						std::pair{
+							"start-at",
+							slideproj::utils::option_info{
+								.description = "The index to start at, clamped to a valid range",
+								.default_value = std::vector{std::string{"0"}},
+								.cardinality = 1
+							}
+						},
 					}
 				}
 			}
