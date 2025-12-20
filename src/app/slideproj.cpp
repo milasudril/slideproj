@@ -73,24 +73,7 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 
 	std::ofstream output{args.at("output-file").at(0)};
 	output << std::setw(2) << to_serialize << '\n';
-
-
-#if 0
-	for(auto const& option : args)
-	{
-		fprintf(stderr, "%s", option.first.c_str());
-		auto delimiter = ':';
-		for(auto const& value: option.second)
-		{
-			fprintf(stderr, "%c %s", delimiter, value.c_str());
-			delimiter = ',';
-		}
-		fprintf(stderr, "\n");
-	}
-#endif
-
 	return 0;
-
 }
 
 int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const&)
