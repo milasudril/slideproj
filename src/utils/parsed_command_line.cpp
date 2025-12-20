@@ -77,18 +77,17 @@ slideproj::utils::parsed_arg slideproj::utils::parse_arg(char const* val)
 
 slideproj::utils::parsed_command_line::parsed_command_line(
 	char const* appname,
-	int argc,
-	char const* const* argv
+	std::span<char const* const> argv
 )
 {
-	auto current_arg = 1;
-	if(current_arg >= argc)
+	size_t current_arg = 1;
+	if(current_arg >= std::size(argv))
 	{ throw std::runtime_error{std::format("Bad command line, try {} help", appname), }; }
 
 	m_action = argv[current_arg];
 	++current_arg;
 
-	for(; current_arg < argc; ++current_arg)
+	for(; current_arg < std::size(argv); ++current_arg)
 	{
 		auto parsed_arg = parse_arg(argv[current_arg]);
 		if(parsed_arg.name.empty())

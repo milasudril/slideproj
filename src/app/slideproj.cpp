@@ -22,7 +22,10 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		slideproj::utils::parsed_command_line cmdline{"slideproj", argc, argv};
+		slideproj::utils::parsed_command_line cmdline{
+			"slideproj",
+			std::span{static_cast<char const* const*>(argv), static_cast<size_t>(argc)}
+		};
 
 		auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 		fprintf(
