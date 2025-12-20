@@ -132,10 +132,11 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 				{
 					printf("%s -- %s\n", action.first.c_str(), action.second.description.c_str());
 				}
-
+				printf("\n");
 				for(auto const& action :valid_actions)
 				{
-					printf("\nValid options for %s\n\n", action.first.c_str());
+					printf("\nDetails about `%s`\n\n", action.first.c_str());
+					printf("Options:\n\n");
 					for(auto const& option : action.second.valid_options)
 					{
 						printf("--%s, %s", option.first.c_str(), option.second.description.c_str());
@@ -154,24 +155,24 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 						}
 						printf("\n");
 					}
-					printf("\n");
-				}
-#if 0
-					auto const& opts = action.second.valid_options;
-					if(opts.empty())
-					{ printf("\n\n"); }
-					else
+					printf("\nDefault command:\n\n");
+					printf("%s %s ", appname.c_str(), action.first.c_str());
+					for(auto const& option : action.second.valid_options)
 					{
-						auto i = opts.begin();
-						printf("(%s", i->first.c_str());
-						++i;
-						for(; i != opts.end(); ++i)
-						{ printf(", %s", i->first.c_str()); }
-						printf(")\n\n");
+						printf("--%s=", option.first.c_str());
+						if(!option.second.default_value.empty())
+						{
+							size_t i = 0;
+							auto const& vals = option.second.default_value;
+							printf("%s", vals[0].c_str());
+							++i;
+							for(; i != std::size(vals); ++i)
+							{ printf(",%s", vals[i].c_str()); }
+						}
+						printf(" ");
 					}
+					printf("\n\n");
 				}
-#endif
-
 				return 0;
 			},
 			.description = "Shows command line help",

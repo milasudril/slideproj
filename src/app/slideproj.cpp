@@ -85,6 +85,23 @@ int main(int argc, char** argv)
 						},
 					}
 				}
+			},
+			std::pair{
+				std::string{"show"},
+				slideproj::utils::action_info{
+					.main = create_file_list,
+					.description = "Shows a slideshow, given a file created by the create action",
+					.valid_options = slideproj::utils::string_lookup_table<slideproj::utils::option_info>{
+						std::pair{
+							"file",
+							slideproj::utils::option_info{
+								.description = "The file to show",
+								.default_value = std::vector<std::string>{"/dev/stdin"},
+								.cardinality = 1
+							}
+						}
+					}
+				}
 			}
 		};
 
