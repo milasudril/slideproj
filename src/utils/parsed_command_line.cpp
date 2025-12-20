@@ -82,11 +82,14 @@ slideproj::utils::parsed_arg slideproj::utils::parse_arg(
 	auto const optinfo = valid_options.find(ret.name);
 	if(optinfo == std::end(valid_options))
 	{ throw std::runtime_error{std::format("Unsupported option {}", ret.name)}; }
+	if(ret.value.empty())
+	{ throw std::runtime_error{std::format("The option {} is missing a value", ret.name)}; }
+
 	if(ret.value.size() > optinfo->second.cardinality)
 	{
 		throw std::runtime_error{
 			std::format(
-				"The option option {} only takes {} value(s)",
+				"The option {} only takes {} value(s)",
 				ret.name,
 				optinfo->second.cardinality
 			)
