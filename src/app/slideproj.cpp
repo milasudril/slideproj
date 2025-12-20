@@ -150,7 +150,7 @@ int main(int argc, char** argv)
 							"start-at",
 							slideproj::utils::option_info{
 								.description = "The index to start at, clamped to a valid range",
-								.default_value = std::vector{std::string{"0"}},
+								.default_value = std::vector{std::string{"saved"}},
 								.cardinality = 1
 							}
 						},
