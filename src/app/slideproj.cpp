@@ -74,7 +74,15 @@ int main(int argc, char** argv)
 								.cardinality = std::numeric_limits<size_t>::max(),
 								.valid_values = slideproj::utils::string_set{"in_group", "timestamp", "caption"}
 							}
-						}
+						},
+						std::pair{
+							"output-files",
+							slideproj::utils::option_info{
+								.description = "A list of files to write the list of files to",
+								.default_value = std::vector{std::string{"/dev/stdout"}},
+								.cardinality = std::numeric_limits<size_t>::max()
+							}
+						},
 					}
 				}
 			}

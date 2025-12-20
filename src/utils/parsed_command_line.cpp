@@ -122,11 +122,41 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 	if(strcmp(argv[current_arg], "help") == 0)
 	{
 		m_action = action_info{
-			.main = [valid_actions = std::move(valid_actions)](string_lookup_table<std::vector<std::string>> const&){
-				printf("Valid actions\n");
+			.main = [
+				appname = std::string{appname},
+				valid_actions = std::move(valid_actions)
+			](string_lookup_table<std::vector<std::string>> const&){
+				printf("\n%s action [options specific to action]\n", appname.c_str());
+				printf("\nSummary of valid actions\n\n");
 				for(auto const& action :valid_actions)
 				{
-					printf("  %s -- %s\n", action.first.c_str(), action.second.description.c_str());
+					printf("%s -- %s\n", action.first.c_str(), action.second.description.c_str());
+				}
+
+				for(auto const& action :valid_actions)
+				{
+					printf("\nValid options for %s\n\n", action.first.c_str());
+					for(auto const& option : action.second.valid_options)
+					{
+						printf("--%s, %s", option.first.c_str(), option.second.description.c_str());
+						if(!option.second.valid_values.empty())
+						{
+							printf(". Valid values are ");
+							auto i = option.second.valid_values.begin();
+							printf("%s", i->c_str());
+							++i;
+							while(i != std::end(option.second.valid_values))
+							{
+								printf(", %s", i->c_str());
+								++i;
+							}
+							printf(".");
+						}
+						printf("\n");
+					}
+					printf("\n");
+				}
+#if 0
 					auto const& opts = action.second.valid_options;
 					if(opts.empty())
 					{ printf("\n\n"); }
@@ -140,6 +170,7 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 						printf(")\n\n");
 					}
 				}
+#endif
 
 				return 0;
 			},
