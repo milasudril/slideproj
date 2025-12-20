@@ -14,8 +14,9 @@
 #include "src/utils/task_result_queue.hpp"
 #include "src/renderer/image_display.hpp"
 #include "src/windowing_api/application_window.hpp"
+#include "src/utils/command_line_parser.hpp"
+
 #include <chrono>
-#include <linux/stat.h>
 
 int main()
 {
