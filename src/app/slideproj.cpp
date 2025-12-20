@@ -6,6 +6,7 @@
 #include "./slideshow.hpp"
 #include "./slideshow_presentation_controller.hpp"
 
+#include "src/config/user_dir_provider.hpp"
 #include "src/pixel_store/rgba_image.hpp"
 #include "src/file_collector/file_collector.hpp"
 #include "src/image_file_loader/image_file_loader.hpp"
@@ -45,6 +46,9 @@ int main(int argc, char** argv)
 {
 	try
 	{
+		setlocale(LC_ALL,"");
+		auto user_dirs = slideproj::config::get_user_dirs();
+
 		std::array actions{
 			std::pair{
 				std::string{"create"},
@@ -56,7 +60,7 @@ int main(int argc, char** argv)
 							"scan-directories",
 							slideproj::utils::option_info{
 								.description = "Directories to include",
-								.default_value = std::vector<std::string>{"."},
+								.default_value = std::vector<std::string>{user_dirs.pictures},
 								.cardinality = std::numeric_limits<size_t>::max()
 							},
 						},
