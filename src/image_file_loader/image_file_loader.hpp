@@ -141,11 +141,18 @@ namespace slideproj::image_file_loader
 
 	constexpr auto to_intensity_transfer_function_id(std::string_view sv)
 	{
-		if(sv == "Linear")
+		if(
+			sv == "Linear"
+			|| sv == "linear"
+			|| sv == "lin_rec709_scene"
+			|| sv == "lin_rec709"
+			|| sv == "lin_srgb"
+			|| sv == "scene_linear"
+		)
 		{ return intensity_transfer_function_id::linear; }
-		if(sv == "sRGB")
+		if(sv == "sRGB" || sv == "srgb_rec709_scene" || sv == "Rec709")
 		{ return intensity_transfer_function_id::srgb; }
-		if(sv == "Gamma2.2")
+		if(sv == "Gamma2.2" || sv == "g22_rec709_scene")
 		{ return intensity_transfer_function_id::g22; }
 		return intensity_transfer_function_id::invalid;
 	}
