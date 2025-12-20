@@ -208,4 +208,9 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 			std::make_move_iterator(std::end(parsed_arg.value))
 		);
 	}
+
+	for(auto& option : m_action.valid_options)
+	{
+		m_args.insert(std::pair{option.first, std::move(option.second.default_value)});
+	}
 }

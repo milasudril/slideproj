@@ -19,8 +19,24 @@
 
 #include <chrono>
 
-int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const&)
-{ return 0; }
+int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
+{
+	fprintf(stderr, "(i) Creating list of files\n\n");
+	for(auto const& option : args)
+	{
+		fprintf(stderr, "%s", option.first.c_str());
+		auto delimiter = ':';
+		for(auto const& value: option.second)
+		{
+			fprintf(stderr, "%c %s", delimiter, value.c_str());
+			delimiter = ',';
+		}
+		fprintf(stderr, "\n");
+	}
+
+	return 0;
+
+}
 
 int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const&)
 { return 0; }
@@ -45,7 +61,7 @@ int main(int argc, char** argv)
 							},
 						},
 						std::pair{
-							"inlcude",
+							"include",
 							slideproj::utils::option_info{
 								.description = "Glob strings used to filter the input",
 								.default_value = std::vector{
@@ -79,11 +95,11 @@ int main(int argc, char** argv)
 							}
 						},
 						std::pair{
-							"output-files",
+							"output-file",
 							slideproj::utils::option_info{
-								.description = "A list of files to write the list of files to",
+								.description = "The file to save the list of files to",
 								.default_value = std::vector{std::string{"/dev/stdout"}},
-								.cardinality = std::numeric_limits<size_t>::max()
+								.cardinality = 1
 							}
 						},
 					}
