@@ -4,8 +4,12 @@
 
 #include <stdexcept>
 #include <format>
+#include <cstring>
 
-slideproj::utils::parsed_arg slideproj::utils::parse_arg(char const* val)
+slideproj::utils::parsed_arg slideproj::utils::parse_arg(
+	char const* val,
+	string_lookup_table<std::string> const& valid_options
+)
 {
 	parsed_arg ret{};
 	enum class state{init_1, init_2, key_1, key_2, value, value_escape};
@@ -44,6 +48,9 @@ slideproj::utils::parsed_arg slideproj::utils::parse_arg(char const* val)
 				if(ch_in == '=')
 				{
 					current_state = state::value;
+					if(!valid_options.contains(ret.name))
+					{ throw std::runtime_error{std::format("Unsuppoted option {}", ret.name)}; }
+
 					ret.value.push_back(std::string{});
 				}
 				else
@@ -72,24 +79,48 @@ slideproj::utils::parsed_arg slideproj::utils::parse_arg(char const* val)
 		++val;
 	}
 
+	if(!valid_options.contains(ret.name))
+	{ throw std::runtime_error{std::format("Unsuppoted option {}", ret.name)}; }
+
 	return ret;
 }
 
 slideproj::utils::parsed_command_line::parsed_command_line(
 	char const* appname,
-	std::span<char const* const> argv
+	std::span<char const* const> argv,
+	string_lookup_table<action_info> const& valid_actions
 )
 {
 	size_t current_arg = 1;
 	if(current_arg >= std::size(argv))
 	{ throw std::runtime_error{std::format("Bad command line, try {} help", appname), }; }
 
-	m_action = argv[current_arg];
+	if(strcmp(argv[current_arg], "help") == 0)
+	{
+		m_action = action_info{
+			.main = [](string_lookup_table<std::vector<std::string>> const&){
+				printf("Show some help\n");
+				return 0;
+			},
+			.valid_options = {}
+		};
+	}
+	else
+	{
+		auto const i = valid_actions.find(argv[current_arg]);
+		if(i == valid_actions.end())
+		{
+			throw std::runtime_error{
+				std::format("Unsupported action {}, try {} help", argv[current_arg], appname)
+			};
+		}
+		m_action = i->second;
+	}
 	++current_arg;
 
 	for(; current_arg < std::size(argv); ++current_arg)
 	{
-		auto parsed_arg = parse_arg(argv[current_arg]);
+		auto parsed_arg = parse_arg(argv[current_arg], m_action.valid_options);
 		if(parsed_arg.name.empty())
 		{ continue; }
 

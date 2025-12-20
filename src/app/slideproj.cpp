@@ -13,6 +13,7 @@
 #include "src/utils/task_queue.hpp"
 #include "src/utils/task_result_queue.hpp"
 #include "src/renderer/image_display.hpp"
+#include "src/utils/transparent_string_hash.hpp"
 #include "src/windowing_api/application_window.hpp"
 #include "src/utils/parsed_command_line.hpp"
 
@@ -24,7 +25,9 @@ int main(int argc, char** argv)
 	{
 		slideproj::utils::parsed_command_line cmdline{
 			"slideproj",
-			std::span{static_cast<char const* const*>(argv), static_cast<size_t>(argc)}
+			std::span{static_cast<char const* const*>(argv), static_cast<size_t>(argc)},
+			slideproj::utils::string_lookup_table<slideproj::utils::action_info>{
+			}
 		};
 
 		auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
