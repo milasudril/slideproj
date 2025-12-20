@@ -19,17 +19,78 @@
 
 #include <chrono>
 
+int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const&)
+{ return 0; }
+
 int main(int argc, char** argv)
 {
 	try
 	{
+		std::array actions{
+			std::pair{
+				std::string{"create"},
+				slideproj::utils::action_info{
+					.main = create_file_list,
+					.description = "Creates a list of image files to be used in a slideshow",
+					.valid_options = slideproj::utils::string_lookup_table<slideproj::utils::option_info>{
+						std::pair{
+							"scan-directories",
+							slideproj::utils::option_info{
+								.description = "Directories to include",
+								.default_value = std::vector<std::string>{"."},
+								.cardinality = std::numeric_limits<size_t>::max()
+							},
+						},
+						std::pair{
+							"inlcude",
+							slideproj::utils::option_info{
+								.description = "Glob strings used to filter the input",
+								.default_value = std::vector{
+									std::string{"*.jpeg"},
+									std::string{"*.jpg"},
+									std::string{"*.bmp"},
+									std::string{"*.png"},
+									std::string{"*.exr"},
+									std::string{"*.gif"},
+									std::string{"*.tif"},
+									std::string{"*.tiff"}
+								},
+								.cardinality = std::numeric_limits<size_t>::max()
+							}
+						},
+						std::pair{
+							"max-pixel-count",
+							slideproj::utils::option_info{
+								.description = "The maximum number of pixels in individual images",
+								.default_value = std::vector{std::string{"33554432"}},
+								.cardinality = 1
+							}
+						},
+						std::pair{
+							"order-by",
+							slideproj::utils::option_info{
+								.description = "The fields used to sort the file list in order of importance",
+								.default_value = std::vector{std::string{"in_group"}, std::string{"timestamp"}},
+								.cardinality = std::numeric_limits<size_t>::max(),
+								.valid_values = slideproj::utils::string_set{"in_group", "timestamp", "caption"}
+							}
+						}
+					}
+				}
+			}
+		};
+
 		slideproj::utils::parsed_command_line cmdline{
 			"slideproj",
 			std::span{static_cast<char const* const*>(argv), static_cast<size_t>(argc)},
 			slideproj::utils::string_lookup_table<slideproj::utils::action_info>{
+				std::make_move_iterator(std::begin(actions)),
+				std::make_move_iterator(std::end(actions))
 			}
 		};
 
+		return cmdline.execute();
+#if 0
 		auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 		fprintf(
 			stderr,
@@ -139,6 +200,7 @@ int main(int argc, char** argv)
 			++k;
 		}
 		return 0;
+#endif
 	}
 	catch(std::exception const& err)
 	{

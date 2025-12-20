@@ -4,6 +4,7 @@
 #include <string_view>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace slideproj::utils
 {
@@ -26,6 +27,12 @@ namespace slideproj::utils
 	using string_lookup_table = std::unordered_map<
 		std::string,
 		Value,
+		transparent_string_hash,
+		std::equal_to<>
+	>;
+
+	using string_set = std::unordered_set<
+		std::string,
 		transparent_string_hash,
 		std::equal_to<>
 	>;

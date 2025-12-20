@@ -8,7 +8,7 @@
 
 slideproj::utils::parsed_arg slideproj::utils::parse_arg(
 	char const* val,
-	string_lookup_table<std::string> const& valid_options
+	string_lookup_table<option_info> const& valid_options
 )
 {
 	parsed_arg ret{};
@@ -79,8 +79,32 @@ slideproj::utils::parsed_arg slideproj::utils::parse_arg(
 		++val;
 	}
 
-	if(!valid_options.contains(ret.name))
-	{ throw std::runtime_error{std::format("Unsuppoted option {}", ret.name)}; }
+	auto const optinfo = valid_options.find(ret.name);
+	if(optinfo == std::end(valid_options))
+	{ throw std::runtime_error{std::format("Unsupported option {}", ret.name)}; }
+	if(ret.value.size() > optinfo->second.cardinality)
+	{
+		throw std::runtime_error{
+			std::format(
+				"The option option {} only takes {} value(s)",
+				ret.name,
+				optinfo->second.cardinality
+			)
+		};
+	}
+
+	if(!optinfo->second.valid_values.empty())
+	{
+		for(auto const& item : ret.value)
+		{
+			if(!optinfo->second.valid_values.contains(item))
+			{
+				throw std::runtime_error{
+					std::format("The option {} does not accept the value {}", ret.name, item)
+				};
+			}
+		}
+	}
 
 	return ret;
 }
@@ -88,7 +112,7 @@ slideproj::utils::parsed_arg slideproj::utils::parse_arg(
 slideproj::utils::parsed_command_line::parsed_command_line(
 	char const* appname,
 	std::span<char const* const> argv,
-	string_lookup_table<action_info> const& valid_actions
+	string_lookup_table<action_info>&& valid_actions
 )
 {
 	size_t current_arg = 1;
@@ -98,10 +122,28 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 	if(strcmp(argv[current_arg], "help") == 0)
 	{
 		m_action = action_info{
-			.main = [](string_lookup_table<std::vector<std::string>> const&){
-				printf("Show some help\n");
+			.main = [valid_actions = std::move(valid_actions)](string_lookup_table<std::vector<std::string>> const&){
+				printf("Valid actions\n");
+				for(auto const& action :valid_actions)
+				{
+					printf("  %s -- %s\n", action.first.c_str(), action.second.description.c_str());
+					auto const& opts = action.second.valid_options;
+					if(opts.empty())
+					{ printf("\n\n"); }
+					else
+					{
+						auto i = opts.begin();
+						printf("(%s", i->first.c_str());
+						++i;
+						for(; i != opts.end(); ++i)
+						{ printf(", %s", i->first.c_str()); }
+						printf(")\n\n");
+					}
+				}
+
 				return 0;
 			},
+			.description = "Shows command line help",
 			.valid_options = {}
 		};
 	}
@@ -114,7 +156,7 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 				std::format("Unsupported action {}, try {} help", argv[current_arg], appname)
 			};
 		}
-		m_action = i->second;
+		m_action = std::move(i->second);
 	}
 	++current_arg;
 
