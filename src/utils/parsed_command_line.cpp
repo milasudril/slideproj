@@ -181,21 +181,20 @@ slideproj::utils::parsed_command_line::parsed_command_line(
 			.description = "Shows command line help",
 			.valid_options = {}
 		};
+		return;
 	}
-	else
+
+	auto const i = valid_actions.find(argv[current_arg]);
+	if(i == valid_actions.end())
 	{
-		auto const i = valid_actions.find(argv[current_arg]);
-		if(i == valid_actions.end())
-		{
-			throw std::runtime_error{
-				std::format("Unsupported action {}, try {} help", argv[current_arg], appname)
-			};
-		}
-		m_action = std::move(i->second);
+		throw std::runtime_error{
+			std::format("Unsupported action {}, try {} help", argv[current_arg], appname)
+		};
 	}
+	m_action = std::move(i->second);
 	++current_arg;
 
-	for(; current_arg < std::size(argv); ++current_arg)
+	for(; current_arg != std::size(argv); ++current_arg)
 	{
 		auto parsed_arg = parse_arg(argv[current_arg], m_action.valid_options);
 		if(parsed_arg.name.empty())
