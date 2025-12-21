@@ -19,6 +19,8 @@
 #include "src/utils/parsed_command_line.hpp"
 
 #include <chrono>
+#include <nlohmann/adl_serializer.hpp>
+#include <nlohmann/detail/output/serializer.hpp>
 #include <nlohmann/json.hpp>
 
 int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
@@ -70,14 +72,44 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	}
 	to_serialize.emplace("files", std::move(serialized_file_list));
 
-
 	std::ofstream output{args.at("output-file").at(0)};
 	output << std::setw(2) << to_serialize << '\n';
+
 	return 0;
 }
 
-int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const&)
-{ return 0; }
+int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
+{
+	nlohmann::json serialized_file_list;
+	{
+		std::ifstream input{args.at("file").at(0)};
+		if(!input.is_open())
+		{ throw std::runtime_error{std::format("Error while trying to open file list: {}", strerror(errno))}; }
+		input >> serialized_file_list;
+	}
+
+	auto const i = serialized_file_list.find("files");
+	if(i == std::end(serialized_file_list))
+	{ throw std::runtime_error{"No file list present in the input"}; }
+	if(!i->is_array())
+	{ throw std::runtime_error{"The list of files should be an array"}; }
+
+	slideproj::file_collector::file_list file_list;
+	for(auto const& item: *i)
+	{
+		auto const j = item.find("path");
+		if(j == std::end(item))
+		{ continue; }
+
+		auto str = j->get_ptr<nlohmann::json::string_t const*>();
+		if(str == nullptr)
+		{ continue; }
+
+		fprintf(stderr, "%s\n", str->c_str());
+	}
+
+	return 0;
+}
 
 int main(int argc, char** argv)
 {
