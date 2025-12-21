@@ -80,7 +80,7 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	return 0;
 }
 
-ssize_t get_start_index_from_filename(std::filesystem::path const&)
+ssize_t get_start_index_from_filename(std::filesystem::path const& filename)
 {
 	try
 	{
@@ -92,12 +92,15 @@ ssize_t get_start_index_from_filename(std::filesystem::path const&)
 		nlohmann::json statefile;
 		input >> statefile;
 
+		auto const& saved_states = statefile.at("saved_states");
+		auto const& states_by_filename = saved_states.at("by_filename");
+		auto const& current_state = states_by_filename.at(filename);
+		return current_state.at("start_at").get<ssize_t>();
 	}
 	catch (...)
 	{
 		// Ignore erros
 	}
-
 	return 0;
 }
 
@@ -173,16 +176,17 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	auto const& fullscreen_str = args.at("fullscreen").at(0);
 	auto const& hide_cursor_str = args.at("hide-cursor").at(0);
 
-	auto const start_at = [](const auto& args) -> std::optional<ssize_t> {
+	auto const fullpath = canonical(std::filesystem::path{args.at("file").at(0)});
+	auto const start_at = [](std::filesystem::path const& filename, const auto& args) -> std::optional<ssize_t> {
 		auto const& start_at = args.at("start-at").at(0);
 		if(start_at == "saved")
-		{ return get_start_index_from_filename(canonical(std::filesystem::path{args.at("file").at(0)})); }
+		{ return get_start_index_from_filename(filename); }
 
 		return slideproj::utils::to_number(
 			start_at,
 			std::ranges::min_max_result{static_cast<ssize_t>(0), std::numeric_limits<ssize_t>::max() - 1}
 		);
-	}(args);
+	}(fullpath, args);
 
 	if(!start_at.has_value())
 	{ throw std::runtime_error{"Invalid value for start-at"}; }
@@ -259,6 +263,7 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		main_window->swap_buffers();
 	}
 	pending_tasks.clear();
+//	save_start_index_with_filename(fullpath);
 	return 0;
 }
 
