@@ -354,7 +354,7 @@ int main(int argc, char** argv)
 						std::pair{
 							"start-at",
 							slideproj::utils::option_info{
-								.description = "The index to start at, clamped to a valid range",
+								.description = "The index to start at, clamped to a valid range, or saved to continue at the previously saved index",
 								.default_value = std::vector{std::string{"saved"}},
 								.cardinality = 1
 							}
