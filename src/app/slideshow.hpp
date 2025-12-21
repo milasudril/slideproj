@@ -84,6 +84,18 @@ namespace slideproj::app
 
 	enum class step_direction{forward, backward, none};
 
+	inline constexpr step_direction make_step_direction_from_string(std::string_view str)
+	{
+		if(str == "forward")
+		{ return step_direction::forward; }
+		if(str == "backward")
+		{ return step_direction::backward; }
+		if(str == "none" || str == "paused")
+		{ return step_direction::none; }
+
+		throw std::runtime_error{"Unsupported step direction"};
+	}
+
 	struct slideshow_step_event
 	{
 		step_direction direction;

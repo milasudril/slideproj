@@ -123,9 +123,13 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 
 		file_list.append(canonical(working_directory/(*str)));
 	}
+	fprintf(stderr, "(i) Loaded file list");
 
 	if(file_list.empty())
-	{ return 0; }
+	{
+		fprintf(stderr, "(!) File list is empty");
+		return 0;
+	}
 
 	auto const step_delay = slideproj::utils::to_number(
 		args.at("step-delay").at(0),
@@ -133,6 +137,8 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	);
 	if(!step_delay.has_value())
 	{ throw std::runtime_error{"Invalid value for step-delay. Value should be within 0 and 2048."}; }
+
+	auto const step_direction = slideproj::app::make_step_direction_from_string(args.at("step-direction").at(0));
 
 	auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 	fprintf(
@@ -159,7 +165,7 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 			.step_delay = std::chrono::duration_cast<slideproj::app::slideshow_clock::duration>(
 				std::chrono::duration<float>{*step_delay}
 			),
-			.step_direction = slideproj::app::step_direction::forward
+			.step_direction = step_direction
 		}
 	};
 
