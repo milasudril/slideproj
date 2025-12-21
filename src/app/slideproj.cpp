@@ -1,4 +1,4 @@
-//@	{"target":{"name":"slideproj.o"}}
+//@	{"target":{"name":"slideproj.o", "dependencies":[{"ref":"md", "origin":"system", "rel":"external"}]}}
 
 #include "./input_filter.hpp"
 #include "./slideshow_window_event_handler.hpp"
@@ -23,6 +23,7 @@
 #include <nlohmann/adl_serializer.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
 #include <nlohmann/json.hpp>
+#include <sha2.h>
 
 int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
 {
@@ -136,8 +137,87 @@ ssize_t get_start_index_from_filename(
 	return 0;
 }
 
+std::string compute_jobinfo_hash(nlohmann::json const& obj)
+{
+	std::filesystem::path const wd{obj.at("working_directory").get<std::string>()};
+	SHA2_CTX hash_ctxt;
+	SHA256Init(&hash_ctxt);
+	for(auto const& item : obj.at("include"))
+	{
+		auto const value = item.get<std::string>();
+		SHA256Update(
+			&hash_ctxt,
+			reinterpret_cast<uint8_t const*>(value.c_str()),
+			std::size(value)
+		);
+	}
+
+	auto const max_pixel_count = obj.at("max_pixel_count").get<ssize_t>();
+	SHA256Update(
+		&hash_ctxt,
+		reinterpret_cast<uint8_t const*>(&max_pixel_count),
+		sizeof(max_pixel_count)
+	);
+
+	for(auto const& item : obj.at("order_by"))
+	{
+		auto const value = item.get<std::string>();
+		SHA256Update(
+			&hash_ctxt,
+			reinterpret_cast<uint8_t const*>(value.c_str()),
+			std::size(value)
+		);
+	}
+
+	for(auto const& item : obj.at("scan_directories"))
+	{
+		auto const path_string = canonical(wd/item.get<std::string>()).string();
+		SHA256Update(
+			&hash_ctxt,
+			reinterpret_cast<uint8_t const*>(path_string.c_str()),
+			std::size(path_string)
+		);
+	}
+
+	static_assert(SHA256_DIGEST_LENGTH == 32);
+	std::array<uint8_t, SHA256_DIGEST_LENGTH> result;
+	SHA256Final(result.data(), &hash_ctxt);
+
+	std::string ret{};
+	for(auto item : result)
+	{
+		auto const msb = static_cast<char>((item&0xf0) >> 4);
+		auto const lsb = static_cast<char>((item&0x0f));
+
+		ret += (msb <= 9)? '0' + msb : 'A' + (msb - 10);
+		ret += (lsb <= 9)? '0' + lsb : 'A' + (lsb - 10);
+	}
+
+	return ret;
+}
+
+ssize_t get_start_index_from_jobinfo(
+	nlohmann::json const& saved_states,
+	nlohmann::json const& jobinfo
+)
+{
+	try
+	{
+		auto const hash = compute_jobinfo_hash(jobinfo);
+		auto const& states_by_filename = saved_states.at("by_hash");
+		auto const& current_state = states_by_filename.at(hash);
+		return current_state.at("start_at").get<ssize_t>();
+	}
+	catch (...)
+	{
+		// Ignore erros
+	}
+	return 0;
+}
+
 std::optional<ssize_t> get_start_index(
 	nlohmann::json const& savestate_file,
+	nlohmann::json const& jobinfo,
 	std::filesystem::path const& filename,
 	slideproj::utils::string_lookup_table<std::vector<std::string>> const& args
 )
@@ -146,8 +226,10 @@ std::optional<ssize_t> get_start_index(
 	if(start_at == "saved")
 	{
 		auto const& saved_states = savestate_file.at("saved_states");
-		// TODO: Handle by hash in case filename in not a regular file
-		return get_start_index_from_filename(saved_states, filename);
+		if(is_regular_file(filename))
+		{ return get_start_index_from_filename(saved_states, filename); }
+		else
+		{ return get_start_index_from_jobinfo(saved_states, jobinfo); }
 	}
 
 	return slideproj::utils::to_number(
@@ -166,16 +248,28 @@ void set_start_index_for_filename(
 	by_filename[filename]["start_at"] = value;
 }
 
+void set_start_index_for_jobinfo(
+	nlohmann::json& saved_states,
+	nlohmann::json const& jobinfo,
+	ssize_t value
+)
+{
+	auto& by_filename = saved_states.at("by_hash");
+	by_filename[compute_jobinfo_hash(jobinfo)]["start_at"] = value;
+}
+
 void set_start_index(
 	nlohmann::json& savestate_file,
-	nlohmann::json const&,
+	nlohmann::json const& jobinfo,
 	std::filesystem::path const& filename,
 	ssize_t value
 )
 {
 	auto& saved_states = savestate_file.at("saved_states");
-	// TODO: Handle by hash in case filename in not a regular file
-	set_start_index_for_filename(saved_states, filename, value);
+	if(is_regular_file(filename))
+	{ set_start_index_for_filename(saved_states, filename, value); }
+	else
+	{ set_start_index_for_jobinfo(saved_states, jobinfo, value); }
 }
 
 
@@ -251,11 +345,12 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	auto const& fullscreen_str = args.at("fullscreen").at(0);
 	auto const& hide_cursor_str = args.at("hide-cursor").at(0);
 
-	auto const fullpath = canonical(std::filesystem::path{args.at("file").at(0)});
+	std::filesystem::path const file_to_read{args.at("file").at(0)};
+	auto const fullpath = is_regular_file(file_to_read)? canonical(file_to_read) :file_to_read;
 	auto const savestate_dir = slideproj::config::get_user_dirs().savestates;
 	auto statefile = load_statefile(savestate_dir);
 
-	auto const start_at = get_start_index(statefile, fullpath, args);
+	auto const start_at = get_start_index(statefile, *jobinfo, fullpath, args);
 	if(!start_at.has_value())
 	{ throw std::runtime_error{"Invalid value for start-at"}; }
 
