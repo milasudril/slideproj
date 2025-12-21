@@ -149,8 +149,11 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	{ throw std::runtime_error{"Invalid value for transition-duration. Value should be within 0.03125 and 8."}; }
 
 	auto const& loop_str = args.at("loop").at(0);
+	auto const& fullscreen_str = args.at("fullscreen").at(0);
+	auto const& hide_cursor_str = args.at("hide-cursor").at(0);
 
 	auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
+
 	fprintf(
 		stderr,
 		"(i) Initialized OpenGL. Vendor = %s, Renderer = %s, Version = %s\n",
@@ -165,6 +168,12 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	glEnable(GL_BLEND);
 	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
 	glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+	if(fullscreen_str == "yes")
+	{ main_window->enable_fullscreen(); }
+
+	if(hide_cursor_str == "yes")
+	{ main_window->set_cursor_mode(slideproj::windowing_api::cursor_mode::hidden); }
 
 	slideproj::app::slideshow slideshow{std::move(file_list)};
 	slideproj::utils::task_result_queue task_results;
@@ -199,6 +208,7 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		playback_ctrl
 	};
 	main_window->set_event_handler(std::ref(eh));
+
 	slideshow_presentation_controller.start_slideshow(slideshow);
 
 	while(!eh.application_should_exit())
