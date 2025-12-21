@@ -18,6 +18,7 @@
 #include "src/windowing_api/application_window.hpp"
 #include "src/utils/parsed_command_line.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <nlohmann/adl_serializer.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
@@ -123,11 +124,11 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 
 		file_list.append(canonical(working_directory/(*str)));
 	}
-	fprintf(stderr, "(i) Loaded file list");
+	fprintf(stderr, "(i) Loaded file list\n");
 
 	if(file_list.empty())
 	{
-		fprintf(stderr, "(!) File list is empty");
+		fprintf(stderr, "(!) File list is empty. Exiting.\n");
 		return 0;
 	}
 
@@ -139,6 +140,13 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	{ throw std::runtime_error{"Invalid value for step-delay. Value should be within 0 and 2048."}; }
 
 	auto const step_direction = slideproj::app::make_step_direction_from_string(args.at("step-direction").at(0));
+
+	auto const transition_duration = slideproj::utils::to_number(
+		args.at("transition-duration").at(0),
+		std::ranges::min_max_result{1.0f/32.0f, 8.0f}
+	);
+	if(!transition_duration.has_value())
+	{ throw std::runtime_error{"Invalid value for transition-duration. Value should be within 0.03125 and 8."}; }
 
 	auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 	fprintf(
@@ -177,7 +185,9 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		std::cref(metadata_repo),
 		playback_ctrl,
 		slideproj::app::slideshow_presentation_descriptor{
-			.transition_duration = std::chrono::seconds{2},
+			.transition_duration = std::chrono::duration_cast<slideproj::app::slideshow_clock::duration>(
+				std::chrono::duration<float>{*transition_duration}
+			),
 			.loop = true
 		}
 	};
