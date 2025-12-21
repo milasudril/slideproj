@@ -88,12 +88,12 @@ nlohmann::json complete_statefile(nlohmann::json&& obj)
 	return std::move(obj);
 }
 
-nlohmann::json load_statefile()
+nlohmann::json load_statefile(std::filesystem::path const& savestate_dir)
 {
 	nlohmann::json statefile;
 	try
 	{
-		auto const statefile_name = slideproj::config::get_user_dirs().savestates/"slideproj.json";
+		auto const statefile_name = savestate_dir/"slideproj.json";
 		std::ifstream input{statefile_name};
 		if(!input.is_open())
 		{ return complete_statefile(std::move(statefile)); }
@@ -105,9 +105,9 @@ nlohmann::json load_statefile()
 	{ return complete_statefile(std::move(statefile)); }
 }
 
-void save_statefile(nlohmann::json const& obj)
+void save_statefile(nlohmann::json const& obj, std::filesystem::path const& savestate_dir)
 {
-	auto const statefile_name = slideproj::config::get_user_dirs().savestates/"slideproj.json";
+	auto const statefile_name = savestate_dir/"slideproj.json";
 	std::ofstream output{statefile_name};
 	if(!output.is_open())
 	{
@@ -215,7 +215,8 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	auto const& hide_cursor_str = args.at("hide-cursor").at(0);
 
 	auto const fullpath = canonical(std::filesystem::path{args.at("file").at(0)});
-	auto statefile = load_statefile();
+	auto const savestate_dir = slideproj::config::get_user_dirs().savestates;
+	auto statefile = load_statefile(savestate_dir);
 	auto const start_at = [](std::filesystem::path const& filename, const auto& args) -> std::optional<ssize_t> {
 		auto const& start_at = args.at("start-at").at(0);
 		if(start_at == "saved")
@@ -303,7 +304,7 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	}
 	pending_tasks.clear();
 //	save_start_index_with_filename(fullpath);
-	save_statefile(statefile);
+	save_statefile(statefile, savestate_dir);
 	return 0;
 }
 
