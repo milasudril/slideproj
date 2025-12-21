@@ -6,10 +6,12 @@
 #include <charconv>
 #include <optional>
 #include <concepts>
+#include <type_traits>
 
 namespace slideproj::utils
 {
-	template<std::integral T>
+	template<class T>
+	requires (std::is_integral_v<T> || std::is_floating_point_v<T>)
 	constexpr std::optional<T> to_number(std::string_view sv, std::ranges::minmax_result<T> accepted_range)
 	{
 		T value;

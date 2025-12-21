@@ -127,6 +127,13 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	if(file_list.empty())
 	{ return 0; }
 
+	auto const step_delay = slideproj::utils::to_number(
+		args.at("step-delay").at(0),
+		std::ranges::minmax_result{0.0f, 2048.0f}
+	);
+	if(!step_delay.has_value())
+	{ throw std::runtime_error{"Invalid value for step-delay. Value should be within 0 and 2048."}; }
+
 	auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 	fprintf(
 		stderr,
@@ -149,7 +156,9 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
 	slideproj::app::slideshow_playback_controller playback_ctrl{
 		slideproj::app::slideshow_playback_descriptor{
-			.step_delay = std::chrono::seconds{6},
+			.step_delay = std::chrono::duration_cast<slideproj::app::slideshow_clock::duration>(
+				std::chrono::duration<float>{*step_delay}
+			),
 			.step_direction = slideproj::app::step_direction::forward
 		}
 	};
