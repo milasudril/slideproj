@@ -145,7 +145,6 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 
 	slideproj::app::slideshow slideshow{std::move(file_list)};
 	slideproj::utils::task_result_queue task_results;
-	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::renderer::image_display img_display{};
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
 	slideproj::app::slideshow_playback_controller playback_ctrl{
@@ -154,6 +153,8 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 			.step_direction = slideproj::app::step_direction::forward
 		}
 	};
+
+	slideproj::utils::task_queue pending_tasks{task_results};
 	slideproj::app::slideshow_presentation_controller slideshow_presentation_controller{
 		pending_tasks,
 		img_display,
@@ -173,7 +174,6 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	main_window->set_event_handler(std::ref(eh));
 	slideshow_presentation_controller.start_slideshow(slideshow);
 
-	size_t k = 0;
 	while(!eh.application_should_exit())
 	{
 		auto const now = std::chrono::steady_clock::now();
@@ -185,8 +185,8 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		glClear(GL_COLOR_BUFFER_BIT);
 		img_display.update();
 		main_window->swap_buffers();
-		++k;
 	}
+	pending_tasks.clear();
 	return 0;
 }
 
