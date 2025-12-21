@@ -4,6 +4,7 @@
 #include "src/utils/numconv.hpp"
 
 #include <cmath>
+#include <array>
 
 namespace slideproj::pixel_store
 {
@@ -14,13 +15,35 @@ namespace slideproj::pixel_store
 		{ return utils::to_normalized_float(value); }
 	};
 
+	template<class T>
+	consteval auto make_srgb_to_lin_lut()
+	{
+		std::array<float, 256> ret{};
+		for(size_t k = 0; k != std::size(ret); ++k)
+		{
+			auto const value = static_cast<T>(k);
+			auto const val = utils::to_normalized_float(value);
+			ret[k] = (val <= 0.04045f)? val/12.92f : std::pow((val + 0.055f)/1.055f, 2.4f);
+		}
+
+		return ret;
+	}
+
 	struct srgb_intensity_mapping
 	{
 		template<class T>
 		static constexpr float to_linear_float(T value)
 		{
-			auto const val = utils::to_normalized_float(value);
-			return (val <= 0.04045f)? val/12.92f : std::pow((val + 0.055f)/1.055f, 2.4f);
+			if constexpr(std::is_same_v<T, uint8_t>)
+			{
+				static constexpr auto srgb_lut = make_srgb_to_lin_lut<T>();
+				return srgb_lut[value];
+			}
+			else
+			{
+				auto const val = utils::to_normalized_float(value);
+				return (val <= 0.04045f)? val/12.92f : std::pow((val + 0.055f)/1.055f, 2.4f);
+			}
 		}
 	};
 
