@@ -80,6 +80,27 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	return 0;
 }
 
+ssize_t get_start_index_from_filename(std::filesystem::path const&)
+{
+	try
+	{
+		auto const statefile_name = slideproj::config::get_state_dir()/"slideproj.json";
+		std::ifstream input{statefile_name};
+		if(!input.is_open())
+		{ return 0; }
+
+		nlohmann::json statefile;
+		input >> statefile;
+
+	}
+	catch (...)
+	{
+		// Ignore erros
+	}
+
+	return 0;
+}
+
 int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
 {
 	nlohmann::json serialized_file_list;
@@ -152,6 +173,20 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	auto const& fullscreen_str = args.at("fullscreen").at(0);
 	auto const& hide_cursor_str = args.at("hide-cursor").at(0);
 
+	auto const start_at = [](const auto& args) -> std::optional<ssize_t> {
+		auto const& start_at = args.at("start-at").at(0);
+		if(start_at == "saved")
+		{ return get_start_index_from_filename(canonical(std::filesystem::path{args.at("file").at(0)})); }
+
+		return slideproj::utils::to_number(
+			start_at,
+			std::ranges::min_max_result{static_cast<ssize_t>(0), std::numeric_limits<ssize_t>::max() - 1}
+		);
+	}(args);
+
+	if(!start_at.has_value())
+	{ throw std::runtime_error{"Invalid value for start-at"}; }
+
 	auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 
 	fprintf(
@@ -208,7 +243,7 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		playback_ctrl
 	};
 	main_window->set_event_handler(std::ref(eh));
-
+	slideshow.set_current_index(*start_at);
 	slideshow_presentation_controller.start_slideshow(slideshow);
 
 	while(!eh.application_should_exit())
