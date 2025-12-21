@@ -189,6 +189,7 @@ void slideproj::app::slideshow_presentation_controller::fetch_image(slideshow_en
 					auto ret = image_file_loader::load_rgba_image(path_to_load, rect);
 					if(ret.is_empty())
 					{
+						fprintf(stderr, "(!) Failed to load image %s", path_to_load.c_str());
 						// TODO: Write a proper error message (Requires some basic text utility)
 						return display_error();
 
@@ -196,7 +197,11 @@ void slideproj::app::slideshow_presentation_controller::fetch_image(slideshow_en
 					return ret;
 				}
 				catch(...)
-				{ return display_error(); }
+				{
+					fprintf(stderr, "(!) Failed to load image %s", path_to_load.c_str());
+					// TODO: Write a proper error message (Requires some basic text utility)
+					return display_error();
+				}
 			},
 			.on_completed = [
 				&cached_entry = m_loaded_images[entry.index],

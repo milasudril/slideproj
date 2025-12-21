@@ -150,7 +150,7 @@ namespace slideproj::image_file_loader
 			|| sv == "scene_linear"
 		)
 		{ return intensity_transfer_function_id::linear; }
-		if(sv == "sRGB" || sv == "srgb_rec709_scene" || sv == "Rec709")
+		if(sv == "sRGB" || sv == "srgb_rec709_scene" || sv == "Rec709" || sv.empty())
 		{ return intensity_transfer_function_id::srgb; }
 		if(sv == "Gamma2.2" || sv == "g22_rec709_scene")
 		{ return intensity_transfer_function_id::g22; }

@@ -237,7 +237,12 @@ slideproj::image_file_loader::load_image(OIIO::ImageInput& input)
 		to_pixel_ordering_from_exif_orientation(spec.get_int_attribute("Orientation")),
 		pixel_store::make_uninitialized_pixel_buffer_tag{}
 	};
+
+	if(ret.is_empty())
+	{ return ret; }
+
 	ret.visit([&input, &spec](auto pixel_buffer, auto&&...){
+		assert(pixel_buffer != nullptr);
 		input.read_image(0, 0, 0, spec.nchannels, spec.format, pixel_buffer);
 	});
 	return ret;
