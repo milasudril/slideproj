@@ -118,19 +118,13 @@ void save_statefile(nlohmann::json const& obj, std::filesystem::path const& save
 	output << std::setw(2) << obj << '\n';
 }
 
-ssize_t get_start_index_from_filename(std::filesystem::path const& filename)
+ssize_t get_start_index_from_filename(
+	nlohmann::json const& saved_states,
+	std::filesystem::path const& filename
+)
 {
 	try
 	{
-		auto const statefile_name = slideproj::config::get_state_dir()/"slideproj.json";
-		std::ifstream input{statefile_name};
-		if(!input.is_open())
-		{ return 0; }
-
-		nlohmann::json statefile;
-		input >> statefile;
-
-		auto const& saved_states = statefile.at("saved_states");
 		auto const& states_by_filename = saved_states.at("by_filename");
 		auto const& current_state = states_by_filename.at(filename);
 		return current_state.at("start_at").get<ssize_t>();
@@ -141,6 +135,49 @@ ssize_t get_start_index_from_filename(std::filesystem::path const& filename)
 	}
 	return 0;
 }
+
+std::optional<ssize_t> get_start_index(
+	nlohmann::json const& savestate_file,
+	std::filesystem::path const& filename,
+	slideproj::utils::string_lookup_table<std::vector<std::string>> const& args
+)
+{
+	auto const& start_at = args.at("start-at").at(0);
+	if(start_at == "saved")
+	{
+		auto const& saved_states = savestate_file.at("saved_states");
+		// TODO: Handle by hash in case filename in not a regular file
+		return get_start_index_from_filename(saved_states, filename);
+	}
+
+	return slideproj::utils::to_number(
+		start_at,
+		std::ranges::min_max_result{static_cast<ssize_t>(0), std::numeric_limits<ssize_t>::max() - 1}
+	);
+}
+
+void set_start_index_for_filename(
+	nlohmann::json& saved_states,
+	std::filesystem::path const& filename,
+	ssize_t value
+)
+{
+	auto& by_filename = saved_states.at("by_filename");
+	by_filename[filename]["start_at"] = value;
+}
+
+void set_start_index(
+	nlohmann::json& savestate_file,
+	nlohmann::json const&,
+	std::filesystem::path const& filename,
+	ssize_t value
+)
+{
+	auto& saved_states = savestate_file.at("saved_states");
+	// TODO: Handle by hash in case filename in not a regular file
+	set_start_index_for_filename(saved_states, filename, value);
+}
+
 
 int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
 {
@@ -217,17 +254,8 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	auto const fullpath = canonical(std::filesystem::path{args.at("file").at(0)});
 	auto const savestate_dir = slideproj::config::get_user_dirs().savestates;
 	auto statefile = load_statefile(savestate_dir);
-	auto const start_at = [](std::filesystem::path const& filename, const auto& args) -> std::optional<ssize_t> {
-		auto const& start_at = args.at("start-at").at(0);
-		if(start_at == "saved")
-		{ return get_start_index_from_filename(filename); }
 
-		return slideproj::utils::to_number(
-			start_at,
-			std::ranges::min_max_result{static_cast<ssize_t>(0), std::numeric_limits<ssize_t>::max() - 1}
-		);
-	}(fullpath, args);
-
+	auto const start_at = get_start_index(statefile, fullpath, args);
 	if(!start_at.has_value())
 	{ throw std::runtime_error{"Invalid value for start-at"}; }
 
@@ -303,7 +331,8 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		main_window->swap_buffers();
 	}
 	pending_tasks.clear();
-//	save_start_index_with_filename(fullpath);
+
+	set_start_index(statefile, *jobinfo, fullpath, slideshow.get_current_index());
 	save_statefile(statefile, savestate_dir);
 	return 0;
 }
