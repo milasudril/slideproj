@@ -148,6 +148,8 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	if(!transition_duration.has_value())
 	{ throw std::runtime_error{"Invalid value for transition-duration. Value should be within 0.03125 and 8."}; }
 
+	auto const& loop_str = args.at("loop").at(0);
+
 	auto main_window = slideproj::glfw_wrapper::glfw_window::create("slideproj");
 	fprintf(
 		stderr,
@@ -188,7 +190,7 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 			.transition_duration = std::chrono::duration_cast<slideproj::app::slideshow_clock::duration>(
 				std::chrono::duration<float>{*transition_duration}
 			),
-			.loop = true
+			.loop = (loop_str == "yes")
 		}
 	};
 	slideproj::app::slideshow_window_event_handler eh{
