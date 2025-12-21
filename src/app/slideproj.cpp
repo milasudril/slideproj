@@ -61,7 +61,8 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	slideproj_create_opts.emplace("order_by", args.at("order-by"));
 	slideproj_create_opts.emplace("include", args.at("include"));
 	slideproj_create_opts.emplace("scan_directories", args.at("scan-directories"));
-	to_serialize.emplace("slideproj_create_opts", std::move(slideproj_create_opts));
+	slideproj_create_opts.emplace("working_directory", std::filesystem::current_path());
+	to_serialize.emplace("slideproj_create_jobinfo", std::move(slideproj_create_opts));
 
 	nlohmann::json serialized_file_list;
 	for(auto const& item : file_list)
@@ -88,6 +89,21 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		input >> serialized_file_list;
 	}
 
+	auto const jobinfo = serialized_file_list.find("slideproj_create_jobinfo");
+
+	if(jobinfo == std::end(serialized_file_list))
+	{ throw std::runtime_error{"Missing slideproj jobinfo"}; }
+
+	auto const wdi = jobinfo->find("working_directory");
+	if(wdi == std::end(*jobinfo))
+	{ throw std::runtime_error{"Field working_directory is missing from jobinfo"}; }
+
+	auto const working_directory_ptr = wdi->get_ptr<nlohmann::json::string_t const*>();
+	if(working_directory_ptr == nullptr)
+	{ throw std::runtime_error{"Field working_directory must be a string"}; }
+
+	std::filesystem::path const working_directory{*working_directory_ptr};
+
 	auto const i = serialized_file_list.find("files");
 	if(i == std::end(serialized_file_list))
 	{ throw std::runtime_error{"No file list present in the input"}; }
@@ -105,8 +121,10 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 		if(str == nullptr)
 		{ continue; }
 
-		fprintf(stderr, "%s\n", str->c_str());
+		file_list.append(canonical(working_directory/(*str)));
 	}
+
+
 
 	return 0;
 }
