@@ -76,6 +76,17 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	{
 		nlohmann::json entry;
 		entry.emplace("path", item.path());
+		auto const file_age = metadata_repo.get_metadata(item).timestamp.time_since_epoch();
+		auto const file_age_secs = std::chrono::duration_cast<std::chrono::seconds>(file_age);
+		auto const file_age_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+			file_age - file_age_secs
+		);
+		
+		nlohmann::json timestamp;
+		timestamp.emplace("seconds", file_age_secs.count());
+		timestamp.emplace("nanoseconds", file_age_ns.count());
+		entry.emplace("timestamp", std::move(timestamp));
+
 		serialized_file_list.push_back(std::move(entry));
 	}
 	to_serialize.emplace("files", std::move(serialized_file_list));
@@ -154,6 +165,17 @@ int update_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	{
 		nlohmann::json entry;
 		entry.emplace("path", item.path());
+		auto const file_age = metadata_repo.get_metadata(item).timestamp.time_since_epoch();
+		auto const file_age_secs = std::chrono::duration_cast<std::chrono::seconds>(file_age);
+		auto const file_age_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+			file_age - file_age_secs
+		);
+		
+		nlohmann::json timestamp;
+		timestamp.emplace("seconds", file_age_secs.count());
+		timestamp.emplace("nanoseconds", file_age_ns.count());
+		entry.emplace("timestamp", std::move(timestamp));
+
 		serialized_file_list.push_back(std::move(entry));
 	}
 	old_data["files"] = std::move(serialized_file_list);
