@@ -25,13 +25,18 @@
 #include <nlohmann/json.hpp>
 #include <sha2.h>
 
+namespace
+{
+	constexpr auto global_max_pixel_count = 1'073'741'824U;
+}
+
 int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
 {
 	fprintf(stderr, "(i) Creating list of files\n");
 	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
 	auto const maxnum_pixels = slideproj::utils::to_number(
 		args.at("max-pixel-count").at(0),
-		std::ranges::minmax_result{1U, 1'073'741'824U}
+		std::ranges::minmax_result{1U, global_max_pixel_count}
 	);
 	if(!maxnum_pixels.has_value())
 	{ throw std::runtime_error{"Invalid value for max-pixel-count. Value should be within 1 and 2^30."}; }
@@ -78,6 +83,84 @@ int create_file_list(slideproj::utils::string_lookup_table<std::vector<std::stri
 	std::ofstream output{args.at("output-file").at(0)};
 	output << std::setw(2) << to_serialize << '\n';
 
+	return 0;
+}
+
+int update_file_list(slideproj::utils::string_lookup_table<std::vector<std::string>> const& args)
+{
+	auto const file = args.at("file").at(0);
+	if(file.empty())
+	{ throw std::runtime_error{"Missing mandatory file argument"}; }
+	
+	nlohmann::json old_data;
+	{
+		std::ifstream input{args.at("file").at(0)};
+		if(!input.is_open())
+		{ throw std::runtime_error{std::format("Error while trying to open file list: {}", strerror(errno))}; }
+		input >> old_data;
+	}
+	
+	// TODO: Review error handling
+	auto const& jobinfo = old_data.at("slideproj_create_jobinfo");	
+	auto const include = slideproj::utils::make_glob_strings(jobinfo.at("include").get<std::vector<std::string>>());
+	auto const max_pixel_count = jobinfo.at("max_pixel_count").get<size_t>();
+	if(max_pixel_count < 1U || max_pixel_count > global_max_pixel_count)
+	{ 
+		throw std::runtime_error{
+			"Invalid value for max-pixel-count. Value should be within 1 and 2^30."
+		};
+	}
+	
+	auto const order_by =
+		slideproj::file_collector::make_metadata_field_array(jobinfo.at("order_by"));
+
+	auto const old_wd = jobinfo.at("working_directory").get<std::string>();
+	// TODO: C++ std::filesystem alternative
+	if(chdir(old_wd.c_str()) == -1)
+	{
+		auto const errmsg = strerror(errno);
+		throw std::runtime_error{
+			std::format("Failed to change working directory to {}: {}",  old_wd, errmsg)
+		};
+	}
+	
+	auto const scan_directories =
+		jobinfo.at("scan_directories").get<std::vector<std::string>>();
+	slideproj::image_file_loader::image_file_metadata_repository metadata_repo;
+
+	fprintf(stderr, "(i) Updating list of files\n");
+	auto const new_file_list = slideproj::file_collector::make_file_list(
+		scan_directories,
+		slideproj::app::input_filter{
+			.include = include,
+			.max_pixel_count = max_pixel_count,
+				.image_dimension_provider = std::cref(metadata_repo)
+			},
+		order_by,
+		metadata_repo,
+		[](auto const& a, auto const& b) {
+			auto const res = strcoll(a.c_str(), b.c_str());
+			if(res < 0)
+			{ return std::strong_ordering::less; }
+			if(res == 0)
+			{ return std::strong_ordering::equal; }
+			return std::strong_ordering::greater;
+		}
+	);
+	fprintf(stderr, "(i) Collected %zu files\n", new_file_list.size());
+	
+	nlohmann::json serialized_file_list;
+	for(auto const& item : new_file_list)
+	{
+		nlohmann::json entry;
+		entry.emplace("path", item.path());
+		serialized_file_list.push_back(std::move(entry));
+	}
+	old_data["files"] = std::move(serialized_file_list);
+	
+	std::ofstream output{args.at("file").at(0)};
+	output << std::setw(2) << old_data << '\n';
+	
 	return 0;
 }
 
@@ -152,7 +235,7 @@ std::string compute_jobinfo_hash(nlohmann::json const& obj)
 		);
 	}
 
-	auto const max_pixel_count = obj.at("max_pixel_count").get<ssize_t>();
+	auto const max_pixel_count = obj.at("max_pixel_count").get<size_t>();
 	SHA256Update(
 		&hash_ctxt,
 		reinterpret_cast<uint8_t const*>(&max_pixel_count),
@@ -284,7 +367,6 @@ int show_file_list(slideproj::utils::string_lookup_table<std::vector<std::string
 	}
 
 	auto const jobinfo = serialized_file_list.find("slideproj_create_jobinfo");
-
 	if(jobinfo == std::end(serialized_file_list))
 	{ throw std::runtime_error{"Missing slideproj jobinfo"}; }
 
@@ -496,6 +578,23 @@ int main(int argc, char** argv)
 								.cardinality = 1
 							}
 						},
+					}
+				}
+			},
+			std::pair{
+				std::string{"update"},
+				slideproj::utils::action_info{
+					.main = update_file_list,
+					.description = "Updates a given file by using metadata stored within the same file",
+					.valid_options = slideproj::utils::string_lookup_table<slideproj::utils::option_info>{
+						std::pair{
+							"file",
+							slideproj::utils::option_info{
+								.description = "The file to operate on",
+								.default_value = std::vector<std::string>{""},
+								.cardinality = 1
+							}
+						}
 					}
 				}
 			},
