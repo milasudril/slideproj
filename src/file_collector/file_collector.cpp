@@ -81,17 +81,29 @@ void slideproj::file_collector::sort(
 
 std::optional<slideproj::file_collector::file_clock::time_point>
 slideproj::file_collector::get_timestamp(std::filesystem::path const& path)
-{
+{	
 	struct statx statxbuf{};
 	auto res = statx(AT_FDCWD, path.c_str(), AT_NO_AUTOMOUNT, STATX_BTIME | STATX_MTIME, &statxbuf);
 	if(res == -1)
 	{ return std::nullopt; }
+	
+	std::optional<file_clock::time_point> btime;
+	std::optional<file_clock::time_point> mtime;
 
 	if(statxbuf.stx_mask&STATX_BTIME)
-	{	return file_clock::create(statxbuf.stx_btime); }
-	else
+	{ btime =  file_clock::create(statxbuf.stx_btime); }
+
 	if(statxbuf.stx_mask&STATX_MTIME)
-	{ return file_clock::create(statxbuf.stx_mtime); }
+	{ mtime = file_clock::create(statxbuf.stx_mtime); }
+	
+	if(btime.has_value() && mtime.has_value())
+	{ return std::min(btime, mtime); }
+	
+	if(btime.has_value())
+	{ return btime; }
+	
+	if(mtime.has_value())
+	{ return mtime; }
 
 	return std::nullopt;
 }
