@@ -1,20 +1,21 @@
 @startuml
+left to right direction
 package file_collector {
-	interface input_filter {
+	interface input_filter <<concept>> {
 		+accepts(fs::path): bool {query}
   }
 
-	interface file_metadata_provider{
+	interface file_metadata_provider <<concept>> {
 		+get_metadata(file_list_entry): file_metadata {query}
 	}
 
-	interface string_comparator {
+	interface string_comparator <<concept>> {
 		operator()(string a, string b) : std::strong_ordering  {query}
 	}
 
 	class file_list_entry {
-		id: file_id {read-only}
-		path: fs::path {read-only}
+		+id(): file_id {read-only}
+		+path(): fs::path {read-only}
 	}
 
 	class file_metadata {
@@ -43,6 +44,198 @@ package file_collector {
 	}
 }
 
+package image_file_loader {
+	class image_file_metadata_repository {
+		+get_metadata(file_list_entry): file_metadata {query}
+    +get_dimensions(fs::path): image_rectangle {static}
+	}
+
+	object load_rgba_image <<function>> {
+		+path: fs::path,
+		+fit_rect: image_rectangle
+	}
+}
+
+package pixel_store {
+	class image_rectangle {
+		+width : uint32_t
+		+height :uint32_t
+	}
+
+	class basic_image <? PixelType>{
+	}
+
+	class rgba_image {
+	}
+}
+
+package app {
+	class "input_filter" as app.input_filter <? ImageDimensionProvider> {
+		+include:glob_string
+		+max_pixel_count: size_t
+		+image_dimension_provider: ImageDimensionProvider
+	}
+
+	interface "image_display" as app.image_display <<concept>> {
+		+show_image(rgba_image): void
+		+set_transition_param(float):void
+	}
+
+	class slideshow_entry {
+		+index : ssize_t
+		+source_file : file_list_entry
+	}
+
+	class slideshow_presentation_controller {
+		+set_window_size(image_rectangle):void
+		+start_slideshow(slideshow):void
+		+present_image(slideshow_entry):void
+		+prefetch_image(offset:ssize_t):void
+		+fetch_image(slideshow_entry):void
+		+present_image(loaded_image):void
+		+update_clock(time_point):void
+	}
+
+	interface slideshow_navigator{
+		+step_forward():void
+		+step_backward():void
+		+go_to_begin():void
+		+go_to_end():void
+	}
+
+	interface slideshow_event_handler <<concept>> {
+		+handle_event(slideshow_navigator, slideshow_step_event): void
+		+handle_event(slideshow_navigator, slideshow_transition_end_event): void
+		+handle_event(slideshow_navigator, slideshow_time_event): void
+	}
+
+	class slideshow_playback_controller {
+		+handle_event(slideshow_navigator, slideshow_step_event):void
+		+handle_event(slideshow_navigator, slideshow_transition_end_event):void
+		+handle_event(slideshow_navigator, slideshow_time_event):void
+		+toggle_pause():void
+	}
+
+	class slideshow {
+	}
+
+	class slideshow_window_event_handler {
+		+handle_event(application_window, frame_buffer_size_changed_event): void
+		+handle_event(application_window, window_is_closing_event): void
+		+handle_event(application_window, typing_keyboard_event): void
+		+handle_event(application_window, mouse_button_event): void
+		+application_should_exit() : bool {query}
+	}
+
+	interface playback_controller <<concept>> {
+		+toggle_pause():void
+	}
+
+	interface image_rect_sink <<concept>> {
+		+set_window_size(image_rectangle): void
+	}
+
+	interface title_display <<concept>> {
+		+set_title(char const*): void
+	}
+}
+
+package utils {
+	class glob_string {
+		+matches(string): bool {query}
+	}
+}
+
+package renderer {
+	class gl_vertex_buffer<?ElementType>{
+	}
+
+	class gl_index_buffer {
+		upload(std::span<IndexType const>): void
+	}
+
+	class gl_mesh {
+		+bind()
+		+get_index_count(): size_t {query}
+	}
+
+	class gl_program {
+		+bind(): void
+		+set_uniform(int index, float x, float y, float z, float w): gl_program
+		+set_uniform(int index, float x, float y): gl_program
+		+set_uniform(int index, float value): gl_program
+	}
+
+	class gl_texture {
+		+upload(std::span<std::byte const>, gl_texture_descriptor descriptor): gl_texture
+		+upload(pixel_store::basic_image<T> const& pixels): gl_texture
+		+upload(std::span<std::byte const> data): gl_texture
+		+set_format(gl_texture_descriptor): gl_texture
+		+bind(GLuint): void
+		+descriptor(): gl_texture_descriptor
+		+handle(): uint32_t {query}
+	}
+
+	class gl_vertex_array {
+		+set_buffer(GLuint, gl_vertex_buffer<T>): void
+		+set_buffer(gl_index_buffer<T>) void
+		+bind(): void
+	}
+
+	class image_to_display {
+		+texture: gl_texture
+		+aspect_ratio: float
+	}
+
+	class image_display {
+		+show_image(rgba_image): void
+		+set_window_size(image_rectangle): void
+		+set_transition_param(float): void
+		+update(): void
+		+update_scale(): void
+	}
+
+	class gl_texture_descriptor {
+		+width: GLsizei
+		+height: GLsizei
+		+format: GLenum
+		+type: GLenum
+		+num_mipmaps: GLsizei
+	}
+}
+
+package glfw_wrapper {
+	class glfw_window {
+		+get_primary_monitor_video_mode() : GLFWvidmode {query}
+		+poll_events(): void
+		+swap_buffers(): void
+		+enable_vsync(): void
+		+disable_vsync(): void
+		+restore_vsync(): void
+		+set_event_handler(glfw_window_event_handler): void
+		+get_window_rect(): window_rectangle {query}
+		+set_window_rect(window_rectangle): void
+		+set_title(char const* str): void
+	}
+
+	interface glfw_window_event_handler <<concept>> {
+		+handle_event(application_window, frame_buffer_size_changed_event): void
+		+handle_event(application_window, window_is_closing_event): void
+		+handle_event(application_window, typing_keyboard_event): void
+		+handle_event(application_window, mouse_button_event): void
+	}
+}
+
+package windowing_api {
+	interface application_window {
+		+void enable_fullscreen():void
+		+void disable_fullscreen():void
+		+fullscreen_is_enabled():bool {query}
+		+set_cursor_mode(cursor_mode):void
+		+get_cursor_mode():cursor_mode
+	}
+}
+
 file_metadata_provider --> file_list_entry: <<use>>
 file_metadata_provider --> file_metadata: <<use>>
 file_list "1" *- "N" file_list_entry
@@ -51,45 +244,49 @@ make_file_list --> input_filter: <<use>>
 sort --> file_list: <<use>>
 sort --> file_metadata_provider: <<use>>
 sort --> string_comparator: <<use>>
-
-package image_file_loader {
-	class image_file_metadata_repository {
-		+get_metadata(file_list_entry): file_metadata {query}
-    +get_dimensions(fs::path): image_rectangle {static}
-	}
-
-	class image_rectangle {
-		+width : uint32_t
-		+height :uint32_t
-	}
-}
-
 image_file_metadata_repository --> image_rectangle: <<use>>
 image_file_metadata_repository --> file_metadata: <<use>>
 image_file_metadata_repository --> file_list_entry: <<use>>
-
-
-package app {
-	class input_filter_pattern {
-		+matches(string): bool {query}
-	}
-
-	class "input_filter" as app.input_filter <? ImageDimensionProvider> {
-		+include:input_filter_pattern
-		+max_pixel_count: size_t
-		+image_dimension_provider: ImageDimensionProvider
-	}
-
-	object main <<function>> {
-	}
-}
-
-app.input_filter ..|> input_filter
-app.input_filter "1" *- "N" input_filter_pattern
-image_file_metadata_repository ..|> file_metadata_provider
-main --> image_file_metadata_repository: <<use>>
-main --> app.input_filter: <<use>>
-main --> make_file_list: <<use>>
-main --> sort: <<use>>
+image_to_display "1" *-- "1" gl_texture
+image_display "1" *-- "2" image_to_display
+image_display "1" *-- "1" gl_mesh
+image_display "1" *-- "1" gl_program
+image_display .. app.image_display : <<satisfies>>
+gl_mesh "1" *-down- "1" gl_vertex_array
+gl_mesh "1" *-down- "1" gl_index_buffer
+app.input_filter .. input_filter : <<satisfies>>
+app.input_filter "1" *- "N" glob_string
+image_file_metadata_repository .. file_metadata_provider : <<satisfies>>
+slideshow_presentation_controller ..|> slideshow_navigator
+slideshow_presentation_controller "1" o-- "1" app.image_display
+slideshow_presentation_controller "1" o-- "1" file_metadata_provider
+slideshow_presentation_controller "1" o-- "1" slideshow_event_handler
+slideshow_presentation_controller "1" o-- "1" title_display
+slideshow_presentation_controller .. image_rect_sink: <<satisfies>>
+slideshow_presentation_controller --> slideshow_entry: <<use>>
+image_rect_sink --> image_rectangle: <<use>>
+slideshow_presentation_controller "1" o-- "0..1" slideshow
+slideshow_entry "1" *-- "1" file_list_entry
+load_rgba_image --> image_rectangle: <<use>>
+load_rgba_image --> rgba_image: <<return>>
+glfw_window .. title_display : <<satisfies>>
+slideshow_playback_controller .. slideshow_event_handler: <<satisfies>>
+slideshow_playback_controller .. playback_controller : <<satisfies>>
+rgba_image --> basic_image: <<bind PixelType = rgba_pixel>>
+slideshow "1" *-- "1" file_list
+slideshow_window_event_handler .. glfw_window_event_handler:<<satisfies>>
+glfw_window ..|> application_window
+slideshow_window_event_handler "1" o-- "1" slideshow_navigator
+slideshow_window_event_handler "1" o-- "N" image_rect_sink
+slideshow_window_event_handler "1" o-- "1" playback_controller
+glfw_window .. image_rect_sink: <<satisfies>>
+image_display .. image_rect_sink: <<satisfies>>
+slideshow_event_handler --> slideshow_navigator: <<use>>
+glfw_window --> glfw_window_event_handler: <<use>>
+glfw_window_event_handler --> application_window: <<use>>
+image_display --> rgba_image: <<use>>
+gl_vertex_array --> gl_vertex_buffer: <<use>>
+gl_texture --> gl_texture_descriptor: <<use>>
+gl_texture --> basic_image: <<use>>
 
 @enduml
